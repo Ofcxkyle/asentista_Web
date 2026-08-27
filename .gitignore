@@ -1,0 +1,15 @@
+# Agent & System Internal Tooling
+.agents/
+.claude/
+graphify-out/
+CLAUDE.md
+
+# OS & IDE Files
+.DS_Store
+Thumbs.db
+*.tmp
+.vscode/
+.idea/
+
+# Composer / Vendor (if added)
+vendor/
