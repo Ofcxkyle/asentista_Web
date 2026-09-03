@@ -49,63 +49,104 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     exit;
 }
 
-// Handle Form Submissions (Order Status Updates & Product CRUD)
+// Handle Form Submissions (Order Status Updates, Product CRUD & Restocking)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_action'])) {
-    $action = $_POST['admin_action'];
+    // CSRF Protection Guard for all administrative actions
+    if (!validate_csrf_token($_POST['csrf_token'] ?? null)) {
+        $errorMsg = "Security token invalid or expired. Please refresh the page.";
+    } else {
+        $action = $_POST['admin_action'];
 
-    if ($action === 'update_order_status') {
-        $orderId = (int)$_POST['order_id'];
-        $newStatus = sanitize_input($_POST['new_status']);
-        if (updateOrderStatus($pdo, $orderId, $newStatus)) {
-            $actionMsg = "Order #{$orderId} status successfully updated to <strong>{$newStatus}</strong>.";
-            $activeTab = 'orders';
-        } else {
-            $errorMsg = "Failed to update order status.";
-        }
-    } elseif ($action === 'delete_order') {
-        $orderId = (int)$_POST['order_id'];
-        if (deleteOrder($pdo, $orderId)) {
-            $actionMsg = "Order #{$orderId} removed from database.";
-            $activeTab = 'orders';
-        }
-    } elseif ($action === 'add_product') {
-        $pName     = $_POST['product_name'] ?? '';
-        $pCategory = $_POST['product_category'] ?? 'Bread';
-        $pPrice    = (float)($_POST['product_price'] ?? 0);
-        $pDesc     = $_POST['product_desc'] ?? '';
-        $pImage    = $_POST['product_image'] ?? '';
-        $pFeatured = isset($_POST['is_featured']) ? 1 : 0;
+        if ($action === 'update_order_status') {
+            $orderId = (int)$_POST['order_id'];
+            $newStatus = sanitize_input($_POST['new_status']);
+            if (updateOrderStatus($pdo, $orderId, $newStatus)) {
+                $actionMsg = "Order #{$orderId} status successfully updated to <strong>{$newStatus}</strong>.";
+                $activeTab = 'orders';
+            } else {
+                $errorMsg = "Failed to update order status.";
+            }
+        } elseif ($action === 'delete_order') {
+            $orderId = (int)$_POST['order_id'];
+            if (deleteOrder($pdo, $orderId)) {
+                $actionMsg = "Order #{$orderId} removed from database.";
+                $activeTab = 'orders';
+            }
+        } elseif ($action === 'add_product') {
+            $pName     = $_POST['product_name'] ?? '';
+            $pCategory = $_POST['product_category'] ?? 'Bread';
+            $pPrice    = (float)($_POST['product_price'] ?? 0);
+            $pStock    = isset($_POST['product_stock']) ? max(0, (int)$_POST['product_stock']) : 15;
+            $pDesc     = $_POST['product_desc'] ?? '';
+            $pImage    = $_POST['product_image'] ?? 'assets/breads-e1656042972619.jpg';
+            $pFeatured = isset($_POST['is_featured']) ? 1 : 0;
 
-        if (empty($pName) || $pPrice <= 0) {
-            $errorMsg = "Product name and a valid price are required.";
-        } else {
-            if (addProduct($pdo, $pName, $pCategory, $pPrice, $pDesc, $pImage, $pFeatured)) {
-                $actionMsg = "New bakery item <strong>{$pName}</strong> added to the catalog!";
+            // Handle custom uploaded photo
+            if (!empty($_FILES['product_photo']['name'])) {
+                $uploadRes = handleProductImageUpload($_FILES['product_photo']);
+                if ($uploadRes['success']) {
+                    $pImage = $uploadRes['path'];
+                } else {
+                    $errorMsg = $uploadRes['error'];
+                }
+            }
+
+            if (empty($pName) || $pPrice <= 0) {
+                $errorMsg = "Product name and a valid price are required.";
+            } elseif (empty($errorMsg)) {
+                if (addProduct($pdo, $pName, $pCategory, $pPrice, $pStock, $pDesc, $pImage, $pFeatured)) {
+                    $actionMsg = "New bakery item <strong>{$pName}</strong> (Stock: {$pStock}) added to the catalog with photo!";
+                    $activeTab = 'products';
+                } else {
+                    $errorMsg = "Failed to add product to database.";
+                }
+            }
+        } elseif ($action === 'update_product') {
+            $pId       = (int)($_POST['product_id'] ?? 0);
+            $pName     = $_POST['product_name'] ?? '';
+            $pCategory = $_POST['product_category'] ?? 'Bread';
+            $pPrice    = (float)($_POST['product_price'] ?? 0);
+            $pStock    = isset($_POST['product_stock']) ? max(0, (int)$_POST['product_stock']) : 15;
+            $pDesc     = $_POST['product_desc'] ?? '';
+            $pImage    = $_POST['product_image'] ?? '';
+            $pFeatured = isset($_POST['is_featured']) ? 1 : 0;
+
+            // Handle optional new photo upload
+            if (!empty($_FILES['product_photo']['name'])) {
+                $uploadRes = handleProductImageUpload($_FILES['product_photo']);
+                if ($uploadRes['success']) {
+                    $pImage = $uploadRes['path'];
+                } else {
+                    $errorMsg = $uploadRes['error'];
+                }
+            }
+
+            if ($pId > 0 && empty($errorMsg) && updateProduct($pdo, $pId, $pName, $pCategory, $pPrice, $pStock, $pDesc, $pImage, $pFeatured)) {
+                $actionMsg = "Product <strong>{$pName}</strong> (Stock: {$pStock}) updated successfully!";
                 $activeTab = 'products';
             } else {
-                $errorMsg = "Failed to add product.";
+                if (empty($errorMsg)) $errorMsg = "Failed to update product.";
             }
-        }
-    } elseif ($action === 'update_product') {
-        $pId       = (int)($_POST['product_id'] ?? 0);
-        $pName     = $_POST['product_name'] ?? '';
-        $pCategory = $_POST['product_category'] ?? 'Bread';
-        $pPrice    = (float)($_POST['product_price'] ?? 0);
-        $pDesc     = $_POST['product_desc'] ?? '';
-        $pImage    = $_POST['product_image'] ?? '';
-        $pFeatured = isset($_POST['is_featured']) ? 1 : 0;
+        } elseif ($action === 'restock_product') {
+            $pId   = (int)($_POST['product_id'] ?? 0);
+            $pQty  = (int)($_POST['restock_qty'] ?? 0);
 
-        if ($pId > 0 && updateProduct($pdo, $pId, $pName, $pCategory, $pPrice, $pDesc, $pImage, $pFeatured)) {
-            $actionMsg = "Product <strong>{$pName}</strong> updated successfully!";
-            $activeTab = 'products';
-        } else {
-            $errorMsg = "Failed to update product.";
-        }
-    } elseif ($action === 'delete_product') {
-        $pId = (int)($_POST['product_id'] ?? 0);
-        if ($pId > 0 && deleteProduct($pdo, $pId)) {
-            $actionMsg = "Product #{$pId} was deleted from catalog.";
-            $activeTab = 'products';
+            if ($pId > 0 && $pQty > 0 && restockProduct($pdo, $pId, $pQty)) {
+                $p = getProductById($pdo, $pId);
+                $pNameDisplay = htmlspecialchars($p['name'] ?? "Item #{$pId}");
+                $newStockDisplay = $p['stock'] ?? 'updated';
+                $actionMsg = "Inventory replenished! Added <strong>+{$pQty}</strong> units to <strong>{$pNameDisplay}</strong> (New Stock: {$newStockDisplay}).";
+                $activeTab = 'products';
+            } else {
+                $errorMsg = "Please specify a valid restock quantity greater than 0.";
+                $activeTab = 'products';
+            }
+        } elseif ($action === 'delete_product') {
+            $pId = (int)($_POST['product_id'] ?? 0);
+            if ($pId > 0 && deleteProduct($pdo, $pId)) {
+                $actionMsg = "Product #{$pId} was deleted from catalog.";
+                $activeTab = 'products';
+            }
         }
     }
 }
@@ -117,6 +158,13 @@ $orderStatusFilter = isset($_GET['status']) && !empty($_GET['status']) ? sanitiz
 $ordersList = searchOrders($pdo, $orderSearchKw, $orderStatusFilter, null);
 $productsList = getAllProducts($pdo);
 $customersList = getAllCustomers($pdo);
+
+// Sales Ratings & Most Sold Analytics
+$salesAnalytics = getProductSalesAnalytics($pdo);
+$analyticsMap = [];
+foreach ($salesAnalytics as $a) {
+    $analyticsMap[$a['id']] = $a;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -124,6 +172,9 @@ $customersList = getAllCustomers($pdo);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Command Center - Asentista's Bakery</title>
+    <!-- Website Favicon / Main Logo -->
+    <link rel="icon" type="image/png" href="assets/ASENTISTA FINAL.png">
+    <link rel="apple-touch-icon" href="assets/ASENTISTA FINAL.png">
     <link rel="stylesheet" href="style.css">
     <style>
         .admin-page-wrap {
@@ -396,6 +447,80 @@ $customersList = getAllCustomers($pdo);
             margin-bottom: 0.8rem;
         }
 
+        /* Best Sellers Podium & Leaderboard */
+        .podium-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .podium-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid #E5E7EB;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: var(--transition-fast);
+        }
+        .podium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        .podium-card.rank-1 { border-color: #F59E0B; background: linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 100%); }
+        .podium-card.rank-2 { border-color: #9CA3AF; background: linear-gradient(180deg, #F3F4F6 0%, #FFFFFF 100%); }
+        .podium-card.rank-3 { border-color: #D97706; background: linear-gradient(180deg, #FEF3C7 0%, #FFFFFF 100%); }
+        .podium-medal {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .podium-thumb {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 0.8rem;
+        }
+        .rating-stars-gold {
+            color: #F59E0B;
+            letter-spacing: 1px;
+            font-size: 1.05rem;
+        }
+        .sales-bar-wrap {
+            width: 100%;
+            height: 8px;
+            background: #E5E7EB;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .sales-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #F59E0B, #10B981);
+            border-radius: 4px;
+        }
+
+        /* Upload photo preview */
+        .upload-dropzone {
+            background: #F9FAFB;
+            border: 2px dashed #D1D5DB;
+            border-radius: 6px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        .upload-dropzone:hover {
+            border-color: var(--color-yellow);
+            background: #FEF3C7;
+        }
+
         @media (max-width: 1100px) {
             .kpi-cards-grid { grid-template-columns: repeat(3, 1fr); }
             .products-crud-grid { grid-template-columns: repeat(2, 1fr); }
@@ -413,11 +538,7 @@ $customersList = getAllCustomers($pdo);
     <nav class="admin-nav-bar">
         <div class="admin-brand-block">
             <div class="brand-svg-logo">
-                <svg width="34" height="42" viewBox="0 0 44 52" fill="none">
-                    <ellipse cx="22" cy="18" rx="12" ry="10" fill="#FFAE34" />
-                    <rect x="12" y="20" width="20" height="5" rx="1" fill="#C8A882" />
-                    <text x="22" y="50" text-anchor="middle" font-family="serif" font-size="36" font-weight="bold" fill="#FFFFFF">A</text>
-                </svg>
+                <img src="assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img" style="height: 40px;">
             </div>
             <div>
                 <span class="brand-title" style="color: var(--color-white); font-size: 1rem;">ASENTISTA'S</span>
@@ -448,12 +569,15 @@ $customersList = getAllCustomers($pdo);
                     Real-time baking dispatch queue, live product catalog, and revenue intelligence connected to XAMPP MySQL.
                 </p>
             </div>
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <a href="admin.php?export=csv" class="btn-store-preview" style="background: var(--color-yellow); color: var(--color-brown-deep); border: none; font-weight: 700;">
                     📥 Export CSV Report
                 </a>
+                <button type="button" class="btn-store-preview" style="background: #059669; color: #fff; border: none; font-weight: 700;" onclick="openRestockModal()">
+                    📦 + Add Stock / Restock
+                </button>
                 <button type="button" class="btn-store-preview" onclick="openAddProductModal()">
-                    + Add New Bakery Product
+                    🥖 + Add New Product & Photo
                 </button>
             </div>
         </div>
@@ -474,7 +598,7 @@ $customersList = getAllCustomers($pdo);
         <?php endif; ?>
 
         <!-- Executive KPI Metrics Cards -->
-        <section class="kpi-cards-grid">
+        <section class="kpi-cards-grid" style="grid-template-columns: repeat(6, 1fr);">
             <div class="kpi-card revenue">
                 <span class="kpi-label">Total Revenue</span>
                 <span class="kpi-value" style="color: #059669;"><?php echo $metrics['revenue_formatted']; ?></span>
@@ -495,6 +619,15 @@ $customersList = getAllCustomers($pdo);
                 <span class="kpi-label">Catalog Menu Items</span>
                 <span class="kpi-value"><?php echo $metrics['product_count']; ?></span>
             </div>
+            <div class="kpi-card" style="border-left: 4px solid #F59E0B;">
+                <span class="kpi-label">⭐ Top Sold Product</span>
+                <span class="kpi-value" style="font-size: 1.05rem; color: #D97706; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php echo !empty($salesAnalytics[0]) ? htmlspecialchars($salesAnalytics[0]['name']) : 'N/A'; ?>">
+                    <?php echo !empty($salesAnalytics[0]) ? htmlspecialchars($salesAnalytics[0]['name']) : 'None yet'; ?>
+                </span>
+                <span style="font-size: 0.72rem; color: var(--color-text-muted); font-weight: 600;">
+                    <?php echo !empty($salesAnalytics[0]) ? $salesAnalytics[0]['total_sold'] . ' units sold (' . $salesAnalytics[0]['rating'] . ' ★)' : 'No sales yet'; ?>
+                </span>
+            </div>
         </section>
 
         <!-- Navigation Tabs -->
@@ -503,7 +636,10 @@ $customersList = getAllCustomers($pdo);
                 📋 Live Orders Queue (<?php echo count($ordersList); ?>)
             </button>
             <button type="button" class="admin-tab-btn <?php echo $activeTab === 'products' ? 'active' : ''; ?>" onclick="switchAdminTab('products')">
-                🥖 Product Catalog Manager (<?php echo count($productsList); ?>)
+                🥖 Product Catalog & Inventory (<?php echo count($productsList); ?>)
+            </button>
+            <button type="button" class="admin-tab-btn <?php echo $activeTab === 'analytics' ? 'active' : ''; ?>" onclick="switchAdminTab('analytics')">
+                ⭐ Best-Sellers & Sales Ratings (<?php echo count($salesAnalytics); ?>)
             </button>
             <button type="button" class="admin-tab-btn <?php echo $activeTab === 'customers' ? 'active' : ''; ?>" onclick="switchAdminTab('customers')">
                 👥 Customer Directory (<?php echo count($customersList); ?>)
@@ -584,6 +720,7 @@ $customersList = getAllCustomers($pdo);
                                 </td>
                                 <td>
                                     <form method="POST" action="admin.php" style="display: flex; gap: 4px; align-items: center;">
+                                        <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                         <input type="hidden" name="admin_action" value="update_order_status">
                                         <input type="hidden" name="order_id" value="<?php echo $ord['id']; ?>">
                                         <select name="new_status" class="form-select" style="padding: 3px 6px; font-size: 0.74rem;">
@@ -597,6 +734,7 @@ $customersList = getAllCustomers($pdo);
                                 </td>
                                 <td>
                                     <form method="POST" action="admin.php" onsubmit="return confirm('Delete order #<?php echo $ord['id']; ?> permanently?')">
+                                        <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                         <input type="hidden" name="admin_action" value="delete_order">
                                         <input type="hidden" name="order_id" value="<?php echo $ord['id']; ?>">
                                         <button type="submit" class="btn-table-action" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA;">✕</button>
@@ -616,7 +754,7 @@ $customersList = getAllCustomers($pdo);
             <div class="card-title-row">
                 <div>
                     <h2 class="card-heading">Bakery & Beverage Menu Manager</h2>
-                    <p style="font-size: 0.85rem; color: var(--color-text-muted);">Add, modify, and adjust prices for all catalog items in real time.</p>
+                    <p style="font-size: 0.85rem; color: var(--color-text-muted);">Monitor inventory stock levels, restock items, add new bakery goods, and adjust prices.</p>
                 </div>
                 <button type="button" class="btn-submit-modal" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.82rem; margin: 0;" onclick="openAddProductModal()">
                     + Add New Item to Menu
@@ -625,9 +763,30 @@ $customersList = getAllCustomers($pdo);
 
             <div class="products-crud-grid">
                 <?php foreach ($productsList as $prod): ?>
-                    <div class="product-crud-card">
+                    <?php 
+                        $stockVal = (int)($prod['stock'] ?? 0);
+                        $isStockOut = ($stockVal <= 0);
+                        $isStockLow = ($stockVal > 0 && $stockVal <= 5);
+                    ?>
+                    <div class="product-crud-card" style="<?php echo $isStockOut ? 'border: 1px solid #FECACA; background: #FFFBFB;' : ''; ?>">
                         <div>
-                            <img src="<?php echo htmlspecialchars($prod['image']); ?>" alt="<?php echo htmlspecialchars($prod['name']); ?>" class="product-crud-thumb">
+                            <div style="position: relative;">
+                                <img src="<?php echo htmlspecialchars($prod['image']); ?>" alt="<?php echo htmlspecialchars($prod['name']); ?>" class="product-crud-thumb">
+                                <?php if ($isStockOut): ?>
+                                    <span style="position: absolute; top: 8px; right: 8px; background: #DC2626; color: #fff; font-size: 0.7rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; box-shadow: var(--shadow-sm);">
+                                        OUT OF STOCK (0)
+                                    </span>
+                                <?php elseif ($isStockLow): ?>
+                                    <span style="position: absolute; top: 8px; right: 8px; background: #D97706; color: #fff; font-size: 0.7rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; box-shadow: var(--shadow-sm);">
+                                        LOW STOCK (<?php echo $stockVal; ?>)
+                                    </span>
+                                <?php else: ?>
+                                    <span style="position: absolute; top: 8px; right: 8px; background: #059669; color: #fff; font-size: 0.7rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; box-shadow: var(--shadow-sm);">
+                                        <?php echo $stockVal; ?> in stock
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
                                 <h3 style="font-family: var(--font-serif); font-size: 1.05rem; font-weight: 700; color: var(--color-brown-deep);">
                                     <?php echo htmlspecialchars($prod['name']); ?>
@@ -636,18 +795,53 @@ $customersList = getAllCustomers($pdo);
                                     ₱<?php echo number_format($prod['price'], 2); ?>
                                 </span>
                             </div>
-                            <span style="font-size: 0.72rem; background: #E5E7EB; padding: 2px 6px; border-radius: 3px; font-weight: 600; text-transform: uppercase;">
-                                <?php echo htmlspecialchars($prod['category']); ?>
-                            </span>
-                            <p style="font-size: 0.78rem; color: var(--color-text-muted); margin-top: 8px; line-height: 1.4;">
+
+                            <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap;">
+                                <span style="font-size: 0.72rem; background: #E5E7EB; padding: 2px 6px; border-radius: 3px; font-weight: 600; text-transform: uppercase;">
+                                    <?php echo htmlspecialchars($prod['category']); ?>
+                                </span>
+                                <span style="font-size: 0.75rem; font-weight: 700; color: <?php echo $isStockOut ? '#DC2626' : ($isStockLow ? '#D97706' : '#059669'); ?>;">
+                                    Inventory: <?php echo $stockVal; ?> units
+                                </span>
+                            </div>
+
+                            <?php 
+                                $pAnalytics = $analyticsMap[$prod['id']] ?? null;
+                            ?>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: #FFFBEB; padding: 4px 8px; border-radius: 4px; border: 1px solid #FDE68A;">
+                                <span style="font-size: 0.76rem; font-weight: 700; color: #D97706;">
+                                    ⭐ <?php echo $pAnalytics ? $pAnalytics['rating'] . ' ★' : '4.5 ★'; ?> 
+                                    <span style="font-size: 0.7rem; font-weight: 500; color: #78350F;">(<?php echo $pAnalytics ? $pAnalytics['total_sold'] : 0; ?> sold)</span>
+                                </span>
+                                <?php if ($pAnalytics && !empty($pAnalytics['badge'])): ?>
+                                    <span style="font-size: 0.68rem; font-weight: 800; background: <?php echo $pAnalytics['badge_bg']; ?>; color: <?php echo $pAnalytics['badge_color']; ?>; padding: 2px 6px; border-radius: 3px;">
+                                        <?php echo $pAnalytics['badge']; ?>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+
+                            <p style="font-size: 0.78rem; color: var(--color-text-muted); margin-top: 4px; line-height: 1.4;">
                                 <?php echo htmlspecialchars($prod['description']); ?>
                             </p>
+
+                            <!-- Quick Restock Widget -->
+                            <form method="POST" action="admin.php" style="margin-top: 10px; background: rgba(0,0,0,0.03); padding: 8px; border-radius: 4px; display: flex; align-items: center; gap: 6px;">
+                                <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
+                                <input type="hidden" name="admin_action" value="restock_product">
+                                <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
+                                <label style="font-size: 0.72rem; font-weight: 700; color: var(--color-brown-deep); white-space: nowrap;">+ Add Stock:</label>
+                                <input type="number" name="restock_qty" value="10" min="1" max="500" style="width: 55px; padding: 3px 6px; font-size: 0.75rem; border: 1px solid #ccc; border-radius: 3px;">
+                                <button type="submit" class="btn-table-action" style="background: #059669; color: #fff; font-size: 0.72rem; padding: 3px 8px; border: none; font-weight: 700;">
+                                    Restock
+                                </button>
+                            </form>
                         </div>
                         <div style="display: flex; gap: 8px; margin-top: 1rem;">
                             <button type="button" class="btn-table-action" style="flex: 1; background: var(--color-brown-deep); color: #fff;" onclick='openEditProductModal(<?php echo json_encode($prod); ?>)'>
                                 ✏️ Edit
                             </button>
                             <form method="POST" action="admin.php" onsubmit="return confirm('Are you sure you want to delete <?php echo htmlspecialchars(addslashes($prod['name'])); ?>?');" style="flex: 1;">
+                                <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                 <input type="hidden" name="admin_action" value="delete_product">
                                 <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
                                 <button type="submit" class="btn-table-action" style="width: 100%; background: #FEE2E2; color: #DC2626;">
@@ -661,7 +855,163 @@ $customersList = getAllCustomers($pdo);
         </section>
 
         <!-- ==============================================================================
-             TAB 3: CUSTOMER DIRECTORY
+             TAB 3: BEST-SELLERS & SALES RATINGS LEADERBOARD
+             ============================================================================== -->
+        <section id="tab-analytics" class="admin-content-card" style="display: <?php echo $activeTab === 'analytics' ? 'block' : 'none'; ?>;">
+            <div class="card-title-row">
+                <div>
+                    <h2 class="card-heading">⭐ Product Sales Ratings & Best-Sellers Leaderboard</h2>
+                    <p style="font-size: 0.85rem; color: var(--color-text-muted);">
+                        Real-time sales velocity, total units purchased by customers, generated revenue, and customer popularity ratings.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-store-preview" style="background: #059669; color: #fff; border: none; font-weight: 700;" onclick="openRestockModal()">
+                        📦 Restock Low Inventory Items
+                    </button>
+                </div>
+            </div>
+
+            <!-- Top 3 Best-Seller Showcase Podium -->
+            <h3 style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--color-brown-deep); margin-bottom: 1rem;">
+                🏆 Bakery Best-Sellers Showcase
+            </h3>
+            <div class="podium-grid">
+                <?php 
+                    $medals = ['🥇', '🥈', '🥉'];
+                    $ranks = ['rank-1', 'rank-2', 'rank-3'];
+                    $rankTitles = ['#1 Best-Selling Artisan Loaf', '#2 Customer Favorite', '#3 Trending Item'];
+                    for ($i = 0; $i < 3; $i++): 
+                        if (empty($salesAnalytics[$i])) continue;
+                        $topItem = $salesAnalytics[$i];
+                ?>
+                    <div class="podium-card <?php echo $ranks[$i]; ?>">
+                        <div class="podium-medal"><?php echo $medals[$i]; ?></div>
+                        <img src="<?php echo htmlspecialchars($topItem['image']); ?>" alt="<?php echo htmlspecialchars($topItem['name']); ?>" class="podium-thumb">
+                        <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: #B45309; letter-spacing: 0.05em;">
+                            <?php echo $rankTitles[$i]; ?>
+                        </span>
+                        <h4 style="font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; color: var(--color-brown-deep); margin: 4px 0;">
+                            <?php echo htmlspecialchars($topItem['name']); ?>
+                        </h4>
+                        <div class="rating-stars-gold" style="margin-bottom: 6px;">
+                            <?php echo $topItem['rating_stars']; ?> 
+                            <strong style="font-size: 0.88rem; color: #92400E;"><?php echo $topItem['rating']; ?> / 5.0</strong>
+                        </div>
+                        <div style="display: flex; gap: 14px; font-size: 0.85rem; margin-bottom: 10px;">
+                            <div>
+                                <span style="color: var(--color-text-muted); font-size: 0.75rem; display: block;">Total Sold</span>
+                                <strong style="font-size: 1.1rem; color: var(--color-brown-deep);"><?php echo $topItem['total_sold']; ?> units</strong>
+                            </div>
+                            <div>
+                                <span style="color: var(--color-text-muted); font-size: 0.75rem; display: block;">Revenue</span>
+                                <strong style="font-size: 1.1rem; color: #059669;">₱<?php echo number_format($topItem['total_revenue'], 2); ?></strong>
+                            </div>
+                        </div>
+                        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 8px;">
+                            <span style="font-size: 0.78rem; font-weight: 700; color: <?php echo $topItem['stock'] <= 5 ? '#DC2626' : '#059669'; ?>;">
+                                Stock: <?php echo $topItem['stock']; ?> units
+                            </span>
+                            <button type="button" class="btn-table-action" style="background: #059669; color: #fff; font-size: 0.74rem; padding: 4px 10px;" onclick="openRestockForProduct(<?php echo $topItem['id']; ?>, '<?php echo htmlspecialchars(addslashes($topItem['name'])); ?>', <?php echo $topItem['stock']; ?>)">
+                                + Add Stock
+                            </button>
+                        </div>
+                    </div>
+                <?php endfor; ?>
+            </div>
+
+            <!-- Complete Sales Ratings & Units Sold Table -->
+            <h3 style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--color-brown-deep); margin: 1.5rem 0 1rem 0;">
+                📊 Complete Catalog Sales Rankings & Ratings (<?php echo count($salesAnalytics); ?> Products)
+            </h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Rank</th>
+                        <th>Product Details</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th style="min-width: 160px;">Units Sold Performance</th>
+                        <th>Revenue Generated</th>
+                        <th>Customer Rating</th>
+                        <th>Current Stock</th>
+                        <th style="width: 130px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                        $maxSoldGlobal = !empty($salesAnalytics[0]['total_sold']) ? $salesAnalytics[0]['total_sold'] : 1;
+                        foreach ($salesAnalytics as $idx => $item): 
+                            $rankNum = $idx + 1;
+                            $pct = ($maxSoldGlobal > 0 && $item['total_sold'] > 0) ? min(100, round(($item['total_sold'] / $maxSoldGlobal) * 100)) : 5;
+                    ?>
+                        <tr>
+                            <td>
+                                <strong style="font-size: 1rem; color: <?php echo $rankNum <= 3 ? '#D97706' : 'var(--color-text-muted)'; ?>;">
+                                    #<?php echo $rankNum; ?>
+                                </strong>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <img src="<?php echo htmlspecialchars($item['image']); ?>" alt="" style="width: 44px; height: 44px; border-radius: 4px; object-fit: cover; border: 1px solid #E5E7EB;">
+                                    <div>
+                                        <strong style="color: var(--color-brown-deep); font-size: 0.92rem;">
+                                            <?php echo htmlspecialchars($item['name']); ?>
+                                        </strong>
+                                        <div style="margin-top: 2px;">
+                                            <span style="font-size: 0.68rem; font-weight: 700; background: <?php echo $item['badge_bg']; ?>; color: <?php echo $item['badge_color']; ?>; padding: 2px 6px; border-radius: 3px;">
+                                                <?php echo $item['badge']; ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span style="font-size: 0.75rem; background: #E5E7EB; padding: 2px 7px; border-radius: 3px; font-weight: 600; text-transform: uppercase;">
+                                    <?php echo htmlspecialchars($item['category']); ?>
+                                </span>
+                            </td>
+                            <td style="font-weight: 700; color: var(--color-brown-deep);">
+                                ₱<?php echo number_format($item['price'], 2); ?>
+                            </td>
+                            <td>
+                                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--color-brown-deep);">
+                                    <span><?php echo $item['total_sold']; ?> sold</span>
+                                    <span style="font-size: 0.72rem; color: var(--color-text-muted);"><?php echo $item['order_count']; ?> orders</span>
+                                </div>
+                                <div class="sales-bar-wrap">
+                                    <div class="sales-bar-fill" style="width: <?php echo $pct; ?>%;"></div>
+                                </div>
+                            </td>
+                            <td style="font-weight: 700; color: #059669;">
+                                ₱<?php echo number_format($item['total_revenue'], 2); ?>
+                            </td>
+                            <td>
+                                <div class="rating-stars-gold" style="font-size: 0.95rem;">
+                                    <?php echo $item['rating_stars']; ?>
+                                </div>
+                                <span style="font-size: 0.76rem; font-weight: 700; color: #92400E;">
+                                    <?php echo $item['rating']; ?> / 5.0
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge" style="background: <?php echo $item['stock'] <= 0 ? '#FEE2E2' : ($item['stock'] <= 5 ? '#FEF3C7' : '#D1FAE5'); ?>; color: <?php echo $item['stock'] <= 0 ? '#991B1B' : ($item['stock'] <= 5 ? '#92400E' : '#065F46'); ?>;">
+                                    <?php echo $item['stock']; ?> units
+                                </span>
+                            </td>
+                            <td>
+                                <button type="button" class="btn-table-action" style="background: #059669; color: #fff; border: none;" onclick="openRestockForProduct(<?php echo $item['id']; ?>, '<?php echo htmlspecialchars(addslashes($item['name'])); ?>', <?php echo $item['stock']; ?>)">
+                                    + Add Stock
+                                </button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ==============================================================================
+             TAB 4: CUSTOMER DIRECTORY
              ============================================================================== -->
         <section id="tab-customers" class="admin-content-card" style="display: <?php echo $activeTab === 'customers' ? 'block' : 'none'; ?>;">
             <div class="card-title-row">
@@ -712,7 +1062,8 @@ $customersList = getAllCustomers($pdo);
                 <button type="button" class="modal-close-btn" onclick="closeProductModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form method="POST" action="admin.php">
+                <form method="POST" action="admin.php" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                     <input type="hidden" name="admin_action" id="prodFormAction" value="add_product">
                     <input type="hidden" name="product_id" id="prodFormId" value="">
 
@@ -736,14 +1087,32 @@ $customersList = getAllCustomers($pdo);
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="prodImage">Image Asset Path</label>
-                        <input type="text" id="prodImage" name="product_image" class="form-input" placeholder="assets/breads-e1656042972619.jpg" value="assets/breads-e1656042972619.jpg">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="prodStock">Available Stock (Units) *</label>
+                            <input type="number" id="prodStock" name="product_stock" class="form-input" placeholder="15" min="0" value="15" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="prodImage">Image Path (Preset / Fallback)</label>
+                            <input type="text" id="prodImage" name="product_image" class="form-input" placeholder="assets/breads-e1656042972619.jpg" value="assets/breads-e1656042972619.jpg">
+                        </div>
+                    </div>
+
+                    <!-- Photo Upload with Live Preview -->
+                    <div class="form-group" style="background: #F9FAFB; border: 2px dashed #D1D5DB; padding: 12px; border-radius: 6px;">
+                        <label class="form-label" for="prodPhotoFile" style="margin-bottom: 4px; display: block; font-weight: 700; color: var(--color-brown-deep);">
+                            📸 Upload Product Photo (JPG, PNG, WEBP)
+                        </label>
+                        <input type="file" id="prodPhotoFile" name="product_photo" accept="image/jpeg,image/png,image/webp" class="form-input" style="padding: 6px; font-size: 0.82rem; background: #fff;" onchange="previewUploadImage(this)">
+                        <div id="previewContainer" style="margin-top: 8px; display: none; text-align: center;">
+                            <img id="photoUploadPreview" src="" alt="Selected Photo Preview" style="max-height: 120px; border-radius: 6px; box-shadow: var(--shadow-sm); border: 1px solid #E5E7EB; object-fit: cover;">
+                            <div style="font-size: 0.72rem; color: #059669; font-weight: 700; margin-top: 4px;">✓ Photo selected for upload</div>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="prodDesc">Description</label>
-                        <textarea id="prodDesc" name="product_desc" class="form-textarea" rows="3" placeholder="Handcrafted with organic wheat flour..."></textarea>
+                        <textarea id="prodDesc" name="product_desc" class="form-textarea" rows="2" placeholder="Handcrafted with organic wheat flour and natural sourdough culture..."></textarea>
                     </div>
 
                     <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
@@ -753,6 +1122,49 @@ $customersList = getAllCustomers($pdo);
 
                     <button type="submit" class="btn-submit-modal" id="prodSubmitBtn">
                         Save to Database Catalog →
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dedicated Restock Inventory Modal -->
+    <div class="modal-backdrop" id="restockFormModal">
+        <div class="modal-window" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📦 Add Inventory Stock / Restock Product</h3>
+                <button type="button" class="modal-close-btn" onclick="closeRestockModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="admin.php">
+                    <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
+                    <input type="hidden" name="admin_action" value="restock_product">
+
+                    <div class="form-group">
+                        <label class="form-label" for="restockProductSelect">Select Product to Restock *</label>
+                        <select id="restockProductSelect" name="product_id" class="form-select" required>
+                            <?php foreach ($productsList as $p): ?>
+                                <option value="<?php echo $p['id']; ?>">
+                                    <?php echo htmlspecialchars($p['name']); ?> (Current Stock: <?php echo $p['stock']; ?> units)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="restockQtyInput">Quantity to Add (+Units) *</label>
+                        <input type="number" id="restockQtyInput" name="restock_qty" class="form-input" min="1" max="1000" value="15" required style="font-size: 1.15rem; font-weight: 700; color: #059669;">
+                        <div style="display: flex; gap: 6px; margin-top: 8px;">
+                            <button type="button" class="btn-table-action" style="padding: 3px 10px; font-size: 0.74rem;" onclick="setRestockAdd(5)">+5</button>
+                            <button type="button" class="btn-table-action" style="padding: 3px 10px; font-size: 0.74rem;" onclick="setRestockAdd(10)">+10</button>
+                            <button type="button" class="btn-table-action" style="padding: 3px 10px; font-size: 0.74rem;" onclick="setRestockAdd(20)">+20</button>
+                            <button type="button" class="btn-table-action" style="padding: 3px 10px; font-size: 0.74rem;" onclick="setRestockAdd(50)">+50</button>
+                            <button type="button" class="btn-table-action" style="padding: 3px 10px; font-size: 0.74rem;" onclick="setRestockAdd(100)">+100</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit-modal" style="background: #059669; font-size: 0.95rem; padding: 0.95rem; margin-top: 1rem;">
+                        + Replenish Inventory Stock Now →
                     </button>
                 </form>
             </div>
@@ -775,21 +1187,25 @@ $customersList = getAllCustomers($pdo);
             window.history.replaceState({}, '', url);
         }
 
-        const modal = document.getElementById('productFormModal');
+        const productModal = document.getElementById('productFormModal');
+        const restockModal = document.getElementById('restockFormModal');
 
         function openAddProductModal() {
-            document.getElementById('productModalHeading').textContent = 'Add New Bakery Item';
+            document.getElementById('productModalHeading').textContent = 'Add New Bakery Item & Photo';
             document.getElementById('prodFormAction').value = 'add_product';
             document.getElementById('prodFormId').value = '';
             document.getElementById('prodName').value = '';
             document.getElementById('prodCategory').value = 'Bread';
             document.getElementById('prodPrice').value = '';
+            document.getElementById('prodStock').value = '15';
             document.getElementById('prodImage').value = 'assets/breads-e1656042972619.jpg';
             document.getElementById('prodDesc').value = '';
             document.getElementById('prodFeatured').checked = true;
+            document.getElementById('prodPhotoFile').value = '';
+            document.getElementById('previewContainer').style.display = 'none';
             document.getElementById('prodSubmitBtn').textContent = 'Add to Database Catalog →';
 
-            modal.classList.add('active');
+            productModal.classList.add('active');
         }
 
         function openEditProductModal(prod) {
@@ -799,20 +1215,72 @@ $customersList = getAllCustomers($pdo);
             document.getElementById('prodName').value = prod.name;
             document.getElementById('prodCategory').value = prod.category;
             document.getElementById('prodPrice').value = prod.price;
+            document.getElementById('prodStock').value = (prod.stock !== undefined) ? prod.stock : 15;
             document.getElementById('prodImage').value = prod.image;
             document.getElementById('prodDesc').value = prod.description;
             document.getElementById('prodFeatured').checked = (prod.is_featured == 1);
-            document.getElementById('prodSubmitBtn').textContent = 'Update Item Details →';
+            document.getElementById('prodPhotoFile').value = '';
 
-            modal.classList.add('active');
+            const previewImg = document.getElementById('photoUploadPreview');
+            const previewWrap = document.getElementById('previewContainer');
+            if (prod.image) {
+                previewImg.src = prod.image;
+                previewWrap.style.display = 'block';
+            } else {
+                previewWrap.style.display = 'none';
+            }
+
+            document.getElementById('prodSubmitBtn').textContent = 'Update Item Details & Photo →';
+
+            productModal.classList.add('active');
         }
 
         function closeProductModal() {
-            modal.classList.remove('active');
+            productModal.classList.remove('active');
         }
 
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeProductModal();
+        function openRestockModal() {
+            restockModal.classList.add('active');
+        }
+
+        function openRestockForProduct(prodId, prodName, currentStock) {
+            const select = document.getElementById('restockProductSelect');
+            if (select) {
+                select.value = prodId;
+            }
+            openRestockModal();
+        }
+
+        function closeRestockModal() {
+            restockModal.classList.remove('active');
+        }
+
+        function setRestockAdd(qty) {
+            const input = document.getElementById('restockQtyInput');
+            if (input) input.value = qty;
+        }
+
+        function previewUploadImage(input) {
+            const previewWrap = document.getElementById('previewContainer');
+            const previewImg = document.getElementById('photoUploadPreview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewWrap.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                previewWrap.style.display = 'none';
+            }
+        }
+
+        productModal.addEventListener('click', (e) => {
+            if (e.target === productModal) closeProductModal();
+        });
+
+        restockModal.addEventListener('click', (e) => {
+            if (e.target === restockModal) closeRestockModal();
         });
     </script>
 </body>
