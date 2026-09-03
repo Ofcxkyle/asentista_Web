@@ -5,18 +5,28 @@
 
 // Global Quick Add to Cart accessible from HTML onclick attributes
 window.quickAddToCart = async function(productName, price = 0, image = '', qty = 1) {
+    const csrfToken = window.CSRF_TOKEN 
+        || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') 
+        || '';
+
     const formData = new FormData();
     formData.append('action', 'add');
     formData.append('product_name', productName);
     formData.append('price', price);
     formData.append('image', image);
     formData.append('quantity', qty);
+    if (csrfToken) {
+        formData.append('csrf_token', csrfToken);
+    }
 
     try {
         const response = await fetch('cart_action.php', {
             method: 'POST',
             body: formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            headers: { 
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken
+            }
         });
         const result = await response.json();
 
@@ -24,7 +34,7 @@ window.quickAddToCart = async function(productName, price = 0, image = '', qty =
             updateCartBadge(result.cart_count);
             showToast(`${result.message} <br><a href="cart.php" style="color:var(--color-yellow); text-decoration:underline; font-weight:700;">View Cart & Checkout (${result.cart_count}) →</a>`, 'success');
         } else {
-            showToast(result.message || 'Could not add item to cart.', 'info');
+            showToast(result.message || 'Could not add item to cart.', result.out_of_stock ? 'danger' : 'info');
         }
     } catch (e) {
         console.error('Cart add error:', e);
@@ -165,14 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const productModal = document.getElementById('productModal');
     const lightboxModal = document.getElementById('lightboxModal');
 
-    // Check for query param flash messages
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('auth_success') === 'login') {
-        showToast('Successfully signed in! Welcome to Asentista Bakery.', 'success');
-    } else if (urlParams.get('auth_success') === 'registered') {
-        showToast('Account registered successfully! Welcome aboard.', 'success');
-    } else if (urlParams.get('auth_msg') === 'logged_out') {
-        showToast('You have been logged out safely.', 'info');
+    // Clean query parameters from URL without displaying popups
+    if (window.location.search.includes('auth_success')) {
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     }
 
     // --- Modal Open/Close Controls ---
@@ -368,6 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const titleEl = document.getElementById('productDetailTitle');
         const priceEl = document.getElementById('productDetailPrice');
         const descEl = document.getElementById('productDetailDesc');
+        const stockEl = document.getElementById('productDetailStock');
         const orderBtn = document.getElementById('productDetailOrderBtn');
         const cartBtn = document.getElementById('productModalAddToCartBtn');
 
@@ -376,31 +383,85 @@ document.addEventListener('DOMContentLoaded', () => {
         if (priceEl) priceEl.textContent = product.price;
         if (descEl) descEl.textContent = product.desc;
 
+        // Stock and availability
+        const stock = (product.stock !== undefined) ? parseInt(product.stock) : 999;
+        const isOutOfStock = (stock <= 0);
+
+        if (stockEl) {
+            if (isOutOfStock) {
+                stockEl.innerHTML = '<span style="color:#D32F2F; background:rgba(211,47,47,0.1); padding:4px 10px; border-radius:4px; display:inline-block;">❌ Out of Stock / Unavailable</span>';
+            } else if (stock <= 4) {
+                stockEl.innerHTML = `<span style="color:#E65100; background:rgba(230,81,0,0.1); padding:4px 10px; border-radius:4px; display:inline-block;">⚠️ Low Stock: Only ${stock} units left!</span>`;
+            } else {
+                stockEl.innerHTML = `<span style="color:#2E7D32; background:rgba(46,125,50,0.1); padding:4px 10px; border-radius:4px; display:inline-block;">✓ In Stock (${stock} available)</span>`;
+            }
+        }
+
         if (cartBtn) {
-            cartBtn.onclick = () => {
-                quickAddToCart(product.name, product.raw_price || 35, product.image);
-            };
+            if (isOutOfStock) {
+                cartBtn.disabled = true;
+                cartBtn.style.opacity = '0.5';
+                cartBtn.style.cursor = 'not-allowed';
+                cartBtn.textContent = 'Out of Stock';
+            } else {
+                cartBtn.disabled = false;
+                cartBtn.style.opacity = '1';
+                cartBtn.style.cursor = 'pointer';
+                cartBtn.textContent = '🛒 Add to Cart Now';
+                cartBtn.onclick = () => {
+                    quickAddToCart(product.name, product.raw_price || 35, product.image);
+                };
+            }
         }
 
         if (orderBtn) {
-            orderBtn.onclick = () => {
-                closeModal(productModal);
-                openBookingWithItem(product.name);
-            };
+            if (isOutOfStock) {
+                orderBtn.disabled = true;
+                orderBtn.style.opacity = '0.5';
+                orderBtn.style.cursor = 'not-allowed';
+                orderBtn.textContent = 'Unavailable for Booking';
+            } else {
+                orderBtn.disabled = false;
+                orderBtn.style.opacity = '1';
+                orderBtn.style.cursor = 'pointer';
+                orderBtn.textContent = 'Direct Book / Custom Reservation →';
+                orderBtn.onclick = () => {
+                    closeModal(productModal);
+                    openBookingWithItem(product.name);
+                };
+            }
         }
 
         openModal(productModal);
     }
 
     window._openProductByName = function(name) {
-        const found = bakeryCatalog.find(i => i.name.toLowerCase() === name.toLowerCase()) || {
-            name: name,
-            category: 'Artisan Bread',
-            price: '₱35.00',
-            raw_price: 35.00,
-            desc: 'Handcrafted with natural ingredients and baked fresh daily in our brick ovens.',
-            image: 'assets/breads-e1656042972619.jpg'
-        };
+        let found = null;
+        if (window.SERVER_PRODUCTS && Array.isArray(window.SERVER_PRODUCTS)) {
+            const p = window.SERVER_PRODUCTS.find(i => i.name.toLowerCase() === name.toLowerCase());
+            if (p) {
+                found = {
+                    name: p.name,
+                    category: p.category,
+                    price: '₱' + parseFloat(p.price).toFixed(2),
+                    raw_price: parseFloat(p.price),
+                    stock: parseInt(p.stock),
+                    desc: p.description,
+                    image: p.image
+                };
+            }
+        }
+        if (!found) {
+            found = bakeryCatalog.find(i => i.name.toLowerCase() === name.toLowerCase()) || {
+                name: name,
+                category: 'Artisan Bread',
+                price: '₱35.00',
+                raw_price: 35.00,
+                stock: 15,
+                desc: 'Handcrafted with natural ingredients and baked fresh daily in our brick ovens.',
+                image: 'assets/breads-e1656042972619.jpg'
+            };
+        }
         openProductDetail(found);
     };
 
@@ -412,8 +473,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function populateBookingSelect() {
         if (!bookingItemSelect) return;
         const currentVal = bookingItemSelect.value;
+        const items = (window.SERVER_PRODUCTS && window.SERVER_PRODUCTS.length) ? window.SERVER_PRODUCTS : bakeryCatalog;
         bookingItemSelect.innerHTML = '<option value="">-- Select Favorite Bread or Beverage --</option>' +
-            bakeryCatalog.map(item => `<option value="${item.name}">${item.name} (${item.price})</option>`).join('');
+            items.map(item => {
+                const stock = (item.stock !== undefined) ? parseInt(item.stock) : 999;
+                const isOut = stock <= 0;
+                const priceStr = item.price.toString().startsWith('₱') ? item.price : '₱' + parseFloat(item.price).toFixed(2);
+                const label = isOut ? `${item.name} (${priceStr}) — [OUT OF STOCK]` : `${item.name} (${priceStr}) — ${stock} in stock`;
+                return `<option value="${item.name}" ${isOut ? 'disabled' : ''}>${label}</option>`;
+            }).join('');
         if (currentVal) bookingItemSelect.value = currentVal;
     }
     populateBookingSelect();
@@ -466,12 +534,19 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = true;
 
             const formData = new FormData(bookingForm);
+            const token = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            if (token && !formData.get('csrf_token')) {
+                formData.append('csrf_token', token);
+            }
 
             try {
                 const response = await fetch('order_process.php', {
                     method: 'POST',
                     body: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    headers: { 
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-Token': token
+                    }
                 });
 
                 const result = await response.json();

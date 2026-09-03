@@ -16,17 +16,19 @@
   --color-brown-soft: #4E382E;
   --color-yellow: #FFAE34;
   --color-yellow-hover: #FFC062;
+  --color-amber-accessible: #92400E; /* WCAG 2.1 AA compliant (5.4:1 contrast on white/cream) */
+  --accent-gold-text: #92400E;
   --color-white: #FFFFFF;
   --color-text-muted: #5A4A42;
   --color-text-subtle: #8A7A72;
   --color-border-subtle: rgba(43, 27, 21, 0.12);
 
   /* Typography */
-  --font-serif: 'Times New Roman', 'Playfair Display', Georgia, serif;
+  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --max-width: 1240px;
 
-  /* Emil Kowalski Motion Curves */
+  /* Emil Kowalski Motion Curves & Spring Dynamics */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-in-quad: cubic-bezier(0.55, 0.085, 0.68, 0.53);
@@ -38,6 +40,9 @@
   --shadow-md: 0 8px 24px rgba(43, 27, 21, 0.09), 0 2px 6px rgba(43, 27, 21, 0.05);
   --shadow-lg: 0 20px 48px rgba(43, 27, 21, 0.14), 0 4px 12px rgba(43, 27, 21, 0.06);
   --shadow-focus: 0 0 0 3px rgba(255, 174, 52, 0.35);
+
+  /* Minimum Ergonomic Tap Targets */
+  --touch-target-min: 44px;
 }
 
 /* --- Universal Reset & Setup --- */
@@ -154,6 +159,26 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   align-items: center;
   filter: drop-shadow(0 2px 4px rgba(43, 27, 21, 0.15));
 }
+
+.brand-logo-img {
+  height: 46px;
+  width: auto;
+  max-width: 58px;
+  object-fit: contain;
+  display: block;
+  transition: transform var(--transition-fast);
+}
+
+.brand-logo-wrap:hover .brand-logo-img {
+  transform: scale(1.08);
+}
+
+.footer-logo-img {
+  height: 56px;
+  max-width: 68px;
+  margin-bottom: 4px;
+}
+
 
 .brand-text-block {
   display: flex;
@@ -1020,6 +1045,90 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .btn-add-price-cart:hover {
   background: var(--color-yellow-hover);
   transform: scale(1.06);
+}
+
+/* ==========================================================================
+   STOCK BADGES & OUT-OF-STOCK STATES
+   ========================================================================== */
+.bread-card-item.item-out-of-stock {
+  opacity: 0.75;
+}
+
+.bread-card-item.item-out-of-stock .bread-round-thumb {
+  filter: grayscale(85%);
+}
+
+.stock-badge-tag {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  z-index: 2;
+}
+
+.out-of-stock-tag {
+  background: #DC2626;
+  color: #FFFFFF;
+}
+
+.low-stock-tag {
+  background: #D97706;
+  color: #FFFFFF;
+}
+
+.bread-stock-hint {
+  margin-top: -2px;
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+.btn-card-add-cart.disabled {
+  background: #9CA3AF !important;
+  color: #E5E7EB !important;
+  cursor: not-allowed !important;
+  opacity: 0.75;
+  transform: none !important;
+}
+
+.price-row-entry.price-row-out-of-stock {
+  opacity: 0.65;
+}
+
+.pill-stock-out {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(220, 38, 38, 0.25);
+  color: #F87171;
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  text-transform: uppercase;
+}
+
+.pill-stock-low {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(217, 119, 6, 0.25);
+  color: #FBBF24;
+  border: 1px solid rgba(217, 119, 6, 0.4);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+}
+
+.btn-add-price-cart.disabled {
+  background: #6B7280 !important;
+  color: #D1D5DB !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  opacity: 0.7;
 }
 
 /* ==========================================================================
