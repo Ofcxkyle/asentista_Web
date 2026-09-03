@@ -23,6 +23,9 @@ if (!$order && isset($_SESSION['flash_order'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Confirmed - Asentista's Bakery</title>
+    <!-- Website Favicon / Main Logo -->
+    <link rel="icon" type="image/png" href="assets/ASENTISTA FINAL.png">
+    <link rel="apple-touch-icon" href="assets/ASENTISTA FINAL.png">
     <link rel="stylesheet" href="style.css">
     <style>
         .receipt-container {
@@ -101,12 +104,7 @@ if (!$order && isset($_SESSION['flash_order'])) {
         <div class="container nav-container">
             <a href="index.php" class="brand-logo-wrap">
                 <div class="brand-svg-logo">
-                    <svg width="38" height="46" viewBox="0 0 44 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <ellipse cx="22" cy="18" rx="12" ry="10" fill="#FFAE34" />
-                        <ellipse cx="22" cy="20" rx="8" ry="5" fill="#FFAE34" opacity="0.7" />
-                        <rect x="12" y="20" width="20" height="5" rx="1" fill="#C8A882" />
-                        <text x="22" y="50" text-anchor="middle" font-family="'Times New Roman', serif" font-size="36" font-weight="bold" fill="#2B1B15">A</text>
-                    </svg>
+                    <img src="assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img">
                 </div>
                 <div class="brand-text-block">
                     <span class="brand-title">ASENTISTA'S</span>

@@ -41,19 +41,30 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     exit;
 }
 
-// Handle Status Updates
+// Handle Status Updates (Protected: Only authenticated Administrators can update order statuses)
 $actionMsg = '';
+$errorMsg  = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    if ($_POST['action'] === 'update_status') {
-        $orderId = (int)$_POST['order_id'];
-        $newStatus = sanitize_input($_POST['new_status']);
-        if (updateOrderStatus($pdo, $orderId, $newStatus)) {
-            $actionMsg = "Order #{$orderId} status successfully updated to <strong>{$newStatus}</strong>.";
-        }
-    } elseif ($_POST['action'] === 'delete_order') {
-        $orderId = (int)$_POST['order_id'];
-        if (deleteOrder($pdo, $orderId)) {
-            $actionMsg = "Order #{$orderId} was removed from the database.";
+    if (!isAdmin()) {
+        $errorMsg = "Unauthorized action: Only store administrators can modify or delete orders.";
+    } elseif (!validate_csrf_token($_POST['csrf_token'] ?? null)) {
+        $errorMsg = "Security token invalid or expired. Please refresh the page.";
+    } else {
+        if ($_POST['action'] === 'update_status') {
+            $orderId = (int)$_POST['order_id'];
+            $newStatus = sanitize_input($_POST['new_status']);
+            if (updateOrderStatus($pdo, $orderId, $newStatus)) {
+                $actionMsg = "Order #{$orderId} status successfully updated to <strong>{$newStatus}</strong>.";
+            } else {
+                $errorMsg = "Failed to update order status.";
+            }
+        } elseif ($_POST['action'] === 'delete_order') {
+            $orderId = (int)$_POST['order_id'];
+            if (deleteOrder($pdo, $orderId)) {
+                $actionMsg = "Order #{$orderId} was removed from the database.";
+            } else {
+                $errorMsg = "Failed to delete order.";
+            }
         }
     }
 }
@@ -80,6 +91,9 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> - Asentista's Bakery</title>
+    <!-- Website Favicon / Main Logo -->
+    <link rel="icon" type="image/png" href="assets/ASENTISTA FINAL.png">
+    <link rel="apple-touch-icon" href="assets/ASENTISTA FINAL.png">
     <link rel="stylesheet" href="style.css">
     <style>
         .dashboard-container {
@@ -247,12 +261,7 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
         <div class="container nav-container">
             <a href="index.php" class="brand-logo-wrap">
                 <div class="brand-svg-logo">
-                    <svg width="38" height="46" viewBox="0 0 44 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <ellipse cx="22" cy="18" rx="12" ry="10" fill="#FFAE34" />
-                        <ellipse cx="22" cy="20" rx="8" ry="5" fill="#FFAE34" opacity="0.7" />
-                        <rect x="12" y="20" width="20" height="5" rx="1" fill="#C8A882" />
-                        <text x="22" y="50" text-anchor="middle" font-family="'Times New Roman', serif" font-size="36" font-weight="bold" fill="#2B1B15">A</text>
-                    </svg>
+                    <img src="assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img">
                 </div>
                 <div class="brand-text-block">
                     <span class="brand-title">ASENTISTA'S</span>
@@ -296,6 +305,12 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
         <?php if (!empty($actionMsg)): ?>
             <div style="background-color: #D1FAE5; color: #065F46; padding: 1rem 1.2rem; border-radius: 4px; margin-bottom: 1.5rem; border-left: 4px solid #10B981;">
                 <?php echo $actionMsg; ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($errorMsg)): ?>
+            <div style="background-color: #FEE2E2; color: #991B1B; padding: 1rem 1.2rem; border-radius: 4px; margin-bottom: 1.5rem; border-left: 4px solid #DC2626;">
+                <?php echo $errorMsg; ?>
             </div>
         <?php endif; ?>
 
@@ -391,17 +406,24 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
                                     </span>
                                 </td>
                                 <td>
-                                    <form method="POST" action="dashboard.php" class="action-select-form">
-                                        <input type="hidden" name="action" value="update_status">
-                                        <input type="hidden" name="order_id" value="<?php echo $row['id']; ?>">
-                                        <select name="new_status" class="status-select">
-                                            <option value="Pending" <?php echo $row['status'] === 'Pending' ? 'selected' : ''; ?>>Pending</option>
-                                            <option value="Confirmed" <?php echo $row['status'] === 'Confirmed' ? 'selected' : ''; ?>>Confirmed</option>
-                                            <option value="Completed" <?php echo $row['status'] === 'Completed' ? 'selected' : ''; ?>>Completed</option>
-                                            <option value="Cancelled" <?php echo $row['status'] === 'Cancelled' ? 'selected' : ''; ?>>Cancelled</option>
-                                        </select>
-                                        <button type="submit" class="btn-status-update">Save</button>
-                                    </form>
+                                    <?php if (isAdmin()): ?>
+                                        <form method="POST" action="dashboard.php" class="action-select-form">
+                                            <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
+                                            <input type="hidden" name="action" value="update_status">
+                                            <input type="hidden" name="order_id" value="<?php echo $row['id']; ?>">
+                                            <select name="new_status" class="status-select">
+                                                <option value="Pending" <?php echo $row['status'] === 'Pending' ? 'selected' : ''; ?>>Pending</option>
+                                                <option value="Confirmed" <?php echo $row['status'] === 'Confirmed' ? 'selected' : ''; ?>>Confirmed</option>
+                                                <option value="Completed" <?php echo $row['status'] === 'Completed' ? 'selected' : ''; ?>>Completed</option>
+                                                <option value="Cancelled" <?php echo $row['status'] === 'Cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                            </select>
+                                            <button type="submit" class="btn-status-update">Save</button>
+                                        </form>
+                                    <?php else: ?>
+                                        <span style="font-size: 0.8rem; color: var(--color-text-muted); font-style: italic;">
+                                            Customer Order
+                                        </span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
