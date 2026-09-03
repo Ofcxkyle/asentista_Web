@@ -24,82 +24,50 @@ $currentUser = getCurrentUser();
 $cartSummary = getCartSummary($pdo);
 $cartCount = $cartSummary['total_items'];
 
-// Bread Menu Items
-$breadMenuItems = [
-    [
-        'name'  => 'Crunchy Crust',
-        'price' => '₱35.00',
-        'raw_price' => 35.00,
-        'desc'  => 'Golden-baked crust with an airy, soft interior. Perfect for morning dips or artisan sandwiches.',
-        'image' => $assetPath . 'bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.jpg'
-    ],
-    [
-        'name'  => 'Crescent Roll',
-        'price' => '₱30.00',
-        'raw_price' => 30.00,
-        'desc'  => 'Buttery, flaky crescent pastry topped with toasted poppy seeds.',
-        'image' => $assetPath . 'top-view-of-crescent-roll-with-poppy-seeds-on-white-background-e1656042946947.jpg'
-    ],
-    [
-        'name'  => 'Round Rye',
-        'price' => '₱45.00',
-        'raw_price' => 45.00,
-        'desc'  => 'Traditional European sourdough rye loaf with rich earthy undertones and dense crumb.',
-        'image' => $assetPath . 'traditional-round-rye-bread-e1656042958429.jpg'
-    ],
-    [
-        'name'  => 'Yeast Custard',
-        'price' => '₱40.00',
-        'raw_price' => 40.00,
-        'desc'  => 'Sweet yeast bun filled with silky vanilla custard and spiced caramelized apple.',
-        'image' => $assetPath . 'yeast-bun-with-apple-and-custard-filling-e1656042965940.jpg'
-    ],
-    [
-        'name'  => 'Bially Sandwich',
-        'price' => '₱50.00',
-        'raw_price' => 50.00,
-        'desc'  => 'Classic bialy bread roll baked with savory roasted onion and savory seeds.',
-        'image' => $assetPath . 'breads-e1656042972619.jpg'
-    ],
-    [
-        'name'  => 'Bun Messes',
-        'price' => '₱28.00',
-        'raw_price' => 28.00,
-        'desc'  => 'Tender, pillowy brioche bun dusted with powdered sugar and natural sweetness.',
-        'image' => $assetPath . 'bun-e1656042983426.jpg'
-    ],
-    [
-        'name'  => 'Slice Bread',
-        'price' => '₱60.00',
-        'raw_price' => 60.00,
-        'desc'  => 'Daily sliced sandwich rye loaf made from whole grains and natural levain.',
-        'image' => $assetPath . 'rye-bread-slice-on-a-white-background--e1656042993568.jpg'
-    ],
-    [
-        'name'  => 'Bun Roll',
-        'price' => '₱25.00',
-        'raw_price' => 25.00,
-        'desc'  => 'Soft dinner roll with a golden finish, perfect with butter or jam.',
-        'image' => $assetPath . 'bun-1-e1656043014357.jpg'
-    ]
-];
+// Fetch all live bakery catalog products from MySQL database
+$dbProducts = getAllProducts($pdo);
 
-// Price Lists
-$breadPrices = [
-    ['item' => 'Baguette',  'price' => '₱25.00', 'raw_price' => 25.00, 'img' => $assetPath . 'bread-e1656042861839-pqroqtezjh2g0607d0pphz5ddrx6ppa7b44no9oloo.jpg'],
-    ['item' => 'Croissant', 'price' => '₱25.00', 'raw_price' => 25.00, 'img' => $assetPath . 'top-view-of-crescent-roll-with-poppy-seeds-on-white-background-e1656042946947.jpg'],
-    ['item' => 'Sourdough', 'price' => '₱25.00', 'raw_price' => 25.00, 'img' => $assetPath . 'assortment-of-artisan-bread-e1656042887278.jpg'],
-    ['item' => 'Ciabatta',  'price' => '₱25.00', 'raw_price' => 25.00, 'img' => $assetPath . 'italian-ciabatta-bread-on-black-slate-with-herbs-and-olives--e1656043199744 (1).jpg'],
-    ['item' => 'Brioche',   'price' => '₱25.00', 'raw_price' => 25.00, 'img' => $assetPath . 'homemade-pumpkin-bread-e1656042901513.jpg']
-];
+// Featured Breads for Checkout Bread Menu (is_featured = 1)
+$breadMenuItems = [];
+$breadPrices = [];
+$beveragePrices = [];
 
-$beveragePrices = [
-    ['item' => 'Americano',  'price' => '₱55.00', 'raw_price' => 55.00, 'img' => $assetPath . 'banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).jpg'],
-    ['item' => 'Cold Brew',  'price' => '₱55.00', 'raw_price' => 55.00, 'img' => $assetPath . 'banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).jpg'],
-    ['item' => 'Carbonated', 'price' => '₱35.00', 'raw_price' => 35.00, 'img' => $assetPath . 'cheese-platter-with-nuts-honey-and-bread-square-crop-e1656043218344 (1).jpg'],
-    ['item' => 'Cortado',    'price' => '₱69.00', 'raw_price' => 69.00, 'img' => $assetPath . 'banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).jpg'],
-    ['item' => 'Macchiato',  'price' => '₱69.00', 'raw_price' => 69.00, 'img' => $assetPath . 'banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).jpg']
-];
+foreach ($dbProducts as $p) {
+    $itemData = [
+        'id'        => $p['id'],
+        'name'      => $p['name'],
+        'category'  => $p['category'],
+        'price'     => '₱' . number_format($p['price'], 2),
+        'raw_price' => (float)$p['price'],
+        'stock'     => (int)$p['stock'],
+        'desc'      => $p['description'],
+        'image'     => $p['image']
+    ];
+
+    if (!empty($p['is_featured'])) {
+        $breadMenuItems[] = $itemData;
+    }
+
+    if ($p['category'] === 'Bread') {
+        $breadPrices[] = [
+            'id'        => $p['id'],
+            'item'      => $p['name'],
+            'price'     => '₱' . number_format($p['price'], 2),
+            'raw_price' => (float)$p['price'],
+            'stock'     => (int)$p['stock'],
+            'img'       => $p['image']
+        ];
+    } elseif ($p['category'] === 'Beverage') {
+        $beveragePrices[] = [
+            'id'        => $p['id'],
+            'item'      => $p['name'],
+            'price'     => '₱' . number_format($p['price'], 2),
+            'raw_price' => (float)$p['price'],
+            'stock'     => (int)$p['stock'],
+            'img'       => $p['image']
+        ];
+    }
+}
 
 // Instagram Gallery Photos
 $instagramPhotos = [
@@ -136,22 +104,15 @@ $instagramPhotos = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asentista's Bakery - Special Bread & Artisan Pastries</title>
     <meta name="description" content="Asentista's Bakery - Baked fresh daily with natural organic ingredients. Special artisan bread, pastries, and handcrafted beverages.">
+    <!-- Website Favicon / Main Logo -->
+    <link rel="icon" type="image/png" href="assets/ASENTISTA FINAL.png">
+    <link rel="apple-touch-icon" href="assets/ASENTISTA FINAL.png">
+    <meta name="csrf-token" content="<?php echo get_csrf_token(); ?>">
+    <script>window.CSRF_TOKEN = '<?php echo get_csrf_token(); ?>';</script>
     <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <?php if (isAdmin()): ?>
-        <div style="background-color: #2B1B15; color: #EDE0D4; padding: 6px 16px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #FFAE34; z-index: 1000; position: relative;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 1rem;">👑</span>
-                <span>Logged in as <strong>Administrator (Kyle Asentista)</strong> — Viewing Customer Storefront</span>
-            </div>
-            <a href="admin.php" style="background: #FFAE34; color: #2B1B15; font-weight: 700; padding: 4px 12px; border-radius: 3px; text-decoration: none; font-size: 0.76rem;">
-                Open Admin Operations Center →
-            </a>
-        </div>
-    <?php endif; ?>
 
     <!-- ==========================================
          NAVIGATION BAR
@@ -161,12 +122,7 @@ $instagramPhotos = [
             <!-- Brand Logo (Scroll to Top) -->
             <a href="#hero" class="brand-logo-wrap" aria-label="Asentista's Bakery Home">
                 <div class="brand-svg-logo">
-                    <svg width="38" height="46" viewBox="0 0 44 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <ellipse cx="22" cy="18" rx="12" ry="10" fill="#FFAE34" />
-                        <ellipse cx="22" cy="20" rx="8" ry="5" fill="#FFAE34" opacity="0.7" />
-                        <rect x="12" y="20" width="20" height="5" rx="1" fill="#C8A882" />
-                        <text x="22" y="50" text-anchor="middle" font-family="'Times New Roman', serif" font-size="36" font-weight="bold" fill="#2B1B15">A</text>
-                    </svg>
+                    <img src="assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img">
                 </div>
                 <div class="brand-text-block">
                     <span class="brand-title">ASENTISTA'S</span>
@@ -362,20 +318,44 @@ $instagramPhotos = [
             <h2 class="menu-main-heading">Checkout Bread Menu</h2>
             <div class="bread-grid-layout">
                 <?php foreach ($breadMenuItems as $item): ?>
-                    <div class="bread-card-item" data-name="<?php echo htmlspecialchars($item['name']); ?>">
+                    <?php 
+                        $isOut = ($item['stock'] <= 0);
+                        $isLow = ($item['stock'] > 0 && $item['stock'] <= 4);
+                    ?>
+                    <div class="bread-card-item <?php echo $isOut ? 'item-out-of-stock' : ''; ?>" data-name="<?php echo htmlspecialchars($item['name']); ?>">
                         <div class="bread-img-container" onclick="openDetailByName('<?php echo htmlspecialchars(addslashes($item['name'])); ?>')">
                             <img src="<?php echo $item['image']; ?>" alt="<?php echo htmlspecialchars($item['name']); ?>" class="bread-round-thumb">
                             <span class="bread-price-badge"><?php echo htmlspecialchars($item['price']); ?></span>
+                            <?php if ($isOut): ?>
+                                <span class="stock-badge-tag out-of-stock-tag">OUT OF STOCK</span>
+                            <?php elseif ($isLow): ?>
+                                <span class="stock-badge-tag low-stock-tag">Only <?php echo $item['stock']; ?> Left!</span>
+                            <?php endif; ?>
                         </div>
                         <span class="bread-title-label" onclick="openDetailByName('<?php echo htmlspecialchars(addslashes($item['name'])); ?>')">
                             <?php echo htmlspecialchars($item['name']); ?>
                         </span>
+                        <div class="bread-stock-hint">
+                            <?php if ($isOut): ?>
+                                <span style="color:#D32F2F; font-size:0.75rem; font-weight:700;">❌ Currently Unavailable</span>
+                            <?php elseif ($isLow): ?>
+                                <span style="color:#E65100; font-size:0.75rem; font-weight:600;">⚡ Low Stock: <?php echo $item['stock']; ?> left</span>
+                            <?php else: ?>
+                                <span style="color:#2E7D32; font-size:0.75rem; font-weight:600;">✓ In Stock (<?php echo $item['stock']; ?>)</span>
+                            <?php endif; ?>
+                        </div>
                         
                         <!-- Interactive Button Group: Add to Cart + Details -->
                         <div class="bread-card-actions">
-                            <button type="button" class="btn-card-add-cart" onclick="quickAddToCart('<?php echo htmlspecialchars(addslashes($item['name'])); ?>', <?php echo $item['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($item['image'])); ?>')">
-                                + Add to Cart
-                            </button>
+                            <?php if ($isOut): ?>
+                                <button type="button" class="btn-card-add-cart disabled" disabled title="Item is out of stock">
+                                    Out of Stock
+                                </button>
+                            <?php else: ?>
+                                <button type="button" class="btn-card-add-cart" onclick="quickAddToCart('<?php echo htmlspecialchars(addslashes($item['name'])); ?>', <?php echo $item['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($item['image'])); ?>')">
+                                    + Add to Cart
+                                </button>
+                            <?php endif; ?>
                             <button type="button" class="btn-card-quick-view" onclick="openDetailByName('<?php echo htmlspecialchars(addslashes($item['name'])); ?>')">
                                 Details 👁️
                             </button>
@@ -397,16 +377,31 @@ $instagramPhotos = [
                     <h3 class="price-box-title">Bread Selection</h3>
                     <div class="price-item-list">
                         <?php foreach ($breadPrices as $entry): ?>
-                            <div class="price-row-entry" title="Click to add <?php echo htmlspecialchars($entry['item']); ?> to cart">
+                            <?php 
+                                $isOut = ($entry['stock'] <= 0);
+                                $isLow = ($entry['stock'] > 0 && $entry['stock'] <= 4);
+                            ?>
+                            <div class="price-row-entry <?php echo $isOut ? 'price-row-out-of-stock' : ''; ?>" title="<?php echo $isOut ? 'Out of stock' : 'Click to add ' . htmlspecialchars($entry['item']) . ' to cart'; ?>">
                                 <span class="item-name-text">
                                     <span>🥖</span>
                                     <?php echo htmlspecialchars($entry['item']); ?>
+                                    <?php if ($isOut): ?>
+                                        <span class="pill-stock-out">Out of Stock</span>
+                                    <?php elseif ($isLow): ?>
+                                        <span class="pill-stock-low"><?php echo $entry['stock']; ?> left</span>
+                                    <?php endif; ?>
                                 </span>
                                 <div class="item-cost-wrap">
                                     <span class="item-cost-text"><?php echo htmlspecialchars($entry['price']); ?></span>
-                                    <button type="button" class="btn-add-price-cart" onclick="quickAddToCart('<?php echo htmlspecialchars(addslashes($entry['item'])); ?>', <?php echo $entry['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($entry['img'])); ?>')">
-                                        + Cart
-                                    </button>
+                                    <?php if ($isOut): ?>
+                                        <button type="button" class="btn-add-price-cart disabled" disabled>
+                                            Sold Out
+                                        </button>
+                                    <?php else: ?>
+                                        <button type="button" class="btn-add-price-cart" onclick="quickAddToCart('<?php echo htmlspecialchars(addslashes($entry['item'])); ?>', <?php echo $entry['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($entry['img'])); ?>')">
+                                            + Cart
+                                        </button>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -418,16 +413,31 @@ $instagramPhotos = [
                     <h3 class="price-box-title">Handcrafted Beverages</h3>
                     <div class="price-item-list">
                         <?php foreach ($beveragePrices as $entry): ?>
-                            <div class="price-row-entry" title="Click to add <?php echo htmlspecialchars($entry['item']); ?> to cart">
+                            <?php 
+                                $isOut = ($entry['stock'] <= 0);
+                                $isLow = ($entry['stock'] > 0 && $entry['stock'] <= 4);
+                            ?>
+                            <div class="price-row-entry <?php echo $isOut ? 'price-row-out-of-stock' : ''; ?>" title="<?php echo $isOut ? 'Out of stock' : 'Click to add ' . htmlspecialchars($entry['item']) . ' to cart'; ?>">
                                 <span class="item-name-text">
                                     <span>☕</span>
                                     <?php echo htmlspecialchars($entry['item']); ?>
+                                    <?php if ($isOut): ?>
+                                        <span class="pill-stock-out">Out of Stock</span>
+                                    <?php elseif ($isLow): ?>
+                                        <span class="pill-stock-low"><?php echo $entry['stock']; ?> left</span>
+                                    <?php endif; ?>
                                 </span>
                                 <div class="item-cost-wrap">
                                     <span class="item-cost-text"><?php echo htmlspecialchars($entry['price']); ?></span>
-                                    <button type="button" class="btn-add-price-cart" onclick="quickAddToCart('<?php echo htmlspecialchars(addslashes($entry['item'])); ?>', <?php echo $entry['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($entry['img'])); ?>')">
-                                        + Cart
-                                    </button>
+                                    <?php if ($isOut): ?>
+                                        <button type="button" class="btn-add-price-cart disabled" disabled>
+                                            Sold Out
+                                        </button>
+                                    <?php else: ?>
+                                        <button type="button" class="btn-add-price-cart" onclick="quickAddToCart('<?php echo htmlspecialchars(addslashes($entry['item'])); ?>', <?php echo $entry['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($entry['img'])); ?>')">
+                                            + Cart
+                                        </button>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -473,12 +483,7 @@ $instagramPhotos = [
                 <!-- Center Column: Logo & Brand Name (Scroll to Top) -->
                 <div class="footer-brand-center" title="Back to top" role="button" tabindex="0">
                     <div class="brand-svg-logo">
-                        <svg width="44" height="52" viewBox="0 0 44 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <ellipse cx="22" cy="18" rx="12" ry="10" fill="#FFAE34" />
-                            <ellipse cx="22" cy="20" rx="8" ry="5" fill="#FFAE34" opacity="0.7" />
-                            <rect x="12" y="20" width="20" height="5" rx="1" fill="#C8A882" />
-                            <text x="22" y="50" text-anchor="middle" font-family="'Times New Roman', serif" font-size="36" font-weight="bold" fill="#2B1B15">A</text>
-                        </svg>
+                        <img src="assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img footer-logo-img">
                     </div>
                     <div>
                         <div class="brand-title">ASENTISTA'S</div>
@@ -544,6 +549,7 @@ $instagramPhotos = [
             </div>
             <div class="modal-body">
                 <form id="bakeryBookingForm" action="order_process.php" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                     <?php if ($currentUser): ?>
                         <input type="hidden" name="user_id" value="<?php echo $currentUser['id']; ?>">
                     <?php endif; ?>
@@ -562,7 +568,13 @@ $instagramPhotos = [
                     <div class="form-group">
                         <label class="form-label" for="bookingItemSelect">Select Bread or Beverage</label>
                         <select id="bookingItemSelect" name="item_name" class="form-select">
-                            <!-- Populated dynamically via JS / DB -->
+                            <?php foreach ($dbProducts as $p): ?>
+                                <?php $pStock = (int)$p['stock']; ?>
+                                <option value="<?php echo htmlspecialchars($p['name']); ?>" <?php echo $pStock <= 0 ? 'disabled' : ''; ?>>
+                                    <?php echo htmlspecialchars($p['name']); ?> — ₱<?php echo number_format($p['price'], 2); ?> 
+                                    <?php echo $pStock <= 0 ? '[OUT OF STOCK]' : "({$pStock} available)"; ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -609,6 +621,7 @@ $instagramPhotos = [
                     <img src="" alt="Product Image" id="productDetailImg" class="product-modal-img">
                     <div>
                         <div class="product-modal-price" id="productDetailPrice">₱35.00</div>
+                        <div id="productDetailStock" style="margin-bottom: 0.85rem; font-size: 0.88rem; font-weight: 700;"></div>
                         <p class="product-modal-desc" id="productDetailDesc">Freshly handcrafted daily with organic flour and pure sourdough culture.</p>
                         
                         <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -638,10 +651,12 @@ $instagramPhotos = [
     <!-- 5. Toast Notifications Container -->
     <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
-    <!-- JavaScript Controller -->
+    <!-- JavaScript Controller & Data Hydration -->
     <script>
         window.isLoggedIn = <?php echo isLoggedIn() ? 'true' : 'false'; ?>;
+        window.CSRF_TOKEN = '<?php echo get_csrf_token(); ?>';
+        window.SERVER_PRODUCTS = <?php echo json_encode($dbProducts); ?>;
     </script>
-    <script src="script.js" defer></script>
+    <script src="script.js?v=<?php echo filemtime(__DIR__ . '/script.js'); ?>" defer></script>
 </body>
 </html>

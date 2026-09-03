@@ -36,6 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Bakery Cart - Asentista's Bakery</title>
+    <!-- Website Favicon / Main Logo -->
+    <link rel="icon" type="image/png" href="assets/ASENTISTA FINAL.png">
+    <link rel="apple-touch-icon" href="assets/ASENTISTA FINAL.png">
     <link rel="stylesheet" href="style.css">
     <style>
         .cart-page-container {
@@ -198,12 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
         <div class="container nav-container">
             <a href="index.php" class="brand-logo-wrap">
                 <div class="brand-svg-logo">
-                    <svg width="38" height="46" viewBox="0 0 44 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <ellipse cx="22" cy="18" rx="12" ry="10" fill="#FFAE34" />
-                        <ellipse cx="22" cy="20" rx="8" ry="5" fill="#FFAE34" opacity="0.7" />
-                        <rect x="12" y="20" width="20" height="5" rx="1" fill="#C8A882" />
-                        <text x="22" y="50" text-anchor="middle" font-family="'Times New Roman', serif" font-size="36" font-weight="bold" fill="#2B1B15">A</text>
-                    </svg>
+                    <img src="assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img">
                 </div>
                 <div class="brand-text-block">
                     <span class="brand-title">ASENTISTA'S</span>
@@ -265,13 +263,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
                             <?php foreach ($cartItems as $item): ?>
                                 <?php 
                                     $itemSubtotal = (float)$item['product_price'] * (int)$item['quantity'];
+                                    $availStock = isset($item['available_stock']) && $item['available_stock'] !== null ? (int)$item['available_stock'] : 999;
+                                    $isItemOutOfStock = ($availStock <= 0);
+                                    $isItemStockInsufficient = ($availStock < (int)$item['quantity']);
                                 ?>
-                                <tr id="cartRow-<?php echo $item['id']; ?>">
+                                <tr id="cartRow-<?php echo $item['id']; ?>" style="<?php echo $isItemOutOfStock ? 'background-color: rgba(229,57,53,0.06);' : ''; ?>">
                                     <td>
                                         <div class="cart-item-preview">
                                             <img src="<?php echo htmlspecialchars($item['product_image']); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>" class="cart-thumb-img">
                                             <div>
                                                 <div class="cart-item-title"><?php echo htmlspecialchars($item['product_name']); ?></div>
+                                                <?php if ($isItemOutOfStock): ?>
+                                                    <span style="display:inline-block; font-size:0.72rem; font-weight:700; background:#E53935; color:#fff; padding:2px 7px; border-radius:3px; margin-top:4px;">OUT OF STOCK</span>
+                                                <?php elseif ($isItemStockInsufficient): ?>
+                                                    <span style="display:inline-block; font-size:0.72rem; font-weight:700; background:#FB8C00; color:#fff; padding:2px 7px; border-radius:3px; margin-top:4px;">Only <?php echo $availStock; ?> left in stock</span>
+                                                <?php else: ?>
+                                                    <span style="font-size:0.72rem; color: #2E7D32; font-weight:600;">In Stock (<?php echo $availStock; ?> left)</span>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     </td>
@@ -280,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
                                         <div class="cart-qty-ctrl">
                                             <button type="button" class="qty-btn" onclick="updateQtyAsync(<?php echo $item['id']; ?>, <?php echo $item['quantity'] - 1; ?>)">−</button>
                                             <span class="qty-val"><?php echo $item['quantity']; ?></span>
-                                            <button type="button" class="qty-btn" onclick="updateQtyAsync(<?php echo $item['id']; ?>, <?php echo $item['quantity'] + 1; ?>)">+</button>
+                                            <button type="button" class="qty-btn" onclick="updateQtyAsync(<?php echo $item['id']; ?>, <?php echo $item['quantity'] + 1; ?>)" <?php echo ($item['quantity'] >= $availStock) ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''; ?>>+</button>
                                         </div>
                                     </td>
                                     <td style="font-weight: 700; color: var(--color-brown-deep);">
@@ -326,7 +334,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
                                 </div>
                                 <div class="cart-summary-total">
                                     <span>Estimated Total:</span>
-                                    <span style="color: var(--color-yellow);"><?php echo $cartSummary['total_formatted']; ?></span>
+                                    <span style="color: var(--color-amber-accessible, #92400E); font-weight: 800;"><?php echo $cartSummary['total_formatted']; ?></span>
                                 </div>
 
                                 <a href="auth.php?redirect=cart.php&msg=login_to_order" class="btn-submit-modal shimmer-btn" style="text-decoration: none; padding: 1rem; font-size: 0.92rem; margin-top: 1.2rem;">
@@ -334,8 +342,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
                                 </a>
                             </div>
                         <?php else: ?>
+                            <?php if (!empty($cartSummary['has_out_of_stock'])): ?>
+                                <div style="background:#FFEBEE; border:1px solid #FFCDD2; color:#C62828; padding:0.85rem 1rem; border-radius:4px; font-size:0.85rem; margin-bottom:1.2rem; line-height:1.4;">
+                                    ⚠️ <strong>Inventory Alert:</strong> One or more items in your cart exceed available bakery inventory. Please adjust quantities or remove out-of-stock items before placing your order.
+                                </div>
+                            <?php endif; ?>
+
                             <form method="POST" action="cart.php">
                                 <input type="hidden" name="checkout_action" value="1">
+                                <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
 
                                 <div class="form-group">
                                     <label class="form-label" for="custName">Customer Full Name *</label>
@@ -377,11 +392,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
                                 </div>
                                 <div class="cart-summary-total">
                                     <span>Grand Total:</span>
-                                    <span style="color: var(--color-yellow);"><?php echo $cartSummary['total_formatted']; ?></span>
+                                    <span style="color: var(--color-amber-accessible, #92400E); font-weight: 800;"><?php echo $cartSummary['total_formatted']; ?></span>
                                 </div>
 
-                                <button type="submit" class="btn-submit-modal shimmer-btn" style="font-size: 0.95rem; padding: 1rem; margin-top: 1rem;">
-                                    Place Order (Save to DB) →
+                                <button type="submit" class="btn-submit-modal shimmer-btn" style="font-size: 0.95rem; padding: 1rem; margin-top: 1rem; <?php echo !empty($cartSummary['has_out_of_stock']) ? 'opacity:0.5; cursor:not-allowed;' : ''; ?>" <?php echo !empty($cartSummary['has_out_of_stock']) ? 'disabled title="Adjust out-of-stock items first"' : ''; ?>>
+                                    <?php echo !empty($cartSummary['has_out_of_stock']) ? 'Items Out of Stock - Adjust Cart' : 'Place Order (Save to DB) →'; ?>
                                 </button>
                             </form>
                         <?php endif; ?>
@@ -392,16 +407,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
     </div>
 
     <script>
+        const CSRF_TOKEN = '<?php echo get_csrf_token(); ?>';
+
         async function updateQtyAsync(cartId, qty) {
             const formData = new FormData();
             formData.append('action', 'update_qty');
             formData.append('cart_id', cartId);
             formData.append('quantity', qty);
+            formData.append('csrf_token', CSRF_TOKEN);
 
             const res = await fetch('cart_action.php', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.success) {
                 window.location.reload();
+            } else {
+                alert(data.message || 'Could not update quantity.');
             }
         }
 
@@ -410,6 +430,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
             const formData = new FormData();
             formData.append('action', 'remove');
             formData.append('cart_id', cartId);
+            formData.append('csrf_token', CSRF_TOKEN);
 
             const res = await fetch('cart_action.php', { method: 'POST', body: formData });
             const data = await res.json();
@@ -422,6 +443,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
             if (!confirm('Are you sure you want to clear your shopping cart?')) return;
             const formData = new FormData();
             formData.append('action', 'clear');
+            formData.append('csrf_token', CSRF_TOKEN);
 
             const res = await fetch('cart_action.php', { method: 'POST', body: formData });
             const data = await res.json();

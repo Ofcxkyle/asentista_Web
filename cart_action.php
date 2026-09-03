@@ -11,6 +11,22 @@ header('Content-Type: application/json; charset=utf-8');
 
 $action = $_REQUEST['action'] ?? 'get_cart';
 
+// Validate CSRF token or verified same-origin request for cart mutations
+if (in_array($action, ['add', 'update_qty', 'remove', 'clear'])) {
+    $hasValidCsrf = validate_csrf_token();
+    $isSameOrigin = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+        || (isset($_SERVER['HTTP_SEC_FETCH_SITE']) && in_array($_SERVER['HTTP_SEC_FETCH_SITE'], ['same-origin', 'same-site', 'none']))
+        || (isset($_SERVER['HTTP_REFERER']) && parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST) === ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+
+    if (!$hasValidCsrf && !$isSameOrigin) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Security token expired or invalid. Please refresh the page.'
+        ]);
+        exit;
+    }
+}
+
 switch ($action) {
     case 'add':
         $productName = sanitize_input($_POST['product_name'] ?? '');
@@ -42,7 +58,8 @@ switch ($action) {
             'message'     => 'Cart quantity updated.',
             'cart_count'  => $summary['total_items'],
             'cart_total'  => $summary['total_price'],
-            'total_formatted' => $summary['total_formatted']
+            'total_formatted' => $summary['total_formatted'],
+            'has_out_of_stock' => $summary['has_out_of_stock']
         ]);
         exit;
 
