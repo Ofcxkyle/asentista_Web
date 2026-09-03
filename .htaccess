@@ -1,0 +1,57 @@
+# ==============================================================================
+# ASENTISTA BAKERY - APACHE SECURITY & ACCESS HARDENING (.htaccess)
+# ==============================================================================
+
+# 1. Disable Directory Browsing / Indexing (Prevents viewing file trees)
+Options -Indexes
+
+# 2. Block Direct Web Access to Sensitive Files and Directories
+<FilesMatch "(^#.*#|\.(bak|conf|dist|fla|in[ci]|log|psd|sh|sql|sw[op]|md|json|lock|env|git.*))$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Explicitly block access to database schema dumps & sensitive configuration
+<Files "database.sql">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</Files>
+
+# 3. Prevent direct HTTP access to system/agent configuration directories
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block access to hidden directories (.git, .agents, .claude, etc.)
+    RewriteRule (^|/)\.(git|agents|claude|gemini) - [F,L]
+
+    # Block direct HTTP access to database folder scripts
+    RewriteRule ^database/(.*)$ - [F,L]
+</IfModule>
+
+# 4. HTTP Security Headers
+<IfModule mod_headers.c>
+    # Prevent Clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+
+    # Prevent MIME-type sniffing
+    Header set X-Content-Type-Options "nosniff"
+
+    # Cross-site scripting filter protection
+    Header set X-XSS-Protection "1; mode=block"
+
+    # Modern Referrer Policy
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Disable risky browser permissions
+    Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
