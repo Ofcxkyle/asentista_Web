@@ -30,48 +30,52 @@ if (isset($_GET['guest'])) {
 
 // Handle Form Submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['auth_action'] ?? 'login';
+    if (!validate_csrf_token($_POST['csrf_token'] ?? null)) {
+        $errorMsg = 'Security validation failed (CSRF token expired or invalid). Please refresh the page.';
+    } else {
+        $action = $_POST['auth_action'] ?? 'login';
 
-    if ($action === 'register') {
-        $activeTab = 'register';
-        $name     = sanitize_input($_POST['name'] ?? '');
-        $email    = sanitize_input($_POST['email'] ?? '');
-        $phone    = sanitize_input($_POST['phone'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $confirm  = $_POST['confirm_password'] ?? '';
+        if ($action === 'register') {
+            $activeTab = 'register';
+            $name     = sanitize_input($_POST['name'] ?? '');
+            $email    = sanitize_input($_POST['email'] ?? '');
+            $phone    = sanitize_input($_POST['phone'] ?? '');
+            $password = $_POST['password'] ?? '';
+            $confirm  = $_POST['confirm_password'] ?? '';
 
-        if ($password !== $confirm) {
-            $errorMsg = 'Passwords do not match. Please re-enter.';
-        } else {
-            $regResult = registerUser($pdo, $name, $email, $phone, $password);
-            if ($regResult['success']) {
-                $redirectUrl = !empty($_GET['redirect']) ? $_GET['redirect'] : 'index.php';
-                header("Location: {$redirectUrl}?auth_success=registered");
+            if ($password !== $confirm) {
+                $errorMsg = 'Passwords do not match. Please re-enter.';
+            } else {
+                $regResult = registerUser($pdo, $name, $email, $phone, $password);
+                if ($regResult['success']) {
+                    $redirectUrl = !empty($_GET['redirect']) ? $_GET['redirect'] : 'index.php';
+                    header("Location: {$redirectUrl}");
+                    exit;
+                } else {
+                    $errorMsg = $regResult['message'];
+                }
+            }
+        } elseif ($action === 'login') {
+            $activeTab = 'login';
+            $email    = sanitize_input($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? '';
+
+            $loginResult = loginUser($pdo, $email, $password);
+            if ($loginResult['success']) {
+                $userRole = $loginResult['user']['role'] ?? 'customer';
+                
+                // Custom redirect if provided, otherwise route admins to admin.php and customers to index.php
+                if (!empty($_GET['redirect'])) {
+                    $redirectUrl = $_GET['redirect'];
+                } else {
+                    $redirectUrl = ($userRole === 'admin') ? 'admin.php' : 'index.php';
+                }
+                
+                header("Location: {$redirectUrl}");
                 exit;
             } else {
-                $errorMsg = $regResult['message'];
+                $errorMsg = $loginResult['message'];
             }
-        }
-    } elseif ($action === 'login') {
-        $activeTab = 'login';
-        $email    = sanitize_input($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
-
-        $loginResult = loginUser($pdo, $email, $password);
-        if ($loginResult['success']) {
-            $userRole = $loginResult['user']['role'] ?? 'customer';
-            
-            // Custom redirect if provided, otherwise route admins to admin.php and customers to index.php
-            if (!empty($_GET['redirect'])) {
-                $redirectUrl = $_GET['redirect'];
-            } else {
-                $redirectUrl = ($userRole === 'admin') ? 'admin.php' : 'index.php';
-            }
-            
-            header("Location: {$redirectUrl}?auth_success=login");
-            exit;
-        } else {
-            $errorMsg = $loginResult['message'];
         }
     }
 }
@@ -82,6 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In & Register - Asentista's Bakery</title>
+    <!-- Website Favicon / Main Logo -->
+    <link rel="icon" type="image/png" href="assets/ASENTISTA FINAL.png">
+    <link rel="apple-touch-icon" href="assets/ASENTISTA FINAL.png">
     <link rel="stylesheet" href="style.css">
     <style>
         .auth-viewport {
@@ -230,31 +237,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: var(--color-white);
             box-shadow: 0 2px 8px rgba(43, 27, 21, 0.2);
         }
-        .quick-demo-pills {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 1.5rem;
-            background: #FFFBEB;
-            border: 1px dashed #F59E0B;
-            padding: 10px 12px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .btn-demo-fill {
-            background: #F59E0B;
-            color: #fff;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 3px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 0.7rem;
-        }
-        .btn-demo-fill:hover {
-            background: #D97706;
-        }
         .guest-link-bar {
             text-align: center;
             margin-top: 1.8rem;
@@ -289,12 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="hero-brand-block">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
                     <div class="brand-svg-logo">
-                        <svg width="46" height="54" viewBox="0 0 44 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <ellipse cx="22" cy="18" rx="12" ry="10" fill="#FFAE34" />
-                            <ellipse cx="22" cy="20" rx="8" ry="5" fill="#FFAE34" opacity="0.7" />
-                            <rect x="12" y="20" width="20" height="5" rx="1" fill="#C8A882" />
-                            <text x="22" y="50" text-anchor="middle" font-family="'Times New Roman', serif" font-size="36" font-weight="bold" fill="#FFFFFF">A</text>
-                        </svg>
+                        <img src="assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img" style="height: 54px;">
                     </div>
                     <div>
                         <div class="brand-title" style="color: var(--color-white); font-size: 1.3rem;">ASENTISTA'S</div>
@@ -344,13 +321,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h2 class="form-top-title">Welcome to Asentista's</h2>
                 <p class="form-top-subtitle">Sign in to access fresh orders, bookings & bakery rewards</p>
 
-                <!-- Quick Demo Fill -->
-                <div class="quick-demo-pills">
-                    <span><strong>⚡ Quick Demo:</strong></span>
-                    <button type="button" class="btn-demo-fill" onclick="fillDemo('admin@asentista.com', 'admin123')">Admin</button>
-                    <button type="button" class="btn-demo-fill" onclick="fillDemo('customer@asentista.com', 'password123')">Customer</button>
-                </div>
-
                 <!-- Tabs -->
                 <div class="auth-tab-switch">
                     <button type="button" class="tab-switch-btn <?php echo $activeTab === 'login' ? 'active' : ''; ?>" id="tabLogin" onclick="switchTab('login')">
@@ -381,6 +351,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <!-- 1. LOGIN FORM -->
                 <form action="auth.php<?php echo !empty($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''; ?>" method="POST" id="formLogin" style="display: <?php echo $activeTab === 'login' ? 'block' : 'none'; ?>;">
+                    <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                     <input type="hidden" name="auth_action" value="login">
 
                     <div class="form-group">
@@ -390,7 +361,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="form-group">
                         <label class="form-label" for="loginPassword">Password *</label>
-                        <input type="password" id="loginPassword" name="password" class="form-input" placeholder="••••••••" required>
+                        <input type="password" id="loginPassword" name="password" class="form-input" placeholder="••••••••" autocomplete="current-password" required>
                     </div>
 
                     <button type="submit" class="btn-submit-modal" style="margin-top: 1.2rem; font-size: 0.9rem; padding: 0.95rem;">
@@ -400,6 +371,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <!-- 2. REGISTER FORM -->
                 <form action="auth.php<?php echo !empty($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''; ?>" method="POST" id="formRegister" style="display: <?php echo $activeTab === 'register' ? 'block' : 'none'; ?>;">
+                    <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                     <input type="hidden" name="auth_action" value="register">
 
                     <div class="form-group">
@@ -421,11 +393,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="regPassword">Password *</label>
-                            <input type="password" id="regPassword" name="password" class="form-input" placeholder="Min 6 chars" minlength="6" required>
+                            <input type="password" id="regPassword" name="password" class="form-input" placeholder="Create your password" autocomplete="new-password" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="regConfirm">Confirm *</label>
-                            <input type="password" id="regConfirm" name="confirm_password" class="form-input" placeholder="Repeat" minlength="6" required>
+                            <input type="password" id="regConfirm" name="confirm_password" class="form-input" placeholder="Repeat password" autocomplete="new-password" required>
                         </div>
                     </div>
 
@@ -460,12 +432,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 tabLogin.classList.add('active');
                 tabRegister.classList.remove('active');
             }
-        }
-
-        function fillDemo(email, pass) {
-            switchTab('login');
-            document.getElementById('loginEmail').value = email;
-            document.getElementById('loginPassword').value = pass;
         }
     </script>
 </body>
