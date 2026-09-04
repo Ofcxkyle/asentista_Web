@@ -120,7 +120,9 @@ if (!$order && isset($_SESSION['flash_order'])) {
     <div class="container">
         <div class="receipt-container">
             <div class="receipt-header">
-                <div class="receipt-badge-check">✓</div>
+                <div class="receipt-badge-check" style="display:inline-flex; align-items:center; justify-content:center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
                 <h1 style="font-family: var(--font-serif); font-size: 1.8rem; color: var(--color-cream-light); margin-bottom: 0.4rem;">
                     Bakery Order Confirmed!
                 </h1>
@@ -181,15 +183,17 @@ if (!$order && isset($_SESSION['flash_order'])) {
                     </p>
                 <?php endif; ?>
 
-                <div class="receipt-actions">
-                    <button type="button" class="btn-submit-modal" style="flex:1; background: var(--color-cream-light); color: var(--color-brown-deep);" onclick="window.print()">
-                        🖨️ Print Receipt
+                <div class="receipt-actions" style="display:flex; gap:0.75rem; justify-content:stretch;">
+                    <button type="button" class="btn btn-secondary btn-md" style="flex:1;" onclick="window.print()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        Print Receipt
                     </button>
-                    <a href="index.php" class="btn-submit-modal" style="flex:1; text-align: center; text-decoration: none;">
-                        ← Back to Home
+                    <a href="index.php" class="btn btn-ghost btn-md" style="flex:1; border: 1px solid var(--btn-border);">
+                        ← Back to Menu
                     </a>
-                    <a href="dashboard.php" class="btn-submit-modal" style="flex:1; background-color: var(--color-brown-mid); text-align: center; text-decoration: none;">
-                        Orders Portal →
+                    <a href="dashboard.php" class="btn btn-primary btn-md" style="flex:1;">
+                        Orders Portal
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </a>
                 </div>
             </div>

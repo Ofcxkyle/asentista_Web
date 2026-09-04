@@ -111,43 +111,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
         .cart-qty-ctrl {
             display: flex;
             align-items: center;
-            border: 1px solid rgba(43, 27, 21, 0.2);
-            border-radius: 4px;
+            border: 1px solid rgba(43, 27, 21, 0.16);
+            border-radius: 6px;
             overflow: hidden;
             width: fit-content;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(43, 27, 21, 0.04);
         }
         .qty-btn {
             background: var(--color-cream-light);
             color: var(--color-brown-deep);
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             cursor: pointer;
             border: none;
-            transition: background-color 0.2s ease;
+            transition: background-color 140ms ease, color 140ms ease;
         }
         .qty-btn:hover {
-            background: var(--color-yellow);
+            background: #FAF7F2;
+            color: var(--color-brown-deep);
+        }
+        .qty-btn:active {
+            transform: scale(0.92);
         }
         .qty-val {
-            width: 32px;
+            width: 36px;
             text-align: center;
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--color-brown-deep);
         }
         .btn-remove-item {
-            color: #DC2626;
-            background: transparent;
-            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #991B1B;
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-size: 0.74rem;
+            font-weight: 600;
             cursor: pointer;
-            border: none;
-            text-decoration: underline;
+            transition: transform 140ms var(--ease-out-expo), background-color 140ms ease, color 140ms ease;
         }
         .btn-remove-item:hover {
-            color: #991B1B;
+            background: #991B1B;
+            color: #FFFFFF;
+            transform: translateY(-1px);
         }
         .cart-footer-bar {
             padding: 1.25rem 1.5rem;
@@ -157,17 +172,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
             align-items: center;
         }
         .btn-clear-cart {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
             font-size: 0.78rem;
-            color: var(--color-text-muted);
+            font-weight: 600;
+            color: #991B1B;
             cursor: pointer;
-            background: transparent;
-            border: 1px solid rgba(43, 27, 21, 0.2);
-            padding: 4px 10px;
-            border-radius: 3px;
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            padding: 5px 12px;
+            border-radius: 6px;
+            transition: transform 140ms var(--ease-out-expo), background-color 140ms ease, color 140ms ease;
         }
         .btn-clear-cart:hover {
-            background: #FEE2E2;
-            color: #991B1B;
+            background: #991B1B;
+            color: #FFFFFF;
+            transform: translateY(-1px);
         }
         .checkout-body {
             padding: 1.5rem;
@@ -246,7 +267,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
                 <div class="cart-items-card">
                     <div class="card-header-bar">
                         <span class="card-header-title">Items in Your Cart (<?php echo $cartSummary['total_items']; ?>)</span>
-                        <button type="button" class="btn-clear-cart" onclick="clearCartAsync()">Clear Cart</button>
+                        <button type="button" class="btn-clear-cart" onclick="clearCartAsync()">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>Clear Cart</span>
+                        </button>
                     </div>
 
                     <table class="cart-table">
@@ -337,8 +364,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
                                     <span style="color: var(--color-amber-accessible, #92400E); font-weight: 800;"><?php echo $cartSummary['total_formatted']; ?></span>
                                 </div>
 
-                                <a href="auth.php?redirect=cart.php&msg=login_to_order" class="btn-submit-modal shimmer-btn" style="text-decoration: none; padding: 1rem; font-size: 0.92rem; margin-top: 1.2rem;">
-                                    Sign In / Register to Place Order →
+                                <a href="auth.php?redirect=cart.php&msg=login_to_order" class="btn btn-primary btn-lg shimmer-btn" style="text-decoration: none; width: 100%; margin-top: 1.2rem;">
+                                    <span>Sign In to Place Order →</span>
                                 </a>
                             </div>
                         <?php else: ?>
@@ -395,8 +422,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
                                     <span style="color: var(--color-amber-accessible, #92400E); font-weight: 800;"><?php echo $cartSummary['total_formatted']; ?></span>
                                 </div>
 
-                                <button type="submit" class="btn-submit-modal shimmer-btn" style="font-size: 0.95rem; padding: 1rem; margin-top: 1rem; <?php echo !empty($cartSummary['has_out_of_stock']) ? 'opacity:0.5; cursor:not-allowed;' : ''; ?>" <?php echo !empty($cartSummary['has_out_of_stock']) ? 'disabled title="Adjust out-of-stock items first"' : ''; ?>>
-                                    <?php echo !empty($cartSummary['has_out_of_stock']) ? 'Items Out of Stock - Adjust Cart' : 'Place Order (Save to DB) →'; ?>
+                                <button type="submit" class="btn btn-primary btn-lg shimmer-btn" style="width: 100%; margin-top: 1.2rem; <?php echo !empty($cartSummary['has_out_of_stock']) ? 'opacity:0.5; cursor:not-allowed;' : ''; ?>" <?php echo !empty($cartSummary['has_out_of_stock']) ? 'disabled title="Adjust out-of-stock items first"' : ''; ?>>
+                                    <span><?php echo !empty($cartSummary['has_out_of_stock']) ? 'Items Out of Stock - Adjust Cart' : 'Confirm & Place Bakery Order →'; ?></span>
                                 </button>
                             </form>
                         <?php endif; ?>

@@ -93,7 +93,12 @@ function registerUser(PDO $pdo, $name, $email, $phone, $password, $role = 'custo
  */
 function loginUser(PDO $pdo, $email, $password) {
     $errors = [];
-    validate_email($email, $errors);
+    $identifier = trim($email);
+    if (strpos($identifier, '@') !== false) {
+        validate_email($identifier, $errors);
+    } else {
+        validate_required($identifier, 'Email or Username', $errors);
+    }
     validate_required($password, 'Password', $errors);
 
     if (!empty($errors)) {
@@ -101,7 +106,7 @@ function loginUser(PDO $pdo, $email, $password) {
     }
 
     // Rate Limiting / Brute Force Prevention (Persistent Database Check)
-    $throttle = check_login_attempts($email, $pdo);
+    $throttle = check_login_attempts($identifier, $pdo);
     if (!$throttle['allowed']) {
         $minutes = ceil($throttle['wait_seconds'] / 60);
         return [
@@ -110,18 +115,20 @@ function loginUser(PDO $pdo, $email, $password) {
         ];
     }
 
-    $stmt = $pdo->prepare("SELECT id, name, email, phone, password, role FROM `users` WHERE email = :email LIMIT 1");
-    $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+    $stmt = $pdo->prepare("SELECT id, name, email, phone, password, role FROM `users` WHERE LOWER(email) = LOWER(:id1) OR LOWER(name) = LOWER(:id2) OR (role = 'admin' AND LOWER(:id3) = 'admin') LIMIT 1");
+    $stmt->bindValue(':id1', $identifier, PDO::PARAM_STR);
+    $stmt->bindValue(':id2', $identifier, PDO::PARAM_STR);
+    $stmt->bindValue(':id3', $identifier, PDO::PARAM_STR);
     $stmt->execute();
     $user = $stmt->fetch();
 
     if (!$user || !password_verify($password, $user['password'])) {
-        record_failed_attempt($email, $pdo);
-        $checkAfter = check_login_attempts($email, $pdo);
+        record_failed_attempt($identifier, $pdo);
+        $checkAfter = check_login_attempts($identifier, $pdo);
         $attemptNotice = $checkAfter['remaining_attempts'] > 0
             ? " ({$checkAfter['remaining_attempts']} attempts remaining before temporary lockout)"
             : " (Account locked for 15 minutes due to consecutive failed attempts)";
-        return ['success' => false, 'message' => 'Invalid email address or password.' . $attemptNotice];
+        return ['success' => false, 'message' => 'Invalid email address/username or password.' . $attemptNotice];
     }
 
     // Clear failed attempts upon successful authentication
@@ -290,7 +297,7 @@ function addToCart(PDO $pdo, $productName, $price = 0, $image = '', $qty = 1) {
     }
 
     if (empty($image)) {
-        $image = 'assets/breads-e1656042972619.jpg';
+        $image = 'assets/breads-e1656042972619.png';
     }
 
     // 1. Strict Out-of-Stock Guard
@@ -935,13 +942,17 @@ function deleteOrder(PDO $pdo, $orderId) {
 // PRODUCT CATALOG HELPERS
 // ==============================================================================
 
-function getAllProducts(PDO $pdo) {
-    $stmt = $pdo->query("SELECT * FROM `products` ORDER BY id ASC");
+function getAllProducts(PDO $pdo, $includeHidden = false) {
+    if ($includeHidden) {
+        $stmt = $pdo->query("SELECT * FROM `products` ORDER BY id ASC");
+    } else {
+        $stmt = $pdo->query("SELECT * FROM `products` WHERE is_active = 1 ORDER BY id ASC");
+    }
     return $stmt->fetchAll();
 }
 
 function getFeaturedProducts(PDO $pdo) {
-    $stmt = $pdo->query("SELECT * FROM `products` WHERE is_featured = 1 ORDER BY id ASC");
+    $stmt = $pdo->query("SELECT * FROM `products` WHERE is_featured = 1 AND is_active = 1 ORDER BY id ASC");
     return $stmt->fetchAll();
 }
 
@@ -959,7 +970,7 @@ function getProductByName(PDO $pdo, $name) {
     return $stmt->fetch();
 }
 
-function addProduct(PDO $pdo, $name, $category, $price, $stock = 15, $desc = '', $image = '', $isFeatured = 1) {
+function addProduct(PDO $pdo, $name, $category, $price, $stock = 15, $desc = '', $image = '', $isFeatured = 1, $isActive = 1) {
     $name = sanitize_input($name);
     $category = sanitize_input($category);
     $price = (float)$price;
@@ -967,12 +978,13 @@ function addProduct(PDO $pdo, $name, $category, $price, $stock = 15, $desc = '',
     $desc = sanitize_input($desc);
     $image = sanitize_input($image);
     $isFeatured = $isFeatured ? 1 : 0;
+    $isActive = $isActive ? 1 : 0;
 
     if (empty($image)) {
-        $image = 'assets/breads-e1656042972619.jpg';
+        $image = 'assets/breads-e1656042972619.png';
     }
 
-    $stmt = $pdo->prepare("INSERT INTO `products` (name, category, price, stock, description, image, is_featured) VALUES (:name, :category, :price, :stock, :desc, :image, :is_featured)");
+    $stmt = $pdo->prepare("INSERT INTO `products` (name, category, price, stock, description, image, is_featured, is_active) VALUES (:name, :category, :price, :stock, :desc, :image, :is_featured, :is_active)");
     $stmt->bindValue(':name', $name, PDO::PARAM_STR);
     $stmt->bindValue(':category', $category, PDO::PARAM_STR);
     $stmt->bindValue(':price', $price);
@@ -980,10 +992,11 @@ function addProduct(PDO $pdo, $name, $category, $price, $stock = 15, $desc = '',
     $stmt->bindValue(':desc', $desc, PDO::PARAM_STR);
     $stmt->bindValue(':image', $image, PDO::PARAM_STR);
     $stmt->bindValue(':is_featured', $isFeatured, PDO::PARAM_INT);
+    $stmt->bindValue(':is_active', $isActive, PDO::PARAM_INT);
     return $stmt->execute();
 }
 
-function updateProduct(PDO $pdo, $id, $name, $category, $price, $stock = 15, $desc = '', $image = '', $isFeatured = 1) {
+function updateProduct(PDO $pdo, $id, $name, $category, $price, $stock = 15, $desc = '', $image = '', $isFeatured = 1, $isActive = 1) {
     $id = (int)$id;
     $name = sanitize_input($name);
     $category = sanitize_input($category);
@@ -992,8 +1005,9 @@ function updateProduct(PDO $pdo, $id, $name, $category, $price, $stock = 15, $de
     $desc = sanitize_input($desc);
     $image = sanitize_input($image);
     $isFeatured = $isFeatured ? 1 : 0;
+    $isActive = $isActive ? 1 : 0;
 
-    $stmt = $pdo->prepare("UPDATE `products` SET name = :name, category = :category, price = :price, stock = :stock, description = :desc, image = :image, is_featured = :is_featured WHERE id = :id");
+    $stmt = $pdo->prepare("UPDATE `products` SET name = :name, category = :category, price = :price, stock = :stock, description = :desc, image = :image, is_featured = :is_featured, is_active = :is_active WHERE id = :id");
     $stmt->bindValue(':name', $name, PDO::PARAM_STR);
     $stmt->bindValue(':category', $category, PDO::PARAM_STR);
     $stmt->bindValue(':price', $price);
@@ -1001,6 +1015,26 @@ function updateProduct(PDO $pdo, $id, $name, $category, $price, $stock = 15, $de
     $stmt->bindValue(':desc', $desc, PDO::PARAM_STR);
     $stmt->bindValue(':image', $image, PDO::PARAM_STR);
     $stmt->bindValue(':is_featured', $isFeatured, PDO::PARAM_INT);
+    $stmt->bindValue(':is_active', $isActive, PDO::PARAM_INT);
+    $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+    return $stmt->execute();
+}
+
+function toggleProductStatus(PDO $pdo, $id, $isActive) {
+    $id = (int)$id;
+    $isActive = $isActive ? 1 : 0;
+    
+    // If removing from store, purge any active cart items for this product
+    if ($isActive === 0) {
+        try {
+            $cartStmt = $pdo->prepare("DELETE FROM `cart_items` WHERE product_id = :id");
+            $cartStmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $cartStmt->execute();
+        } catch (Exception $e) {}
+    }
+    
+    $stmt = $pdo->prepare("UPDATE `products` SET is_active = :status WHERE id = :id");
+    $stmt->bindValue(':status', $isActive, PDO::PARAM_INT);
     $stmt->bindValue(':id', $id, PDO::PARAM_INT);
     return $stmt->execute();
 }
@@ -1017,6 +1051,12 @@ function restockProduct(PDO $pdo, $id, $addedStock) {
 
 function deleteProduct(PDO $pdo, $id) {
     $id = (int)$id;
+    try {
+        $cartStmt = $pdo->prepare("DELETE FROM `cart_items` WHERE product_id = :id");
+        $cartStmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $cartStmt->execute();
+    } catch (Exception $e) {}
+
     $stmt = $pdo->prepare("DELETE FROM `products` WHERE id = :id");
     $stmt->bindValue(':id', $id, PDO::PARAM_INT);
     return $stmt->execute();
