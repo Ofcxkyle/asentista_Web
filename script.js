@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
             price: '₱35.00',
             raw_price: 35.00,
             desc: 'Golden-baked crust with an airy, soft interior. Perfect for morning dips or artisan sandwiches.',
-            image: 'assets/bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.jpg'
+            image: 'assets/bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.png'
         },
         {
             id: 'bread-2',
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             price: '₱30.00',
             raw_price: 30.00,
             desc: 'Buttery, flaky crescent roll sprinkled with aromatic toasted poppy seeds.',
-            image: 'assets/top-view-of-crescent-roll-with-poppy-seeds-on-white-background-e1656042946947.jpg'
+            image: 'assets/top-view-of-crescent-roll-with-poppy-seeds-on-white-background-e1656042946947.png'
         },
         {
             id: 'bread-3',
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             price: '₱45.00',
             raw_price: 45.00,
             desc: 'Traditional European sourdough rye loaf with rich earthy undertones and dense crumb.',
-            image: 'assets/traditional-round-rye-bread-e1656042958429.jpg'
+            image: 'assets/traditional-round-rye-bread-e1656042958429.png'
         },
         {
             id: 'bread-4',
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             price: '₱40.00',
             raw_price: 40.00,
             desc: 'Sweet yeast bun filled with silky vanilla custard and spiced caramelized apple.',
-            image: 'assets/yeast-bun-with-apple-and-custard-filling-e1656042965940.jpg'
+            image: 'assets/yeast-bun-with-apple-and-custard-filling-e1656042965940.png'
         },
         {
             id: 'bread-5',
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
             price: '₱50.00',
             raw_price: 50.00,
             desc: 'Classic bialy bread roll baked with savory roasted onion and savory seeds.',
-            image: 'assets/breads-e1656042972619.jpg'
+            image: 'assets/breads-e1656042972619.png'
         },
         {
             id: 'bread-6',
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
             price: '₱28.00',
             raw_price: 28.00,
             desc: 'Tender, pillowy brioche bun dusted with powdered sugar and natural sweetness.',
-            image: 'assets/bun-e1656042983426.jpg'
+            image: 'assets/bun-e1656042983426.png'
         },
         {
             id: 'bread-7',
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
             price: '₱60.00',
             raw_price: 60.00,
             desc: 'Daily sliced sandwich rye loaf made from whole grains and natural levain.',
-            image: 'assets/rye-bread-slice-on-a-white-background--e1656042993568.jpg'
+            image: 'assets/rye-bread-slice-on-a-white-background--e1656042993568.png'
         },
         {
             id: 'bread-8',
@@ -151,20 +151,20 @@ document.addEventListener('DOMContentLoaded', () => {
             price: '₱25.00',
             raw_price: 25.00,
             desc: 'Soft dinner roll with a golden finish, perfect with butter or jam.',
-            image: 'assets/bun-1-e1656043014357.jpg'
+            image: 'assets/bun-1-e1656043014357.png'
         },
         // Menu List items
-        { id: 'item-baguette', name: 'Baguette', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Classic French crusty artisan baguette.', image: 'assets/bread-e1656042861839-pqroqtezjh2g0607d0pphz5ddrx6ppa7b44no9oloo.jpg' },
-        { id: 'item-croissant', name: 'Croissant', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Laminated, all-butter flaky French pastry.', image: 'assets/top-view-of-crescent-roll-with-poppy-seeds-on-white-background-e1656042946947.jpg' },
-        { id: 'item-sourdough', name: 'Sourdough', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Slow-fermented artisan sourdough loaf.', image: 'assets/assortment-of-artisan-bread-e1656042887278.jpg' },
-        { id: 'item-ciabatta', name: 'Ciabatta', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Italian style white bread with olive oil and herbs.', image: 'assets/italian-ciabatta-bread-on-black-slate-with-herbs-and-olives--e1656043199744 (1).jpg' },
-        { id: 'item-brioche', name: 'Brioche', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Rich golden bread enriched with egg and butter.', image: 'assets/homemade-pumpkin-bread-e1656042901513.jpg' },
+        { id: 'item-baguette', name: 'Baguette', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Classic French crusty artisan baguette.', image: 'assets/bread-e1656042861839-pqroqtezjh2g0607d0pphz5ddrx6ppa7b44no9oloo.png' },
+        { id: 'item-croissant', name: 'Croissant', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Laminated, all-butter flaky French pastry.', image: 'assets/top-view-of-crescent-roll-with-poppy-seeds-on-white-background-e1656042946947.png' },
+        { id: 'item-sourdough', name: 'Sourdough', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Slow-fermented artisan sourdough loaf.', image: 'assets/assortment-of-artisan-bread-e1656042887278.png' },
+        { id: 'item-ciabatta', name: 'Ciabatta', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Italian style white bread with olive oil and herbs.', image: 'assets/italian-ciabatta-bread-on-black-slate-with-herbs-and-olives--e1656043199744 (1).png' },
+        { id: 'item-brioche', name: 'Brioche', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Rich golden bread enriched with egg and butter.', image: 'assets/homemade-pumpkin-bread-e1656042901513.png' },
         // Beverages
-        { id: 'item-americano', name: 'Americano', category: 'Beverage', price: '₱55.00', raw_price: 55.00, desc: 'Rich double espresso diluted with hot mountain spring water.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).jpg' },
-        { id: 'item-coldbrew', name: 'Cold Brew', category: 'Beverage', price: '₱55.00', raw_price: 55.00, desc: 'Smooth, 18-hour cold steeped single-origin Arabica coffee.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).jpg' },
-        { id: 'item-carbonated', name: 'Carbonated Drink', category: 'Beverage', price: '₱35.00', raw_price: 35.00, desc: 'Refreshing chilled sparkling fruit infusion.', image: 'assets/cheese-platter-with-nuts-honey-and-bread-square-crop-e1656043218344 (1).jpg' },
-        { id: 'item-cortado', name: 'Cortado', category: 'Beverage', price: '₱69.00', raw_price: 69.00, desc: 'Equal parts espresso and warm steamed milk.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).jpg' },
-        { id: 'item-macchiato', name: 'Macchiato', category: 'Beverage', price: '₱69.00', raw_price: 69.00, desc: 'Espresso stained with a dollop of foamed milk.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).jpg' }
+        { id: 'item-americano', name: 'Americano', category: 'Beverage', price: '₱55.00', raw_price: 55.00, desc: 'Rich double espresso diluted with hot mountain spring water.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png' },
+        { id: 'item-coldbrew', name: 'Cold Brew', category: 'Beverage', price: '₱55.00', raw_price: 55.00, desc: 'Smooth, 18-hour cold steeped single-origin Arabica coffee.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png' },
+        { id: 'item-carbonated', name: 'Carbonated Drink', category: 'Beverage', price: '₱35.00', raw_price: 35.00, desc: 'Refreshing chilled sparkling fruit infusion.', image: 'assets/cheese-platter-with-nuts-honey-and-bread-square-crop-e1656043218344 (1).png' },
+        { id: 'item-cortado', name: 'Cortado', category: 'Beverage', price: '₱69.00', raw_price: 69.00, desc: 'Equal parts espresso and warm steamed milk.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png' },
+        { id: 'item-macchiato', name: 'Macchiato', category: 'Beverage', price: '₱69.00', raw_price: 69.00, desc: 'Espresso stained with a dollop of foamed milk.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png' }
     ];
 
     // --- DOM Elements ---
@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 price: 'Daily Harvest',
                 raw_price: 60.00,
                 desc: 'Slow-crafted daily with 100% certified organic grains, pure mountain spring water, and natural sourdough culture. No artificial preservatives, synthetic additives, or commercial yeast.',
-                image: 'assets/AdobeStock_326195507.jpeg'
+                image: 'assets/AdobeStock_326195507.png'
             });
         });
     }
@@ -459,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 raw_price: 35.00,
                 stock: 15,
                 desc: 'Handcrafted with natural ingredients and baked fresh daily in our brick ovens.',
-                image: 'assets/breads-e1656042972619.jpg'
+                image: 'assets/breads-e1656042972619.png'
             };
         }
         openProductDetail(found);

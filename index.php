@@ -72,27 +72,27 @@ foreach ($dbProducts as $p) {
 // Instagram Gallery Photos
 $instagramPhotos = [
     [
-        'thumb' => $assetPath . 'banana-bread-cake-with-banana-chocolate-walnut-traditional-american-cuisine-top-view-e1656043212111 (1).jpg',
+        'thumb' => $assetPath . 'banana-bread-cake-with-banana-chocolate-walnut-traditional-american-cuisine-top-view-e1656043212111 (1).png',
         'title' => 'Banana Chocolate Walnut Loaf'
     ],
     [
-        'thumb' => $assetPath . 'banana-bread-e1656043181560 (1).jpg',
+        'thumb' => $assetPath . 'banana-bread-e1656043181560 (1).png',
         'title' => 'Golden Banana Loaf'
     ],
     [
-        'thumb' => $assetPath . 'banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).jpg',
+        'thumb' => $assetPath . 'banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png',
         'title' => 'Morning Blueberry Toast & Coffee'
     ],
     [
-        'thumb' => $assetPath . 'cheese-platter-with-nuts-honey-and-bread-square-crop-e1656043218344 (1).jpg',
+        'thumb' => $assetPath . 'cheese-platter-with-nuts-honey-and-bread-square-crop-e1656043218344 (1).png',
         'title' => 'Artisan Cheese Platter & Bread'
     ],
     [
-        'thumb' => $assetPath . 'cheese-rolls-e1656043205913 (1).jpg',
+        'thumb' => $assetPath . 'cheese-rolls-e1656043205913 (1).png',
         'title' => 'Warm Baked Cheese Rolls'
     ],
     [
-        'thumb' => $assetPath . 'easter-orthodox-sweet-bread-e1656043173915 (1).jpg',
+        'thumb' => $assetPath . 'easter-orthodox-sweet-bread-e1656043173915 (1).png',
         'title' => 'Easter Sweet Braid Bread'
     ]
 ];
@@ -228,7 +228,7 @@ $instagramPhotos = [
 
                     <!-- Organic Product Card (Clickable for Craft Info) -->
                     <div class="organic-card" id="organicProductCard" title="Click to view Organic Craft Details" role="button" tabindex="0">
-                        <img src="<?php echo $assetPath; ?>AdobeStock_326195507.jpeg" alt="Natural Organic Bread" class="organic-thumb-img">
+                        <img src="<?php echo $assetPath; ?>AdobeStock_326195507.png" alt="Natural Organic Bread" class="organic-thumb-img">
                         <div class="organic-card-info">
                             <h3 class="organic-title">Natural Organic Product</h3>
                             <p class="organic-desc">
@@ -263,9 +263,9 @@ $instagramPhotos = [
             <div class="fresh-bread-grid">
                 <!-- Left Column: Multi-Image Collage -->
                 <div class="fresh-image-collage">
-                    <img src="<?php echo $assetPath; ?>assortment-of-artisan-bread-e1656042887278.jpg" alt="Artisan Bread Assortment" class="collage-img-1">
-                    <img src="<?php echo $assetPath; ?>bread-e1656042861839-pqroqtezjh2g0607d0pphz5ddrx6ppa7b44no9oloo.jpg" alt="Fresh Baked Loaves" class="collage-img-2">
-                    <img src="<?php echo $assetPath; ?>homemade-pumpkin-bread-e1656042901513.jpg" alt="Pumpkin Bread" class="collage-img-3">
+                    <img src="<?php echo $assetPath; ?>assortment-of-artisan-bread-e1656042887278.png" alt="Artisan Bread Assortment" class="collage-img-1">
+                    <img src="<?php echo $assetPath; ?>bread-e1656042861839-pqroqtezjh2g0607d0pphz5ddrx6ppa7b44no9oloo.png" alt="Fresh Baked Loaves" class="collage-img-2">
+                    <img src="<?php echo $assetPath; ?>homemade-pumpkin-bread-e1656042901513.png" alt="Pumpkin Bread" class="collage-img-3">
                 </div>
 
                 <!-- Right Column: Description & Booking Action -->
@@ -275,15 +275,20 @@ $instagramPhotos = [
                         From crusty sourdough to pillowy brioche, we bake a full selection every morning using time-honored techniques and locally sourced grains. Come in early for the best picks.
                     </p>
                     <p class="fresh-subtitle">Book Anytime or Add to Order</p>
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
                         <button type="button" class="btn-book-now shimmer-btn" id="bookNowHeroBtn">
-                            BOOK NOW
+                            <span>Book a Table</span>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M5 12h14M12 5l7 7-7 7"/>
                             </svg>
                         </button>
-                        <a href="#bread-menu" class="btn-book-now" style="background-color: var(--color-brown-mid); text-decoration: none;">
-                            🛒 View Catalog
+                        <a href="#bread-menu" class="btn btn-secondary btn-lg" style="border-radius: 8px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                            <span>Explore Menu</span>
                         </a>
                     </div>
                 </div>
@@ -295,7 +300,7 @@ $instagramPhotos = [
          FULL-WIDTH QUOTE BANNER SECTION
          ========================================== -->
     <section class="quote-section" id="quote-section">
-        <img src="<?php echo $assetPath; ?>AdobeStock_2042265063.jpeg" alt="Artisan bakery table spread" class="quote-bg-img">
+        <img src="<?php echo $assetPath; ?>AdobeStock_2042265063.png" alt="Artisan bakery table spread" class="quote-bg-img">
         <div class="quote-overlay"></div>
         <div class="container quote-container">
             <div class="quote-content-wrap">
@@ -349,15 +354,23 @@ $instagramPhotos = [
                         <div class="bread-card-actions">
                             <?php if ($isOut): ?>
                                 <button type="button" class="btn-card-add-cart disabled" disabled title="Item is out of stock">
-                                    Out of Stock
+                                    Sold Out
                                 </button>
                             <?php else: ?>
                                 <button type="button" class="btn-card-add-cart" onclick="quickAddToCart('<?php echo htmlspecialchars(addslashes($item['name'])); ?>', <?php echo $item['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($item['image'])); ?>')">
-                                    + Add to Cart
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    <span>Add to Cart</span>
                                 </button>
                             <?php endif; ?>
-                            <button type="button" class="btn-card-quick-view" onclick="openDetailByName('<?php echo htmlspecialchars(addslashes($item['name'])); ?>')">
-                                Details 👁️
+                            <button type="button" class="btn-card-quick-view" onclick="openDetailByName('<?php echo htmlspecialchars(addslashes($item['name'])); ?>')" title="View item details">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <span>Details</span>
                             </button>
                         </div>
                     </div>
@@ -599,7 +612,7 @@ $instagramPhotos = [
                     </div>
 
                     <button type="submit" class="btn-submit-modal shimmer-btn">
-                        Confirm Reservation / Order (Save to DB)
+                        <span>Confirm Table Reservation & Order</span>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
@@ -626,10 +639,15 @@ $instagramPhotos = [
                         
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <button type="button" class="btn-submit-modal shimmer-btn" id="productModalAddToCartBtn">
-                                🛒 Add to Cart Now
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                                </svg>
+                                <span>Add to Cart</span>
                             </button>
-                            <button type="button" class="btn-submit-modal" style="background-color: var(--color-brown-mid);" id="productDetailOrderBtn">
-                                Direct Book / Custom Reservation →
+                            <button type="button" class="btn btn-secondary btn-md" style="width: 100%;" id="productDetailOrderBtn">
+                                <span>Direct Book / Table Reservation →</span>
                             </button>
                         </div>
                     </div>

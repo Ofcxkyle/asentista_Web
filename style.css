@@ -85,17 +85,176 @@ button {
   transition: var(--transition-fast);
 }
 
-/* Tactile Active States for all Buttons */
-button:active, .btn-book-now:active, .btn-submit-modal:active, .btn-card-add-cart:active, .btn-search-cart:active {
-  transform: scale(0.97) !important;
+/* ==========================================================================
+   PRO DESIGN SYSTEM - BUTTON PRIMITIVES & HIERARCHY
+   (Emil Kowalski Design Engineering & Impeccable Craft Standards)
+   ========================================================================== */
+
+/* Universal Base Button Primitive */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.625rem 1.125rem;
+  white-space: nowrap;
+  user-select: none;
+  transition: transform 140ms var(--ease-out-expo), 
+              background-color 140ms ease, 
+              border-color 140ms ease, 
+              box-shadow 140ms ease, 
+              color 140ms ease;
+  position: relative;
+  outline: none;
 }
 
-/* Optical Focus Rings */
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: none;
-  box-shadow: var(--shadow-focus);
-  border-radius: 4px;
+.btn svg {
+  flex-shrink: 0;
+  transition: transform 140ms var(--ease-out-expo);
 }
+
+/* Tactile Active States (Physical Depression Simulation) */
+.btn:active, button:active, .btn-book-now:active, .btn-submit-modal:active, .btn-card-add-cart:active, .btn-search-cart:active, .btn-table-action:active {
+  transform: translateY(1px) scale(0.97) !important;
+}
+
+/* Accessible Focus Rings */
+.btn:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-white), 0 0 0 4px rgba(217, 119, 6, 0.55);
+}
+
+/* Standardized Button Sizing */
+.btn-sm {
+  padding: 0.42rem 0.8rem;
+  font-size: 0.78rem;
+  border-radius: 6px;
+  gap: 6px;
+}
+
+.btn-md {
+  padding: 0.625rem 1.125rem;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  gap: 8px;
+}
+
+.btn-lg {
+  padding: 0.85rem 1.75rem;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  gap: 10px;
+}
+
+/* Tier 1: Primary Roast Espresso with Bevel Highlight */
+.btn-primary {
+  background: linear-gradient(180deg, #3A231A 0%, #251610 100%);
+  color: #FFFFFF !important;
+  border: 1px solid #1A0F0A;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 
+              0 1px 3px rgba(37, 22, 16, 0.22), 
+              0 3px 8px rgba(37, 22, 16, 0.1);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, #482C21 0%, #2F1C14 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 
+              0 3px 10px rgba(37, 22, 16, 0.28);
+  transform: translateY(-1px);
+  color: #FFFFFF !important;
+}
+
+.btn-primary:hover svg {
+  transform: translateX(1.5px);
+}
+
+/* Tier 2: Secondary Warm Linen / Outlined Parchment */
+.btn-secondary {
+  background: #FFFFFF;
+  color: #2B1B15 !important;
+  border: 1px solid rgba(43, 27, 21, 0.18);
+  box-shadow: 0 1px 2px rgba(43, 27, 21, 0.05);
+}
+
+.btn-secondary:hover {
+  background: #FAF7F2;
+  border-color: rgba(43, 27, 21, 0.35);
+  color: #1A0F0A !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(43, 27, 21, 0.08);
+}
+
+/* Tier 3: Warm Baked Golden Crust Accent */
+.btn-accent {
+  background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
+  color: #FFFFFF !important;
+  border: 1px solid #B45309;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 
+              0 2px 6px rgba(217, 119, 6, 0.25);
+}
+
+.btn-accent:hover {
+  background: linear-gradient(180deg, #FBBF24 0%, #E27909 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 
+              0 4px 12px rgba(217, 119, 6, 0.32);
+  transform: translateY(-1px);
+  color: #FFFFFF !important;
+}
+
+/* Tier 4: Emerald Forest Sage (Restock & Growth) */
+.btn-emerald, .btn-success {
+  background: linear-gradient(180deg, #059669 0%, #047857 100%);
+  color: #FFFFFF !important;
+  border: 1px solid #065F46;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 
+              0 2px 6px rgba(5, 150, 105, 0.22);
+}
+
+.btn-emerald:hover, .btn-success:hover {
+  background: linear-gradient(180deg, #10B981 0%, #059669 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), 
+              0 4px 12px rgba(5, 150, 105, 0.3);
+  transform: translateY(-1px);
+  color: #FFFFFF !important;
+}
+
+/* Tier 5: Refined Destructive Wine (Soft idle, confident hover) */
+.btn-destructive, .btn-danger {
+  background: #FEF2F2;
+  color: #991B1B !important;
+  border: 1px solid #FECACA;
+  box-shadow: 0 1px 2px rgba(153, 27, 27, 0.05);
+}
+
+.btn-destructive:hover, .btn-danger:hover {
+  background: #991B1B;
+  color: #FFFFFF !important;
+  border-color: #7F1D1D;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 
+              0 3px 8px rgba(153, 27, 27, 0.24);
+  transform: translateY(-1px);
+}
+
+/* Tier 6: Ghost Neutral */
+.btn-ghost {
+  background: transparent;
+  color: var(--color-brown-soft);
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover {
+  background: rgba(43, 27, 21, 0.07);
+  color: var(--color-brown-deep);
+}
+
 
 /* Subtle Scrollbar */
 ::-webkit-scrollbar {
@@ -718,28 +877,43 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 .btn-book-now {
-  background-color: var(--color-brown-deep);
-  color: var(--color-white);
+  background: linear-gradient(180deg, #3A231A 0%, #251610 100%);
+  color: #FFFFFF !important;
   font-family: var(--font-sans);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  padding: 0.9rem 2rem;
+  letter-spacing: 0.08em;
+  padding: 0.85rem 1.85rem;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 4px;
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition-fast);
+  border-radius: 8px;
+  border: 1px solid #1A0F0A;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 
+              0 2px 5px rgba(37, 22, 16, 0.25), 
+              0 6px 16px rgba(37, 22, 16, 0.12);
+  transition: transform 150ms var(--ease-out-expo), 
+              box-shadow 150ms ease, 
+              background-color 150ms ease;
 }
 
 .btn-book-now:hover {
-  background-color: var(--color-brown-mid);
+  background: linear-gradient(180deg, #482C21 0%, #2F1C14 100%);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  color: var(--color-yellow);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 
+              0 4px 12px rgba(37, 22, 16, 0.32), 
+              0 10px 24px rgba(37, 22, 16, 0.15);
+  color: #FFFFFF !important;
+}
+
+.btn-book-now svg {
+  transition: transform 160ms var(--ease-out-expo);
+}
+
+.btn-book-now:hover svg {
+  transform: translateX(3px);
 }
 
 .shimmer-btn {
@@ -912,42 +1086,69 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .bread-card-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .btn-card-add-cart {
-  flex: 1.3;
-  background: var(--color-brown-deep);
-  color: var(--color-white);
-  font-size: 0.72rem;
+  flex: 1.4;
+  background: linear-gradient(180deg, #382218 0%, #24150E 100%);
+  color: #FFFFFF !important;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
   font-weight: 700;
-  padding: 6px 8px;
-  border-radius: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #1A0F0A;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 2px rgba(0, 0, 0, 0.12);
   cursor: pointer;
-  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: transform 140ms var(--ease-out-expo), 
+              background-color 140ms ease, 
+              border-color 140ms ease, 
+              box-shadow 140ms ease;
 }
 
 .btn-card-add-cart:hover {
-  background: var(--color-yellow);
-  color: var(--color-brown-deep);
+  background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
+  border-color: #B45309;
+  color: #FFFFFF !important;
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 3px 8px rgba(217, 119, 6, 0.28);
 }
 
 .btn-card-quick-view {
   flex: 1;
-  background: var(--color-cream-light);
-  color: var(--color-brown-deep);
-  font-size: 0.7rem;
+  background: #FFFFFF;
+  color: #2B1B15 !important;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 6px 8px;
-  border-radius: 4px;
+  padding: 8px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(43, 27, 21, 0.18);
+  box-shadow: 0 1px 2px rgba(43, 27, 21, 0.04);
   cursor: pointer;
-  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: transform 140ms var(--ease-out-expo), 
+              background-color 140ms ease, 
+              border-color 140ms ease,
+              box-shadow 140ms ease;
 }
 
 .btn-card-quick-view:hover {
-  background: #E2D2C3;
+  background: #FAF7F2;
+  border-color: rgba(43, 27, 21, 0.32);
+  color: #1A0F0A !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(43, 27, 21, 0.06);
 }
 
 /* ==========================================================================
@@ -1032,19 +1233,29 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 
 .btn-add-price-cart {
-  font-size: 0.72rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
   font-weight: 700;
-  color: var(--color-brown-deep);
-  background: var(--color-yellow);
-  padding: 4px 10px;
-  border-radius: 3px;
+  color: #FFFFFF !important;
+  background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
+  border: 1px solid #B45309;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 2px rgba(217, 119, 6, 0.2);
+  padding: 5px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: transform 140ms var(--ease-out-expo), 
+              background-color 140ms ease, 
+              box-shadow 140ms ease;
 }
 
 .btn-add-price-cart:hover {
-  background: var(--color-yellow-hover);
-  transform: scale(1.06);
+  background: linear-gradient(180deg, #FBBF24 0%, #E27909 100%);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 3px 6px rgba(217, 119, 6, 0.3);
 }
 
 /* ==========================================================================
@@ -1405,27 +1616,33 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .btn-submit-modal {
   width: 100%;
-  background-color: var(--color-brown-deep);
-  color: var(--color-white);
+  background: linear-gradient(180deg, #3A231A 0%, #251610 100%);
+  color: #FFFFFF !important;
   font-family: var(--font-sans);
   font-size: 0.85rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  padding: 0.9rem;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 1.25rem;
   text-transform: uppercase;
   margin-top: 0.8rem;
-  border-radius: 4px;
+  border-radius: 8px;
+  border: 1px solid #1A0F0A;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 2px 6px rgba(37, 22, 16, 0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: var(--transition-fast);
+  transition: transform 140ms var(--ease-out-expo), 
+              box-shadow 140ms ease, 
+              background-color 140ms ease;
 }
 
 .btn-submit-modal:hover {
-  background-color: var(--color-brown-mid);
-  color: var(--color-yellow);
+  background: linear-gradient(180deg, #482C21 0%, #2F1C14 100%);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 4px 12px rgba(37, 22, 16, 0.28);
+  color: #FFFFFF !important;
 }
 
 /* Product Detail Modal specific */
