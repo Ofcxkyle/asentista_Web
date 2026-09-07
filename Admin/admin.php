@@ -4,12 +4,12 @@
  * Pure PHP implementation providing full bakery management: Analytics, Live Order Dispatching, Product Catalog CRUD, and Customer Management.
  */
 
-require_once __DIR__ . '/database/config.php';
-require_once __DIR__ . '/database/function.php';
+require_once __DIR__ . '/../database/config.php';
+require_once __DIR__ . '/../database/function.php';
 
 // Strict Admin Access Guard
 if (!isAdmin()) {
-    header('Location: auth.php?msg=admin_required&redirect=admin.php');
+    header('Location: ../Login/auth.php?msg=admin_required&redirect=Admin/admin.php');
     exit;
 }
 
@@ -195,6 +195,15 @@ foreach ($salesAnalytics as $a) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <?php
+    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+    $parts = array_values(array_filter(explode('/', trim($scriptDir, '/'))));
+    if (!empty($parts) && in_array(end($parts), ['Admin', 'User', 'Login', 'Cart', 'database'])) {
+        array_pop($parts);
+    }
+    $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
+    ?>
+    <base href="<?php echo htmlspecialchars($appBasePath); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Command Center - Asentista's Bakery</title>
     <!-- Website Favicon / Main Logo -->
@@ -615,7 +624,7 @@ foreach ($salesAnalytics as $a) {
             <span style="font-size: 0.8rem; opacity: 0.85;">
                 Logged in: <strong><?php echo htmlspecialchars($currentUser['name']); ?></strong>
             </span>
-            <a href="logout.php" class="btn-admin-logout" title="Sign Out">
+            <a href="Login/logout.php" class="btn-admin-logout" title="Sign Out">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                     <polyline points="16 17 21 12 16 7"></polyline>
@@ -636,7 +645,7 @@ foreach ($salesAnalytics as $a) {
                 </p>
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                <a href="admin.php?export=csv" class="btn btn-secondary btn-sm" title="Download Operations CSV">
+                <a href="Admin/admin.php?export=csv" class="btn btn-secondary btn-sm" title="Download Operations CSV">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
@@ -770,7 +779,7 @@ foreach ($salesAnalytics as $a) {
                 </div>
 
                 <!-- Filters & Search -->
-                <form method="GET" action="admin.php" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <form method="GET" action="Admin/admin.php" style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <input type="hidden" name="tab" value="orders">
                     <select name="status" class="form-select" style="width: auto; padding: 0.45rem 0.8rem; font-size: 0.82rem;" onchange="this.form.submit()">
                         <option value="">All Statuses</option>
@@ -782,7 +791,7 @@ foreach ($salesAnalytics as $a) {
                     <input type="text" name="q" class="form-input" style="width: 220px; padding: 0.45rem 0.8rem; font-size: 0.82rem;" placeholder="Search name, phone, item..." value="<?php echo htmlspecialchars($orderSearchKw); ?>">
                     <button type="submit" class="btn btn-primary btn-sm">Search</button>
                     <?php if ($orderSearchKw || $orderStatusFilter): ?>
-                        <a href="admin.php?tab=orders" class="btn btn-secondary btn-sm">Reset</a>
+                        <a href="Admin/admin.php?tab=orders" class="btn btn-secondary btn-sm">Reset</a>
                     <?php endif; ?>
                 </form>
             </div>
@@ -832,7 +841,7 @@ foreach ($salesAnalytics as $a) {
                                     </span>
                                 </td>
                                 <td>
-                                    <form method="POST" action="admin.php" style="display: flex; gap: 6px; align-items: center;">
+                                    <form method="POST" action="Admin/admin.php" style="display: flex; gap: 6px; align-items: center;">
                                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                         <input type="hidden" name="admin_action" value="update_order_status">
                                         <input type="hidden" name="order_id" value="<?php echo $ord['id']; ?>">
@@ -846,7 +855,7 @@ foreach ($salesAnalytics as $a) {
                                     </form>
                                 </td>
                                 <td>
-                                    <form method="POST" action="admin.php" onsubmit="return confirm('Delete order #<?php echo $ord['id']; ?> permanently?')">
+                                    <form method="POST" action="Admin/admin.php" onsubmit="return confirm('Delete order #<?php echo $ord['id']; ?> permanently?')">
                                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                         <input type="hidden" name="admin_action" value="delete_order">
                                         <input type="hidden" name="order_id" value="<?php echo $ord['id']; ?>">
@@ -970,7 +979,7 @@ foreach ($salesAnalytics as $a) {
                             </p>
 
                             <!-- Quick Restock Widget -->
-                            <form method="POST" action="admin.php" style="margin-top: 10px; background: rgba(43,27,21,0.04); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(43,27,21,0.06); display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                            <form method="POST" action="Admin/admin.php" style="margin-top: 10px; background: rgba(43,27,21,0.04); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(43,27,21,0.06); display: flex; align-items: center; justify-content: space-between; gap: 6px;">
                                 <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                 <input type="hidden" name="admin_action" value="restock_product">
                                 <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
@@ -996,7 +1005,7 @@ foreach ($salesAnalytics as $a) {
                                 </button>
 
                                 <?php if ($isActive): ?>
-                                    <form method="POST" action="admin.php" onsubmit="return confirm('Remove \'<?php echo htmlspecialchars(addslashes($prod['name'])); ?>\' from customer storefront pages? Customers will immediately no longer be able to view or order this item.');" style="flex: 1.4;">
+                                    <form method="POST" action="Admin/admin.php" onsubmit="return confirm('Remove \'<?php echo htmlspecialchars(addslashes($prod['name'])); ?>\' from customer storefront pages? Customers will immediately no longer be able to view or order this item.');" style="flex: 1.4;">
                                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                         <input type="hidden" name="admin_action" value="toggle_product_store">
                                         <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
@@ -1010,7 +1019,7 @@ foreach ($salesAnalytics as $a) {
                                         </button>
                                     </form>
                                 <?php else: ?>
-                                    <form method="POST" action="admin.php" onsubmit="return confirm('Restore \'<?php echo htmlspecialchars(addslashes($prod['name'])); ?>\' to customer storefront pages?');" style="flex: 1.4;">
+                                    <form method="POST" action="Admin/admin.php" onsubmit="return confirm('Restore \'<?php echo htmlspecialchars(addslashes($prod['name'])); ?>\' to customer storefront pages?');" style="flex: 1.4;">
                                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                         <input type="hidden" name="admin_action" value="toggle_product_store">
                                         <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
@@ -1026,7 +1035,7 @@ foreach ($salesAnalytics as $a) {
                             </div>
 
                             <!-- Permanent Delete Option -->
-                            <form method="POST" action="admin.php" onsubmit="return confirm('Permanently delete \'<?php echo htmlspecialchars(addslashes($prod['name'])); ?>\' from the database catalog? This action cannot be undone.');">
+                            <form method="POST" action="Admin/admin.php" onsubmit="return confirm('Permanently delete \'<?php echo htmlspecialchars(addslashes($prod['name'])); ?>\' from the database catalog? This action cannot be undone.');">
                                 <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                 <input type="hidden" name="admin_action" value="delete_product">
                                 <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
@@ -1252,7 +1261,7 @@ foreach ($salesAnalytics as $a) {
                 <button type="button" class="modal-close-btn" onclick="closeProductModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form method="POST" action="admin.php" enctype="multipart/form-data">
+                <form method="POST" action="Admin/admin.php" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                     <input type="hidden" name="admin_action" id="prodFormAction" value="add_product">
                     <input type="hidden" name="product_id" id="prodFormId" value="">
@@ -1284,19 +1293,35 @@ foreach ($salesAnalytics as $a) {
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="prodImage">Image Path (Preset / Fallback)</label>
-                            <input type="text" id="prodImage" name="product_image" class="form-input" placeholder="assets/breads-e1656042972619.png" value="assets/breads-e1656042972619.png">
+                            <input type="text" id="prodImage" name="product_image" class="form-input" placeholder="assets/breads-e1656042972619.png" value="assets/bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.png" oninput="updatePresetPreviewFromInput()">
+                        </div>
+                    </div>
+
+                    <!-- Preset Photo Quick Chooser -->
+                    <div class="form-group" style="background: #FDF8F3; border: 1px solid #F3E8DC; border-radius: 6px; padding: 10px 12px; margin-bottom: 1rem;">
+                        <label class="form-label" style="font-size:0.8rem; font-weight:700; color:var(--color-brown-deep); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                            <span>🖼️</span> Quick Photo Presets (Click to Select)
+                        </label>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px;" onclick="selectPresetPhoto('assets/bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.png')">🥖 Crusty Bread</button>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px;" onclick="selectPresetPhoto('assets/top-view-of-crescent-roll-with-poppy-seeds-on-white-background-e1656042946947.png')">🥐 Crescent / Roll</button>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px;" onclick="selectPresetPhoto('assets/bread-e1656042861839-pqroqtezjh2g0607d0pphz5ddrx6ppa7b44no9oloo.png')">🥖 Baguette</button>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px;" onclick="selectPresetPhoto('assets/assortment-of-artisan-bread-e1656042887278.png')">🍞 Sourdough</button>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px;" onclick="selectPresetPhoto('assets/bun-1-e1656043014357.png')">🥯 Dinner Roll</button>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px;" onclick="selectPresetPhoto('assets/yeast-bun-with-apple-and-custard-filling-e1656042965940.png')">🧁 Custard Bun</button>
+                            <button type="button" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:4px 8px;" onclick="selectPresetPhoto('assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png')">☕ Coffee / Brew</button>
                         </div>
                     </div>
 
                     <!-- Photo Upload with Live Preview -->
                     <div class="form-group" style="background: #F9FAFB; border: 2px dashed #D1D5DB; padding: 12px; border-radius: 6px;">
                         <label class="form-label" for="prodPhotoFile" style="margin-bottom: 4px; display: block; font-weight: 700; color: var(--color-brown-deep);">
-                            📸 Upload Product Photo (JPG, PNG, WEBP)
+                            📸 Or Upload Custom Product Photo (JPG, PNG, WEBP)
                         </label>
                         <input type="file" id="prodPhotoFile" name="product_photo" accept="image/jpeg,image/png,image/webp" class="form-input" style="padding: 6px; font-size: 0.82rem; background: #fff;" onchange="previewUploadImage(this)">
-                        <div id="previewContainer" style="margin-top: 8px; display: none; text-align: center;">
-                            <img id="photoUploadPreview" src="" alt="Selected Photo Preview" style="max-height: 120px; border-radius: 6px; box-shadow: var(--shadow-sm); border: 1px solid #E5E7EB; object-fit: cover;">
-                            <div style="font-size: 0.72rem; color: #059669; font-weight: 700; margin-top: 4px;">✓ Photo selected for upload</div>
+                        <div id="previewContainer" style="margin-top: 8px; text-align: center;">
+                            <img id="photoUploadPreview" src="assets/bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.png" alt="Selected Photo Preview" style="max-height: 120px; border-radius: 6px; box-shadow: var(--shadow-sm); border: 1px solid #E5E7EB; object-fit: cover;">
+                            <div id="previewCaption" style="font-size: 0.72rem; color: #059669; font-weight: 700; margin-top: 4px;">Selected photo preview</div>
                         </div>
                     </div>
 
@@ -1333,7 +1358,7 @@ foreach ($salesAnalytics as $a) {
                 <button type="button" class="modal-close-btn" onclick="closeRestockModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form method="POST" action="admin.php">
+                <form method="POST" action="Admin/admin.php">
                     <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                     <input type="hidden" name="admin_action" value="restock_product">
 
@@ -1441,7 +1466,7 @@ foreach ($salesAnalytics as $a) {
                 <!-- Action Forms -->
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <!-- Hide / Restore Form -->
-                    <form method="POST" action="admin.php" id="removeToggleForm" onsubmit="return confirmRemoveToggle()">
+                    <form method="POST" action="Admin/admin.php" id="removeToggleForm" onsubmit="return confirmRemoveToggle()">
                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                         <input type="hidden" name="admin_action" value="toggle_product_store">
                         <input type="hidden" name="product_id" id="toggleFormProdId" value="">
@@ -1456,7 +1481,7 @@ foreach ($salesAnalytics as $a) {
                     </form>
 
                     <!-- Permanent Delete Form -->
-                    <form method="POST" action="admin.php" id="deletePermanentForm" onsubmit="return confirmDeletePermanent()">
+                    <form method="POST" action="Admin/admin.php" id="deletePermanentForm" onsubmit="return confirmDeletePermanent()">
                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                         <input type="hidden" name="admin_action" value="delete_product">
                         <input type="hidden" name="product_id" id="deleteFormProdId" value="">
@@ -1487,7 +1512,7 @@ foreach ($salesAnalytics as $a) {
                                     <div>
                                         <strong><?php echo htmlspecialchars($hp['name']); ?></strong> (₱<?php echo number_format($hp['price'], 2); ?>)
                                     </div>
-                                    <form method="POST" action="admin.php" style="margin: 0;">
+                                    <form method="POST" action="Admin/admin.php" style="margin: 0;">
                                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                         <input type="hidden" name="admin_action" value="toggle_product_store">
                                         <input type="hidden" name="product_id" value="<?php echo $hp['id']; ?>">
@@ -1525,6 +1550,29 @@ foreach ($salesAnalytics as $a) {
         const restockModal = document.getElementById('restockFormModal');
         const removeProductModal = document.getElementById('removeProductModal');
 
+        function selectPresetPhoto(path) {
+            document.getElementById('prodImage').value = path;
+            document.getElementById('prodPhotoFile').value = '';
+            const previewImg = document.getElementById('photoUploadPreview');
+            const previewWrap = document.getElementById('previewContainer');
+            const caption = document.getElementById('previewCaption');
+            if (previewImg) previewImg.src = path;
+            if (previewWrap) previewWrap.style.display = 'block';
+            if (caption) caption.textContent = '✓ Preset photo chosen';
+        }
+
+        function updatePresetPreviewFromInput() {
+            const path = document.getElementById('prodImage').value.trim();
+            const previewImg = document.getElementById('photoUploadPreview');
+            const previewWrap = document.getElementById('previewContainer');
+            const caption = document.getElementById('previewCaption');
+            if (path) {
+                if (previewImg) previewImg.src = path;
+                if (previewWrap) previewWrap.style.display = 'block';
+                if (caption) caption.textContent = 'Custom image path';
+            }
+        }
+
         function openAddProductModal() {
             document.getElementById('productModalHeading').textContent = 'Add New Bakery Item & Photo';
             document.getElementById('prodFormAction').value = 'add_product';
@@ -1533,12 +1581,19 @@ foreach ($salesAnalytics as $a) {
             document.getElementById('prodCategory').value = 'Bread';
             document.getElementById('prodPrice').value = '';
             document.getElementById('prodStock').value = '15';
-            document.getElementById('prodImage').value = 'assets/breads-e1656042972619.png';
+            document.getElementById('prodImage').value = 'assets/bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.png';
             document.getElementById('prodDesc').value = '';
             document.getElementById('prodFeatured').checked = true;
             document.getElementById('prodActive').checked = true;
             document.getElementById('prodPhotoFile').value = '';
-            document.getElementById('previewContainer').style.display = 'none';
+
+            const previewImg = document.getElementById('photoUploadPreview');
+            const previewWrap = document.getElementById('previewContainer');
+            const caption = document.getElementById('previewCaption');
+            if (previewImg) previewImg.src = 'assets/bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.png';
+            if (previewWrap) previewWrap.style.display = 'block';
+            if (caption) caption.textContent = 'Default bread photo (click a preset or upload custom photo)';
+
             document.getElementById('prodSubmitBtn').textContent = 'Add to Database Catalog →';
 
             productModal.classList.add('active');
@@ -1560,11 +1615,13 @@ foreach ($salesAnalytics as $a) {
 
             const previewImg = document.getElementById('photoUploadPreview');
             const previewWrap = document.getElementById('previewContainer');
+            const caption = document.getElementById('previewCaption');
             if (prod.image) {
-                previewImg.src = prod.image;
-                previewWrap.style.display = 'block';
+                if (previewImg) previewImg.src = prod.image;
+                if (previewWrap) previewWrap.style.display = 'block';
+                if (caption) caption.textContent = 'Current Item Photo';
             } else {
-                previewWrap.style.display = 'none';
+                if (previewWrap) previewWrap.style.display = 'none';
             }
 
             document.getElementById('prodSubmitBtn').textContent = 'Update Item Details & Photo →';
@@ -1685,16 +1742,30 @@ foreach ($salesAnalytics as $a) {
         function previewUploadImage(input) {
             const previewWrap = document.getElementById('previewContainer');
             const previewImg = document.getElementById('photoUploadPreview');
+            const caption = document.getElementById('previewCaption');
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    previewWrap.style.display = 'block';
+                    if (previewImg) previewImg.src = e.target.result;
+                    if (previewWrap) previewWrap.style.display = 'block';
+                    if (caption) caption.textContent = '✓ Custom file selected: ' + input.files[0].name;
                 };
                 reader.readAsDataURL(input.files[0]);
-            } else {
-                previewWrap.style.display = 'none';
             }
+        }
+
+        const prodCategoryEl = document.getElementById('prodCategory');
+        if (prodCategoryEl) {
+            prodCategoryEl.addEventListener('change', function() {
+                if (document.getElementById('prodFormAction').value === 'add_product') {
+                    const curImg = document.getElementById('prodImage').value;
+                    if (this.value === 'Beverage' && curImg.includes('bread')) {
+                        selectPresetPhoto('assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png');
+                    } else if (this.value === 'Bread' && curImg.includes('coffee')) {
+                        selectPresetPhoto('assets/bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.png');
+                    }
+                }
+            });
         }
 
         productModal.addEventListener('click', (e) => {

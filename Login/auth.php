@@ -5,8 +5,8 @@
  * Full-stack PHP/MySQL session management with CSRF protection, rate limiting, and interactive client UX.
  */
 
-require_once __DIR__ . '/database/config.php';
-require_once __DIR__ . '/database/function.php';
+require_once __DIR__ . '/../database/config.php';
+require_once __DIR__ . '/../database/function.php';
 
 $errorMsg = '';
 $successMsg = '';
@@ -15,9 +15,9 @@ $activeTab = isset($_GET['tab']) && $_GET['tab'] === 'register' ? 'register' : '
 // If already logged in, redirect based on role
 if (isLoggedIn() && !isset($_GET['action'])) {
     if (isAdmin()) {
-        header('Location: admin.php');
+        header('Location: ../Admin/admin.php');
     } else {
-        header('Location: index.php');
+        header('Location: ../index.php');
     }
     exit;
 }
@@ -25,8 +25,38 @@ if (isLoggedIn() && !isset($_GET['action'])) {
 // Handle Guest Mode Skip
 if (isset($_GET['guest'])) {
     $_SESSION['guest_mode'] = true;
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
+}
+
+// Helper to determine safe relative redirect destination
+// SECURITY: Only allows relative paths within this application.
+// Absolute URLs (http://, https://, //host, etc.) are always rejected.
+function getSafeRedirectUrl($target, $default = '../index.php') {
+    if (empty($target)) return $default;
+
+    // Strip whitespace and null bytes to prevent bypass tricks
+    $target = trim(str_replace(["\0", "\r", "\n"], '', $target));
+
+    // Reject anything that looks like an absolute URL or protocol-relative URL
+    if (preg_match('#^(https?:)?//#i', $target)) {
+        return $default;
+    }
+
+    // Reject data: javascript: and other scheme URLs
+    if (preg_match('#^[a-z][a-z0-9+\-.]*:#i', $target)) {
+        return $default;
+    }
+
+    // Only allow known internal relative paths (alphanumeric, /, ., _, -, ?, =, &, %)
+    if (!preg_match('#^[a-zA-Z0-9/._\-?=&%+#]+$#', $target)) {
+        return $default;
+    }
+
+    // Remove leading slashes to ensure we stay relative
+    $target = ltrim($target, '/');
+
+    return '../' . $target;
 }
 
 // Handle Form Submissions
@@ -49,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $regResult = registerUser($pdo, $name, $email, $phone, $password);
                 if ($regResult['success']) {
-                    $redirectUrl = !empty($_GET['redirect']) ? $_GET['redirect'] : 'index.php';
+                    $redirectUrl = getSafeRedirectUrl($_GET['redirect'] ?? '', '../index.php');
                     header("Location: {$redirectUrl}");
                     exit;
                 } else {
@@ -67,9 +97,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Custom redirect if provided, otherwise route admins to admin.php and customers to index.php
                 if (!empty($_GET['redirect'])) {
-                    $redirectUrl = $_GET['redirect'];
+                    $redirectUrl = getSafeRedirectUrl($_GET['redirect'], '../index.php');
                 } else {
-                    $redirectUrl = ($userRole === 'admin') ? 'admin.php' : 'index.php';
+                    $redirectUrl = ($userRole === 'admin') ? '../Admin/admin.php' : '../index.php';
                 }
                 
                 header("Location: {$redirectUrl}");
@@ -85,6 +115,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+<?php
+$scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+$parts = array_values(array_filter(explode('/', trim($scriptDir, '/'))));
+if (!empty($parts) && in_array(end($parts), ['Admin', 'User', 'Login', 'Cart', 'database'])) {
+    array_pop($parts);
+}
+$appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
+?>
+    <base href="<?php echo htmlspecialchars($appBasePath); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In & Register - Asentista's Bakery</title>
     <!-- Favicon & Touch Icon -->
@@ -1103,7 +1142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <!-- ==============================================================
                          FORM 1: SIGN IN FORM
                          ============================================================== -->
-                    <form action="auth.php<?php echo !empty($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''; ?>" method="POST" id="formLogin" class="auth-form" style="display: <?php echo $activeTab === 'login' ? 'flex' : 'none'; ?>;">
+                    <form action="Login/auth.php<?php echo !empty($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''; ?>" method="POST" id="formLogin" class="auth-form" style="display: <?php echo $activeTab === 'login' ? 'flex' : 'none'; ?>;">
                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                         <input type="hidden" name="auth_action" value="login">
 
@@ -1158,7 +1197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <!-- ==============================================================
                          FORM 2: CREATE ACCOUNT FORM
                          ============================================================== -->
-                    <form action="auth.php<?php echo !empty($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''; ?>" method="POST" id="formRegister" class="auth-form" style="display: <?php echo $activeTab === 'register' ? 'flex' : 'none'; ?>;">
+                    <form action="Login/auth.php<?php echo !empty($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''; ?>" method="POST" id="formRegister" class="auth-form" style="display: <?php echo $activeTab === 'register' ? 'flex' : 'none'; ?>;">
                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                         <input type="hidden" name="auth_action" value="register">
 
@@ -1223,7 +1262,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                         </svg>
                                     </span>
-                                    <input type="password" id="regPassword" name="password" class="auth-luxury-input" placeholder="Create password" autocomplete="new-password" required oninput="validateLivePasswordMatch()">
+                                    <input type="password" id="regPassword" name="password" class="auth-luxury-input" placeholder="Min. 8 chars with number or symbol" autocomplete="new-password" required minlength="8" oninput="validateLivePasswordMatch()">
                                     <button type="button" class="auth-pwd-toggle-btn" onclick="togglePasswordVisibility('regPassword', this)" title="Toggle password visibility">
                                         <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -1274,7 +1313,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <!-- Guest Access Link -->
-                    <a href="auth.php?guest=1" class="guest-browse-btn">
+                    <a href="Login/auth.php?guest=1" class="guest-browse-btn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>

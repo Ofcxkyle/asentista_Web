@@ -4,8 +4,8 @@
  * Full cart management & multi-item checkout connected to MySQL database.
  */
 
-require_once __DIR__ . '/database/config.php';
-require_once __DIR__ . '/database/function.php';
+require_once __DIR__ . '/../database/config.php';
+require_once __DIR__ . '/../database/function.php';
 
 $currentUser = getCurrentUser();
 $cartSummary = getCartSummary($pdo);
@@ -17,13 +17,13 @@ $successMsg = '';
 // Handle Checkout POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
     if (!isLoggedIn()) {
-        header('Location: auth.php?redirect=cart.php&msg=login_to_order');
+        header('Location: ../Login/auth.php?redirect=Cart/cart.php&msg=login_to_order');
         exit;
     }
     $checkoutResult = checkoutCart($pdo, $_POST);
     if ($checkoutResult['success']) {
         $_SESSION['flash_order'] = $checkoutResult['data'];
-        header('Location: success.php?order_id=' . $checkoutResult['order_id']);
+        header('Location: ../database/success.php?order_id=' . $checkoutResult['order_id']);
         exit;
     } else {
         $errorMsg = $checkoutResult['message'];
@@ -34,6 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+<?php
+$scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+$parts = array_values(array_filter(explode('/', trim($scriptDir, '/'))));
+if (!empty($parts) && in_array(end($parts), ['Admin', 'User', 'Login', 'Cart', 'database'])) {
+    array_pop($parts);
+}
+$appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
+?>
+    <base href="<?php echo htmlspecialchars($appBasePath); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Bakery Cart - Asentista's Bakery</title>
     <!-- Website Favicon / Main Logo -->
@@ -215,7 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
         }
     </style>
 </head>
-<body>
+<body class="<?php echo isAdmin($pdo) ? 'admin-logged-in' : ''; ?>">
 
     <!-- Header Navigation -->
     <nav class="site-nav">
@@ -232,7 +241,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
             
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <a href="index.php" class="nav-link">← Continue Shopping</a>
-                <a href="dashboard.php" class="nav-link">Orders Portal</a>
+                <a href="User/dashboard.php" class="nav-link">Orders Portal</a>
+                <?php if (isAdmin($pdo)): ?>
+                    <a href="Admin/admin.php" class="nav-link" style="color: var(--color-yellow); font-weight: 700; display: inline-flex; align-items: center; gap: 5px;" title="Return to Executive Admin Console">
+                        <span>👑</span> Admin Console
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
@@ -364,7 +378,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
                                     <span style="color: var(--color-amber-accessible, #92400E); font-weight: 800;"><?php echo $cartSummary['total_formatted']; ?></span>
                                 </div>
 
-                                <a href="auth.php?redirect=cart.php&msg=login_to_order" class="btn btn-primary btn-lg shimmer-btn" style="text-decoration: none; width: 100%; margin-top: 1.2rem;">
+                                <a href="Login/auth.php?redirect=Cart/cart.php&msg=login_to_order" class="btn btn-primary btn-lg shimmer-btn" style="text-decoration: none; width: 100%; margin-top: 1.2rem;">
                                     <span>Sign In to Place Order →</span>
                                 </a>
                             </div>
@@ -375,7 +389,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
                                 </div>
                             <?php endif; ?>
 
-                            <form method="POST" action="cart.php">
+                            <form method="POST" action="Cart/cart.php">
                                 <input type="hidden" name="checkout_action" value="1">
                                 <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
 
@@ -443,7 +457,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
             formData.append('quantity', qty);
             formData.append('csrf_token', CSRF_TOKEN);
 
-            const res = await fetch('cart_action.php', { method: 'POST', body: formData });
+            const res = await fetch('Cart/cart_action.php', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.success) {
                 window.location.reload();
@@ -459,7 +473,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
             formData.append('cart_id', cartId);
             formData.append('csrf_token', CSRF_TOKEN);
 
-            const res = await fetch('cart_action.php', { method: 'POST', body: formData });
+            const res = await fetch('Cart/cart_action.php', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.success) {
                 window.location.reload();
@@ -472,7 +486,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_action'])) {
             formData.append('action', 'clear');
             formData.append('csrf_token', CSRF_TOKEN);
 
-            const res = await fetch('cart_action.php', { method: 'POST', body: formData });
+            const res = await fetch('Cart/cart_action.php', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.success) {
                 window.location.reload();

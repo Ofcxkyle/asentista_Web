@@ -17,7 +17,7 @@ A full-stack artisan bakery and coffee web application built with **Pure PHP, Va
 - **Account Protection**: Placing bookings and orders requires user registration or login.
 - **Role Routing**: Administrators automatically land on the Operations Center, while customers access the storefront.
 
-### 3. 👑 Executive Admin Operations Center (`admin.php`)
+### 3. 👑 Executive Admin Operations Center (`Admin/admin.php`)
 - **Real-Time KPI Dashboard**: Live revenue metrics (₱), pending order queue, baking schedule, and customer statistics.
 - **Order Dispatch Board**: 1-click status transitions (`Pending` ➔ `Confirmed` ➔ `Completed` ➔ `Cancelled`) with keyword search and CSV export.
 - **Menu Catalog Management (CRUD)**: Add, edit, and delete bakery items and beverage prices in MySQL.
@@ -30,7 +30,7 @@ A full-stack artisan bakery and coffee web application built with **Pure PHP, Va
 1. Start **Apache** and **MySQL** in your **XAMPP Control Panel**.
 2. Open **phpMyAdmin** (`http://localhost/phpmyadmin/`).
 3. Create a new database named `asentista_db`.
-4. Import the provided [`database.sql`](database.sql) file.
+4. Import the provided [`database/database.sql`](database/database.sql) file.
 5. Place this project inside `C:\xampp\htdocs\Asentista_Web`.
 6. Open your browser and navigate to:
    ```

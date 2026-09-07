@@ -4,28 +4,42 @@
  * Returns JSON for all client-side cart interactions.
  */
 
-require_once __DIR__ . '/database/config.php';
-require_once __DIR__ . '/database/function.php';
+require_once __DIR__ . '/../database/config.php';
+require_once __DIR__ . '/../database/function.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
 $action = $_REQUEST['action'] ?? 'get_cart';
 
-// Validate CSRF token or verified same-origin request for cart mutations
+// SECURITY: All cart mutations MUST have a valid CSRF token — no Referer/XHR fallback
 if (in_array($action, ['add', 'update_qty', 'remove', 'clear'])) {
-    $hasValidCsrf = validate_csrf_token();
-    $isSameOrigin = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
-        || (isset($_SERVER['HTTP_SEC_FETCH_SITE']) && in_array($_SERVER['HTTP_SEC_FETCH_SITE'], ['same-origin', 'same-site', 'none']))
-        || (isset($_SERVER['HTTP_REFERER']) && parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST) === ($_SERVER['HTTP_HOST'] ?? 'localhost'));
-
-    if (!$hasValidCsrf && !$isSameOrigin) {
+    if (!validate_csrf_token()) {
         echo json_encode([
             'success' => false,
             'message' => 'Security token expired or invalid. Please refresh the page.'
         ]);
         exit;
     }
+
+    // SECURITY: Simple per-session rate limit — max 60 cart mutations per minute
+    $rateLimitKey = 'cart_rate_' . session_id();
+    $now = time();
+    $windowStart = $now - 60; // 1-minute rolling window
+    if (!isset($_SESSION[$rateLimitKey])) {
+        $_SESSION[$rateLimitKey] = [];
+    }
+    // Remove timestamps older than 1 minute
+    $_SESSION[$rateLimitKey] = array_filter($_SESSION[$rateLimitKey], fn($t) => $t > $windowStart);
+    if (count($_SESSION[$rateLimitKey]) >= 60) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Too many cart requests. Please slow down and try again in a moment.'
+        ]);
+        exit;
+    }
+    $_SESSION[$rateLimitKey][] = $now;
 }
+
 
 switch ($action) {
     case 'add':

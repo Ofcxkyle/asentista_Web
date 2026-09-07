@@ -4,16 +4,24 @@
  * Pure PHP CRUD Portal connected to MySQL database with search, filters & export.
  */
 
-require_once __DIR__ . '/database/config.php';
-require_once __DIR__ . '/database/function.php';
+require_once __DIR__ . '/../database/config.php';
+require_once __DIR__ . '/../database/function.php';
 
 $user = getCurrentUser();
+
+// SECURITY: Dashboard requires authentication — guests must log in first
+if (!$user) {
+    header('Location: ../Login/auth.php?redirect=User/dashboard.php&msg=login_required');
+    exit;
+}
+
 $filterStatus = isset($_GET['status']) && !empty($_GET['status']) ? sanitize_input($_GET['status']) : null;
 $searchKeyword = isset($_GET['q']) ? sanitize_input($_GET['q']) : '';
 
 // CSV Export Feature (Admin or Customer export)
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-    $exportUserId = ($user && $user['role'] === 'customer') ? $user['id'] : null;
+    // Customers only export their own orders; admins export all
+    $exportUserId = ($user['role'] === 'customer') ? $user['id'] : null;
     $exportOrders = searchOrders($pdo, $searchKeyword, $filterStatus, $exportUserId);
 
     header('Content-Type: text/csv; charset=utf-8');
@@ -69,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Fetch filtered orders list
-if ($user && $user['role'] === 'customer') {
+// Fetch filtered orders list — customers see only their own; admins see all
+if ($user['role'] === 'customer') {
     $orders = searchOrders($pdo, $searchKeyword, $filterStatus, $user['id']);
     $pageTitle = "My Bakery Orders";
 } else {
@@ -92,9 +100,9 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> - Asentista's Bakery</title>
     <!-- Website Favicon / Main Logo -->
-    <link rel="icon" type="image/png" href="assets/ASENTISTA FINAL.png">
-    <link rel="apple-touch-icon" href="assets/ASENTISTA FINAL.png">
-    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="../assets/ASENTISTA FINAL.png">
+    <link rel="apple-touch-icon" href="../assets/ASENTISTA FINAL.png">
+    <link rel="stylesheet" href="../style.css">
     <style>
         .dashboard-container {
             padding: 3rem 0 5rem 0;
@@ -254,14 +262,14 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
         }
     </style>
 </head>
-<body>
+<body class="<?php echo isAdmin($pdo) ? 'admin-logged-in' : ''; ?>">
 
     <!-- Header Navigation -->
     <nav class="site-nav">
         <div class="container nav-container">
-            <a href="index.php" class="brand-logo-wrap">
+            <a href="../index.php" class="brand-logo-wrap">
                 <div class="brand-svg-logo">
-                    <img src="assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img">
+                    <img src="../assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img">
                 </div>
                 <div class="brand-text-block">
                     <span class="brand-title">ASENTISTA'S</span>
@@ -270,13 +278,16 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
             </a>
             
             <div style="display: flex; align-items: center; gap: 1rem;">
-                <a href="index.php" class="nav-link">← Home Menu</a>
-                <a href="cart.php" class="nav-link">🛒 Cart</a>
+                <a href="../index.php" class="nav-link">← Home Menu</a>
+                <a href="../Cart/cart.php" class="nav-link">🛒 Cart</a>
+                <?php if (isAdmin($pdo)): ?>
+                    <a href="../Admin/admin.php" class="nav-link" style="color: var(--color-yellow); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;" title="Return to Executive Operations Center">👑 Admin Console</a>
+                <?php endif; ?>
                 <?php if ($user): ?>
                     <span style="font-size: 0.8rem; font-weight: 600;">👤 <?php echo htmlspecialchars($user['name']); ?> (<?php echo ucfirst($user['role']); ?>)</span>
-                    <a href="logout.php" class="btn-submit-modal" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; text-decoration: none;">Logout</a>
+                    <a href="../Login/logout.php" class="btn-submit-modal" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; text-decoration: none;">Logout</a>
                 <?php else: ?>
-                    <a href="auth.php" class="btn-submit-modal" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; text-decoration: none;">Login / Register</a>
+                    <a href="../Login/auth.php" class="btn-submit-modal" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; text-decoration: none;">Login / Register</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -293,10 +304,15 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
                 </p>
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <?php if (isAdmin($pdo)): ?>
+                    <a href="../Admin/admin.php" class="btn-book-now" style="background: var(--color-brown-deep); border: 1px solid var(--color-yellow); color: var(--color-yellow); text-decoration: none;" title="Open Executive Operations Center">
+                        👑 Executive Admin Console →
+                    </a>
+                <?php endif; ?>
                 <a href="dashboard.php?export=csv<?php echo $filterStatus ? '&status=' . urlencode($filterStatus) : ''; ?><?php echo $searchKeyword ? '&q=' . urlencode($searchKeyword) : ''; ?>" class="btn-clear-cart" style="padding: 0.8rem 1.2rem; font-weight: 700; background: var(--color-white); border-color: var(--color-brown-deep); text-decoration: none;">
                     📥 Export CSV
                 </a>
-                <a href="index.php#bread-menu" class="btn-book-now" style="text-decoration: none;">
+                <a href="../index.php#bread-menu" class="btn-book-now" style="text-decoration: none;">
                     + Place New Order
                 </a>
             </div>
@@ -361,7 +377,7 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
                     <h3>No orders found matching your search.</h3>
                     <p style="margin-top: 0.5rem;">
                         <a href="dashboard.php" style="color: var(--color-brown-deep); text-decoration: underline;">Clear filters</a> or 
-                        <a href="index.php" style="color: var(--color-brown-deep); text-decoration: underline;">Browse bakery menu</a>.
+                        <a href="../index.php" style="color: var(--color-brown-deep); text-decoration: underline;">Browse bakery menu</a>.
                     </p>
                 </div>
             <?php else: ?>

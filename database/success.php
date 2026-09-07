@@ -3,8 +3,8 @@
  * Asentista Bakery - Order Success & Receipt Confirmation
  */
 
-require_once __DIR__ . '/database/config.php';
-require_once __DIR__ . '/database/function.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/function.php';
 
 $orderId = isset($_GET['order_id']) ? (int)$_GET['order_id'] : 0;
 $order = null;
@@ -24,9 +24,9 @@ if (!$order && isset($_SESSION['flash_order'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Confirmed - Asentista's Bakery</title>
     <!-- Website Favicon / Main Logo -->
-    <link rel="icon" type="image/png" href="assets/ASENTISTA FINAL.png">
-    <link rel="apple-touch-icon" href="assets/ASENTISTA FINAL.png">
-    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="../assets/ASENTISTA FINAL.png">
+    <link rel="apple-touch-icon" href="../assets/ASENTISTA FINAL.png">
+    <link rel="stylesheet" href="../style.css">
     <style>
         .receipt-container {
             max-width: 620px;
@@ -97,22 +97,25 @@ if (!$order && isset($_SESSION['flash_order'])) {
         }
     </style>
 </head>
-<body>
+<body class="<?php echo isAdmin($pdo) ? 'admin-logged-in' : ''; ?>">
 
     <!-- Header Navigation -->
     <nav class="site-nav">
         <div class="container nav-container">
-            <a href="index.php" class="brand-logo-wrap">
+            <a href="../index.php" class="brand-logo-wrap">
                 <div class="brand-svg-logo">
-                    <img src="assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img">
+                    <img src="../assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img">
                 </div>
                 <div class="brand-text-block">
                     <span class="brand-title">ASENTISTA'S</span>
                     <span class="brand-subtitle">BAKERY</span>
                 </div>
             </a>
-            <div>
-                <a href="index.php" class="nav-link">← Back to Home</a>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="../index.php" class="nav-link">← Back to Home</a>
+                <?php if (isAdmin($pdo)): ?>
+                    <a href="../Admin/admin.php" class="nav-link" style="color: var(--color-yellow); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">👑 Admin Console</a>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
@@ -188,10 +191,10 @@ if (!$order && isset($_SESSION['flash_order'])) {
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                         Print Receipt
                     </button>
-                    <a href="index.php" class="btn btn-ghost btn-md" style="flex:1; border: 1px solid var(--btn-border);">
+                    <a href="../index.php" class="btn btn-ghost btn-md" style="flex:1; border: 1px solid var(--btn-border);">
                         ← Back to Menu
                     </a>
-                    <a href="dashboard.php" class="btn btn-primary btn-md" style="flex:1;">
+                    <a href="../User/dashboard.php" class="btn btn-primary btn-md" style="flex:1;">
                         Orders Portal
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </a>

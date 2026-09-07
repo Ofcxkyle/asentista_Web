@@ -5,8 +5,11 @@
  * Strictly requires authenticated user session (guests can browse, but cannot place orders).
  */
 
-require_once __DIR__ . '/database/config.php';
-require_once __DIR__ . '/database/function.php';
+require_once __DIR__ . '/../database/config.php';
+require_once __DIR__ . '/../database/function.php';
+
+$isSubfolder = (strpos($_SERVER['REQUEST_URI'] ?? '', '/Cart/') !== false);
+$rootPrefix = $isSubfolder ? '../' : '';
 
 // Check if request is AJAX
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
@@ -23,12 +26,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'success'      => false,
                 'require_auth' => true,
                 'message'      => 'An account is required to place an order. Please sign in or register to complete your bakery order.',
-                'redirect'     => 'auth.php?msg=login_to_order'
+                'redirect'     => 'Login/auth.php?msg=login_to_order'
             ]);
             exit;
         }
 
-        header('Location: auth.php?redirect=cart.php&msg=login_to_order');
+        header('Location: ' . $rootPrefix . 'Login/auth.php?redirect=Cart/cart.php&msg=login_to_order');
         exit;
     }
 
@@ -53,15 +56,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Standard POST form submission fallback
     if ($result['success']) {
         $_SESSION['flash_order'] = $result['data'];
-        header('Location: success.php?order_id=' . $result['order_id']);
+        header('Location: ' . $rootPrefix . 'database/success.php?order_id=' . $result['order_id']);
         exit;
     } else {
         $_SESSION['flash_error'] = $result['message'];
-        header('Location: index.php?error=' . urlencode($result['message']));
+        header('Location: ' . $rootPrefix . 'index.php?error=' . urlencode($result['message']));
         exit;
     }
 } else {
     // Non-POST request
-    header('Location: index.php');
+    header('Location: ' . $rootPrefix . 'index.php');
     exit;
 }
