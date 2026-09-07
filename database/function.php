@@ -26,7 +26,11 @@ function registerUser(PDO $pdo, $name, $email, $phone, $password, $role = 'custo
         validate_phone($phone, $errors);
     }
     validate_required($password, 'Password', $errors);
-    validate_length($password, 'Password', 1, 255, $errors);
+    validate_length($password, 'Password', 8, 255, $errors);
+    // SECURITY: Enforce password complexity — must contain at least one digit or special char
+    if (strlen($password) >= 8 && !preg_match('/[0-9!@#$%^&*()_\-+=\[\]{};:\'"\\|,.<>\/?`~]/', $password)) {
+        $errors[] = 'Password must contain at least one number or special character (e.g. !@#$%&*).';
+    }
 
     if (!empty($errors)) {
         return ['success' => false, 'message' => implode('<br>', $errors)];
@@ -72,11 +76,12 @@ function registerUser(PDO $pdo, $name, $email, $phone, $password, $role = 'custo
             $updateCart->execute();
         }
 
-        $_SESSION['user_id']    = $userId;
-        $_SESSION['user_name']  = $name;
-        $_SESSION['user_email'] = $email;
-        $_SESSION['user_phone'] = $phone;
-        $_SESSION['user_role']  = $role;
+        $_SESSION['user_id']       = $userId;
+        $_SESSION['user_name']     = $name;
+        $_SESSION['user_email']    = $email;
+        $_SESSION['user_phone']    = $phone;
+        $_SESSION['user_role']     = $role;
+        $_SESSION['last_activity'] = time();
         unset($_SESSION['guest_mode']);
 
         return ['success' => true, 'message' => 'Account registered successfully!', 'user_id' => $userId];
@@ -115,10 +120,9 @@ function loginUser(PDO $pdo, $email, $password) {
         ];
     }
 
-    $stmt = $pdo->prepare("SELECT id, name, email, phone, password, role FROM `users` WHERE LOWER(email) = LOWER(:id1) OR LOWER(name) = LOWER(:id2) OR (role = 'admin' AND LOWER(:id3) = 'admin') LIMIT 1");
-    $stmt->bindValue(':id1', $identifier, PDO::PARAM_STR);
-    $stmt->bindValue(':id2', $identifier, PDO::PARAM_STR);
-    $stmt->bindValue(':id3', $identifier, PDO::PARAM_STR);
+    // SECURITY: Email-only login — no username/admin shortcut to prevent account enumeration
+    $stmt = $pdo->prepare("SELECT id, name, email, phone, password, role FROM `users` WHERE LOWER(TRIM(email)) = LOWER(TRIM(:email)) LIMIT 1");
+    $stmt->bindValue(':email', $identifier, PDO::PARAM_STR);
     $stmt->execute();
     $user = $stmt->fetch();
 
@@ -142,11 +146,12 @@ function loginUser(PDO $pdo, $email, $password) {
         session_regenerate_id(true);
     }
 
-    $_SESSION['user_id']    = $user['id'];
-    $_SESSION['user_name']  = $user['name'];
-    $_SESSION['user_email'] = $user['email'];
-    $_SESSION['user_phone'] = $user['phone'];
-    $_SESSION['user_role']  = $user['role'];
+    $_SESSION['user_id']       = $user['id'];
+    $_SESSION['user_name']     = $user['name'];
+    $_SESSION['user_email']    = $user['email'];
+    $_SESSION['user_phone']    = $user['phone'];
+    $_SESSION['user_role']     = $user['role'];
+    $_SESSION['last_activity'] = time();
     unset($_SESSION['guest_mode']);
 
     // Reliably migrate guest cart items to this logged-in account
@@ -177,6 +182,15 @@ function validateUserSession(?PDO $pdo = null) {
     if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
         return null;
     }
+
+    // SECURITY: 30-minute idle session timeout — auto-logout inactive sessions
+    $idleTimeoutSeconds = 1800; // 30 minutes
+    if (isset($_SESSION['last_activity']) && (time() - (int)$_SESSION['last_activity']) > $idleTimeoutSeconds) {
+        logoutUser();
+        return null;
+    }
+    // Refresh the activity timestamp on every verified request
+    $_SESSION['last_activity'] = time();
 
     $userId = (int)$_SESSION['user_id'];
 
@@ -268,7 +282,7 @@ function logoutUser() {
 // ==============================================================================
 
 function getEffectiveSessionId() {
-    if (session_status() === PHP_SESSION_NONE) {
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
         session_start();
     }
     return session_id();
@@ -283,7 +297,7 @@ function addToCart(PDO $pdo, $productName, $price = 0, $image = '', $qty = 1) {
     $qty = max(1, (int)$qty);
 
     // Auto-fetch product details & live stock from products table
-    $stmt = $pdo->prepare("SELECT id, name, price, stock, image FROM `products` WHERE name = :name LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, name, price, stock, image FROM `products` WHERE name = :name ORDER BY is_active DESC, id DESC LIMIT 1");
     $stmt->bindValue(':name', $productName, PDO::PARAM_STR);
     $stmt->execute();
     $prod = $stmt->fetch();
@@ -314,13 +328,14 @@ function addToCart(PDO $pdo, $productName, $price = 0, $image = '', $qty = 1) {
 
     // Check if this item is already in the user's/session's cart
     if ($userId) {
-        $check = $pdo->prepare("SELECT id, quantity FROM `cart_items` WHERE user_id = :user_id AND product_name = :pname LIMIT 1");
+        $check = $pdo->prepare("SELECT id, quantity FROM `cart_items` WHERE user_id = :user_id AND (product_name = :pname OR (product_id IS NOT NULL AND product_id = :pid)) LIMIT 1");
         $check->bindValue(':user_id', $userId, PDO::PARAM_INT);
     } else {
-        $check = $pdo->prepare("SELECT id, quantity FROM `cart_items` WHERE session_id = :session_id AND user_id IS NULL AND product_name = :pname LIMIT 1");
+        $check = $pdo->prepare("SELECT id, quantity FROM `cart_items` WHERE session_id = :session_id AND user_id IS NULL AND (product_name = :pname OR (product_id IS NOT NULL AND product_id = :pid)) LIMIT 1");
         $check->bindValue(':session_id', $sessionId, PDO::PARAM_STR);
     }
     $check->bindValue(':pname', $productName, PDO::PARAM_STR);
+    $check->bindValue(':pid', $productId, $productId ? PDO::PARAM_INT : PDO::PARAM_NULL);
     $check->execute();
     $existing = $check->fetch();
 
@@ -390,17 +405,22 @@ function getCartItems(PDO $pdo) {
     $userId = isLoggedIn() ? (int)$_SESSION['user_id'] : null;
     $sessionId = getEffectiveSessionId();
 
+    $stockSql = "COALESCE(
+                     (SELECT p.stock FROM `products` p WHERE p.id = c.product_id LIMIT 1),
+                     (SELECT p.stock FROM `products` p WHERE p.name = c.product_name AND p.is_active = 1 ORDER BY p.id DESC LIMIT 1),
+                     (SELECT p.stock FROM `products` p WHERE p.name = c.product_name ORDER BY p.id DESC LIMIT 1),
+                     999
+                 ) AS available_stock";
+
     if ($userId) {
-        $stmt = $pdo->prepare("SELECT c.*, p.stock AS available_stock 
+        $stmt = $pdo->prepare("SELECT c.*, {$stockSql} 
                                FROM `cart_items` c 
-                               LEFT JOIN `products` p ON (c.product_id = p.id OR c.product_name = p.name) 
                                WHERE c.user_id = :uid 
                                ORDER BY c.created_at DESC");
         $stmt->bindValue(':uid', $userId, PDO::PARAM_INT);
     } else {
-        $stmt = $pdo->prepare("SELECT c.*, p.stock AS available_stock 
+        $stmt = $pdo->prepare("SELECT c.*, {$stockSql} 
                                FROM `cart_items` c 
-                               LEFT JOIN `products` p ON (c.product_id = p.id OR c.product_name = p.name) 
                                WHERE c.session_id = :sid AND c.user_id IS NULL 
                                ORDER BY c.created_at DESC");
         $stmt->bindValue(':sid', $sessionId, PDO::PARAM_STR);
@@ -452,16 +472,21 @@ function updateCartQty(PDO $pdo, $cartId, $qty) {
     }
 
     // Verify ownership and fetch live product stock
+    $stockSql = "COALESCE(
+                     (SELECT p.stock FROM `products` p WHERE p.id = c.product_id LIMIT 1),
+                     (SELECT p.stock FROM `products` p WHERE p.name = c.product_name AND p.is_active = 1 ORDER BY p.id DESC LIMIT 1),
+                     (SELECT p.stock FROM `products` p WHERE p.name = c.product_name ORDER BY p.id DESC LIMIT 1),
+                     999
+                 ) AS stock";
+
     if ($userId) {
-        $checkStmt = $pdo->prepare("SELECT c.id, c.product_name, p.stock 
+        $checkStmt = $pdo->prepare("SELECT c.id, c.product_name, {$stockSql} 
                                     FROM `cart_items` c 
-                                    LEFT JOIN `products` p ON (c.product_id = p.id OR c.product_name = p.name) 
                                     WHERE c.id = :id AND c.user_id = :uid LIMIT 1");
         $checkStmt->bindValue(':uid', $userId, PDO::PARAM_INT);
     } else {
-        $checkStmt = $pdo->prepare("SELECT c.id, c.product_name, p.stock 
+        $checkStmt = $pdo->prepare("SELECT c.id, c.product_name, {$stockSql} 
                                     FROM `cart_items` c 
-                                    LEFT JOIN `products` p ON (c.product_id = p.id OR c.product_name = p.name) 
                                     WHERE c.id = :id AND c.session_id = :sid AND c.user_id IS NULL LIMIT 1");
         $checkStmt->bindValue(':sid', $sid, PDO::PARAM_STR);
     }
@@ -715,15 +740,15 @@ function createOrder(PDO $pdo, array $data) {
         $p = $stmtPrice->fetch();
 
         if ($p) {
-            if ($itemPrice <= 0) {
-                $itemPrice = (float)$p['price'] * $quantity;
-            }
+            // SECURITY: Always use the authoritative database price — never the client-submitted value
+            // This prevents price manipulation (e.g. sending item_price=0.01 via intercepted AJAX)
+            $itemPrice = (float)$p['price'] * $quantity;
             $currStock = (int)$p['stock'];
 
             if ($currStock < $quantity) {
                 $pdo->rollBack();
-                $stockMsg = $currStock > 0 
-                    ? "only has <strong>{$currStock}</strong> left in stock (you requested {$quantity})." 
+                $stockMsg = $currStock > 0
+                    ? "only has <strong>{$currStock}</strong> left in stock (you requested {$quantity})."
                     : "is currently <strong>out of stock</strong>.";
                 return ['success' => false, 'message' => "Sorry, <strong>{$p['name']}</strong> {$stockMsg}"];
             }
@@ -984,6 +1009,16 @@ function addProduct(PDO $pdo, $name, $category, $price, $stock = 15, $desc = '',
         $image = 'assets/breads-e1656042972619.png';
     }
 
+    // Check if a product with the exact same name already exists
+    $check = $pdo->prepare("SELECT id FROM `products` WHERE name = :name ORDER BY is_active DESC, id DESC LIMIT 1");
+    $check->bindValue(':name', $name, PDO::PARAM_STR);
+    $check->execute();
+    $existing = $check->fetch();
+
+    if ($existing) {
+        return updateProduct($pdo, $existing['id'], $name, $category, $price, $stock, $desc, $image, $isFeatured, $isActive);
+    }
+
     $stmt = $pdo->prepare("INSERT INTO `products` (name, category, price, stock, description, image, is_featured, is_active) VALUES (:name, :category, :price, :stock, :desc, :image, :is_featured, :is_active)");
     $stmt->bindValue(':name', $name, PDO::PARAM_STR);
     $stmt->bindValue(':category', $category, PDO::PARAM_STR);
@@ -1130,20 +1165,29 @@ function handleProductImageUpload(array $file) {
         return ['success' => false, 'path' => '', 'error' => 'File upload error code: ' . $file['error']];
     }
 
-    // Max file size: 5MB
+    // Max file size: 5MB — checked before expensive operations
     if ($file['size'] > 5 * 1024 * 1024) {
         return ['success' => false, 'path' => '', 'error' => 'Image file is too large (maximum 5MB allowed).'];
     }
 
+    // SECURITY: Use basename() to strip any directory components from filename
+    // This prevents path traversal attacks (e.g. filename "../../config.php")
+    $originalName = basename($file['name']);
+
+    // SECURITY: Enforce max filename length to prevent buffer issues
+    if (strlen($originalName) > 200) {
+        $originalName = substr($originalName, 0, 200);
+    }
+
     $allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
-    $fileInfo = pathinfo($file['name']);
+    $fileInfo = pathinfo($originalName);
     $ext = strtolower($fileInfo['extension'] ?? '');
 
     if (!in_array($ext, $allowedExts)) {
         return ['success' => false, 'path' => '', 'error' => 'Invalid file type. Please upload a JPG, PNG, or WEBP image.'];
     }
 
-    // Validate MIME type
+    // Validate MIME type against actual file content (not just extension)
     if (function_exists('finfo_open')) {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime = finfo_file($finfo, $file['tmp_name']);
@@ -1151,23 +1195,35 @@ function handleProductImageUpload(array $file) {
 
         $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
         if (!in_array($mime, $allowedMimes)) {
-            return ['success' => false, 'path' => '', 'error' => 'Invalid image content detected.'];
+            return ['success' => false, 'path' => '', 'error' => 'Invalid image content detected. Please upload a real image file.'];
         }
     }
 
-    $uploadDir = __DIR__ . '/../assets/uploads/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
+    $assetsDir = __DIR__ . '/../assets/';
+    if (!is_dir($assetsDir)) {
+        mkdir($assetsDir, 0755, true);
     }
 
-    $safeBaseName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $fileInfo['filename']);
-    $uniqueName = 'product_' . substr($safeBaseName, 0, 20) . '_' . time() . '.' . $ext;
-    $targetPath = $uploadDir . $uniqueName;
+    // Sanitize the base name: allow only alphanumeric, underscore, hyphen; max 30 chars
+    $safeBaseName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $fileInfo['filename'] ?? 'product');
+    $safeBaseName = substr(trim($safeBaseName, '_'), 0, 30);
+    if (empty($safeBaseName)) {
+        $safeBaseName = 'product';
+    }
+    $uniqueName = 'product_' . $safeBaseName . '_' . time() . '.' . $ext;
+    $targetPath = $assetsDir . $uniqueName;
 
     if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+        // Keep a backup copy in assets/uploads/
+        $uploadsBackupDir = __DIR__ . '/../assets/uploads/';
+        if (!is_dir($uploadsBackupDir)) {
+            @mkdir($uploadsBackupDir, 0755, true);
+        }
+        @copy($targetPath, $uploadsBackupDir . $uniqueName);
+
         return [
             'success' => true,
-            'path'    => 'assets/uploads/' . $uniqueName,
+            'path'    => 'assets/' . $uniqueName,
             'error'   => ''
         ];
     }

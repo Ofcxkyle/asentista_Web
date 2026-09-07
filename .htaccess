@@ -30,12 +30,36 @@ Options -Indexes
 # 3. Prevent direct HTTP access to system/agent configuration directories
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /Asentista_Web/
 
     # Block access to hidden directories (.git, .agents, .claude, etc.)
     RewriteRule (^|/)\.(git|agents|claude|gemini) - [F,L]
 
-    # Block direct HTTP access to database folder scripts
-    RewriteRule ^database/(.*)$ - [F,L]
+    # Route root success.php requests directly to database/success.php
+    RewriteRule ^success\.php$ database/success.php [R=302,L,QSA]
+
+    # Route root dashboard.php requests directly to User/dashboard.php
+    RewriteRule ^dashboard\.php$ User/dashboard.php [R=302,L,QSA]
+
+    # Route root admin.php requests directly to Admin/admin.php
+    RewriteRule ^admin\.php$ Admin/admin.php [R=302,L,QSA]
+
+    # Route root auth, logout, and login requests directly to Login/ folder
+    RewriteRule ^auth\.php$ Login/auth.php [R=302,L,QSA]
+    RewriteRule ^logout\.php$ Login/logout.php [R=302,L,QSA]
+    RewriteRule ^login\.php$ Login/auth.php [R=302,L,QSA]
+
+    # Route root cart, cart_action, and order_process requests directly to Cart/ folder
+    RewriteRule ^cart\.php$ Cart/cart.php [R=302,L,QSA]
+    RewriteRule ^cart_action\.php$ Cart/cart_action.php [L,QSA]
+    RewriteRule ^order_process\.php$ Cart/order_process.php [L,QSA]
+
+    # Block direct HTTP access to internal database scripts, while allowing success.php
+    RewriteRule ^database/(?!success\.php).*$ - [F,L]
+
+    # SECURITY: Prevent PHP execution inside the assets/ upload directory
+    # Even if a disguised .php file is somehow uploaded, Apache will refuse to execute it
+    RewriteRule ^assets/.*\.(php|php5|phtml|phar|shtml)$ - [F,L]
 </IfModule>
 
 # 4. HTTP Security Headers

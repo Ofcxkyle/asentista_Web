@@ -4,7 +4,14 @@
  */
 
 // Global Quick Add to Cart accessible from HTML onclick attributes
+const inflightCartRequests = new Set();
 window.quickAddToCart = async function(productName, price = 0, image = '', qty = 1) {
+    const lockKey = `${productName}`;
+    if (inflightCartRequests.has(lockKey)) {
+        return; // Debounce rapid multi-clicks
+    }
+    inflightCartRequests.add(lockKey);
+
     const csrfToken = window.CSRF_TOKEN 
         || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') 
         || '';
@@ -20,7 +27,7 @@ window.quickAddToCart = async function(productName, price = 0, image = '', qty =
     }
 
     try {
-        const response = await fetch('cart_action.php', {
+        const response = await fetch('Cart/cart_action.php', {
             method: 'POST',
             body: formData,
             headers: { 
@@ -32,12 +39,16 @@ window.quickAddToCart = async function(productName, price = 0, image = '', qty =
 
         if (result.success) {
             updateCartBadge(result.cart_count);
-            showToast(`${result.message} <br><a href="cart.php" style="color:var(--color-yellow); text-decoration:underline; font-weight:700;">View Cart & Checkout (${result.cart_count}) →</a>`, 'success');
+            showToast(`${result.message} <br><a href="Cart/cart.php" style="color:var(--color-yellow); text-decoration:underline; font-weight:700;">View Cart & Checkout (${result.cart_count}) →</a>`, 'success');
         } else {
             showToast(result.message || 'Could not add item to cart.', result.out_of_stock ? 'danger' : 'info');
         }
     } catch (e) {
         console.error('Cart add error:', e);
+    } finally {
+        setTimeout(() => {
+            inflightCartRequests.delete(lockKey);
+        }, 500);
     }
 };
 
@@ -79,14 +90,25 @@ window.showToast = function(message, type = 'success') {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Data Store for Bakery Products ---
-    const bakeryCatalog = [
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // Default static fallback catalog only if database products are completely absent
+    const fallbackBakeryCatalog = [
         {
             id: 'bread-1',
             name: 'Crunchy Crust',
             category: 'Bread',
             price: '₱35.00',
             raw_price: 35.00,
+            stock: 18,
             desc: 'Golden-baked crust with an airy, soft interior. Perfect for morning dips or artisan sandwiches.',
             image: 'assets/bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.png'
         },
@@ -96,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Bread',
             price: '₱30.00',
             raw_price: 30.00,
+            stock: 20,
             desc: 'Buttery, flaky crescent roll sprinkled with aromatic toasted poppy seeds.',
             image: 'assets/top-view-of-crescent-roll-with-poppy-seeds-on-white-background-e1656042946947.png'
         },
@@ -105,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Bread',
             price: '₱45.00',
             raw_price: 45.00,
+            stock: 12,
             desc: 'Traditional European sourdough rye loaf with rich earthy undertones and dense crumb.',
             image: 'assets/traditional-round-rye-bread-e1656042958429.png'
         },
@@ -114,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Bread',
             price: '₱40.00',
             raw_price: 40.00,
+            stock: 15,
             desc: 'Sweet yeast bun filled with silky vanilla custard and spiced caramelized apple.',
             image: 'assets/yeast-bun-with-apple-and-custard-filling-e1656042965940.png'
         },
@@ -123,6 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Bread',
             price: '₱50.00',
             raw_price: 50.00,
+            stock: 14,
             desc: 'Classic bialy bread roll baked with savory roasted onion and savory seeds.',
             image: 'assets/breads-e1656042972619.png'
         },
@@ -132,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Bread',
             price: '₱28.00',
             raw_price: 28.00,
+            stock: 25,
             desc: 'Tender, pillowy brioche bun dusted with powdered sugar and natural sweetness.',
             image: 'assets/bun-e1656042983426.png'
         },
@@ -141,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Bread',
             price: '₱60.00',
             raw_price: 60.00,
+            stock: 10,
             desc: 'Daily sliced sandwich rye loaf made from whole grains and natural levain.',
             image: 'assets/rye-bread-slice-on-a-white-background--e1656042993568.png'
         },
@@ -150,22 +178,33 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Bread',
             price: '₱25.00',
             raw_price: 25.00,
+            stock: 30,
             desc: 'Soft dinner roll with a golden finish, perfect with butter or jam.',
             image: 'assets/bun-1-e1656043014357.png'
-        },
-        // Menu List items
-        { id: 'item-baguette', name: 'Baguette', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Classic French crusty artisan baguette.', image: 'assets/bread-e1656042861839-pqroqtezjh2g0607d0pphz5ddrx6ppa7b44no9oloo.png' },
-        { id: 'item-croissant', name: 'Croissant', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Laminated, all-butter flaky French pastry.', image: 'assets/top-view-of-crescent-roll-with-poppy-seeds-on-white-background-e1656042946947.png' },
-        { id: 'item-sourdough', name: 'Sourdough', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Slow-fermented artisan sourdough loaf.', image: 'assets/assortment-of-artisan-bread-e1656042887278.png' },
-        { id: 'item-ciabatta', name: 'Ciabatta', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Italian style white bread with olive oil and herbs.', image: 'assets/italian-ciabatta-bread-on-black-slate-with-herbs-and-olives--e1656043199744 (1).png' },
-        { id: 'item-brioche', name: 'Brioche', category: 'Bread', price: '₱25.00', raw_price: 25.00, desc: 'Rich golden bread enriched with egg and butter.', image: 'assets/homemade-pumpkin-bread-e1656042901513.png' },
-        // Beverages
-        { id: 'item-americano', name: 'Americano', category: 'Beverage', price: '₱55.00', raw_price: 55.00, desc: 'Rich double espresso diluted with hot mountain spring water.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png' },
-        { id: 'item-coldbrew', name: 'Cold Brew', category: 'Beverage', price: '₱55.00', raw_price: 55.00, desc: 'Smooth, 18-hour cold steeped single-origin Arabica coffee.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png' },
-        { id: 'item-carbonated', name: 'Carbonated Drink', category: 'Beverage', price: '₱35.00', raw_price: 35.00, desc: 'Refreshing chilled sparkling fruit infusion.', image: 'assets/cheese-platter-with-nuts-honey-and-bread-square-crop-e1656043218344 (1).png' },
-        { id: 'item-cortado', name: 'Cortado', category: 'Beverage', price: '₱69.00', raw_price: 69.00, desc: 'Equal parts espresso and warm steamed milk.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png' },
-        { id: 'item-macchiato', name: 'Macchiato', category: 'Beverage', price: '₱69.00', raw_price: 69.00, desc: 'Espresso stained with a dollop of foamed milk.', image: 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png' }
+        }
     ];
+
+    // Build live catalog dynamically from database server products so storefront adds/removes sync instantly
+    function getBakeryCatalog() {
+        if (window.SERVER_PRODUCTS && Array.isArray(window.SERVER_PRODUCTS) && window.SERVER_PRODUCTS.length > 0) {
+            return window.SERVER_PRODUCTS.map(p => {
+                const rawPrice = parseFloat(p.price || 0);
+                const stockVal = (p.stock !== undefined && p.stock !== null) ? parseInt(p.stock) : 15;
+                return {
+                    id: 'prod-' + p.id,
+                    real_id: p.id,
+                    name: p.name,
+                    category: p.category || 'Bread',
+                    price: '₱' + rawPrice.toFixed(2),
+                    raw_price: rawPrice,
+                    stock: stockVal,
+                    desc: p.description || '',
+                    image: p.image || 'assets/breads-e1656042972619.png'
+                };
+            });
+        }
+        return fallbackBakeryCatalog;
+    }
 
     // --- DOM Elements ---
     const mobileToggleBtn = document.getElementById('mobileToggleBtn');
@@ -298,40 +337,76 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchResultsList = document.getElementById('searchResultsList');
 
     function renderSearchResults(query = '') {
-        const filtered = bakeryCatalog.filter(item => {
-            const q = query.toLowerCase().trim();
-            return item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q);
+        const catalog = getBakeryCatalog();
+        const q = (query || '').toLowerCase().trim();
+
+        const filtered = catalog.filter(item => {
+            if (!q) return true;
+            const nameMatch = (item.name || '').toLowerCase().includes(q);
+            const catMatch = (item.category || '').toLowerCase().includes(q);
+            const descMatch = (item.desc || '').toLowerCase().includes(q);
+            return nameMatch || catMatch || descMatch;
         });
 
         if (filtered.length === 0) {
-            searchResultsList.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--color-text-muted);">No bakery items found for "${query}". Try "Croissant", "Baguette", or "Brew".</div>`;
+            searchResultsList.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--color-text-muted);">No bakery items found matching "${escapeHtml(query)}". Try "Bread", "Croissant", or "Macchiato".</div>`;
             return;
         }
 
-        searchResultsList.innerHTML = filtered.map(item => `
-            <div class="search-result-item" data-item-id="${item.id}">
+        searchResultsList.innerHTML = filtered.map(item => {
+            const isOutOfStock = (item.stock !== undefined && item.stock <= 0);
+            return `
+            <div class="search-result-item" data-item-id="${item.id}" data-item-name="${escapeHtml(item.name)}">
                 <div class="search-result-info">
-                    <img src="${item.image}" alt="${item.name}" class="search-result-thumb">
+                    <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="search-result-thumb" onerror="this.src='assets/breads-e1656042972619.png'">
                     <div>
-                        <div class="search-result-name">${item.name}</div>
-                        <div class="search-result-category">${item.category} • ${item.price}</div>
+                        <div class="search-result-name">${escapeHtml(item.name)}</div>
+                        <div class="search-result-category">
+                            ${escapeHtml(item.category)} • ${escapeHtml(item.price)}
+                            ${isOutOfStock ? '<span style="color:#DC2626; font-weight:700; margin-left:6px;">(Out of Stock)</span>' : ''}
+                        </div>
                     </div>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <button type="button" class="btn-search-cart" onclick="event.stopPropagation(); quickAddToCart('${item.name.replace(/'/g, "\\'")}', ${item.raw_price || 35}, '${item.image.replace(/'/g, "\\'")}')">
-                        🛒 + Add to Cart
-                    </button>
-                    <button type="button" class="btn-search-view" onclick="event.stopPropagation(); window.openDetailByName('${item.name.replace(/'/g, "\\'")}')">
+                    ${isOutOfStock ? `
+                        <button type="button" class="btn-search-cart" disabled style="opacity:0.5; cursor:not-allowed;">
+                            Sold Out
+                        </button>
+                    ` : `
+                        <button type="button" class="btn-search-cart" data-cart-name="${escapeHtml(item.name)}" data-cart-price="${item.raw_price}" data-cart-image="${escapeHtml(item.image)}">
+                            🛒 + Add to Cart
+                        </button>
+                    `}
+                    <button type="button" class="btn-search-view" data-view-name="${escapeHtml(item.name)}">
                         View →
                     </button>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
         searchResultsList.querySelectorAll('.search-result-item').forEach(el => {
-            el.addEventListener('click', () => {
+            el.addEventListener('click', (e) => {
+                const cartBtn = e.target.closest('.btn-search-cart');
+                if (cartBtn && !cartBtn.disabled) {
+                    e.stopPropagation();
+                    const name = cartBtn.getAttribute('data-cart-name');
+                    const price = parseFloat(cartBtn.getAttribute('data-cart-price')) || 0;
+                    const image = cartBtn.getAttribute('data-cart-image') || '';
+                    quickAddToCart(name, price, image);
+                    return;
+                }
+
+                const viewBtn = e.target.closest('.btn-search-view');
+                if (viewBtn) {
+                    e.stopPropagation();
+                    const name = viewBtn.getAttribute('data-view-name');
+                    window.openDetailByName(name);
+                    return;
+                }
+
                 const itemId = el.getAttribute('data-item-id');
-                const selectedItem = bakeryCatalog.find(i => i.id === itemId);
+                const selectedItem = catalog.find(i => i.id === itemId);
                 if (selectedItem) {
                     closeModal(searchModal);
                     openProductDetail(selectedItem);
@@ -436,33 +511,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window._openProductByName = function(name) {
-        let found = null;
-        if (window.SERVER_PRODUCTS && Array.isArray(window.SERVER_PRODUCTS)) {
-            const p = window.SERVER_PRODUCTS.find(i => i.name.toLowerCase() === name.toLowerCase());
-            if (p) {
-                found = {
-                    name: p.name,
-                    category: p.category,
-                    price: '₱' + parseFloat(p.price).toFixed(2),
-                    raw_price: parseFloat(p.price),
-                    stock: parseInt(p.stock),
-                    desc: p.description,
-                    image: p.image
-                };
-            }
-        }
+        if (!name) return;
+        const catalog = getBakeryCatalog();
+        const trimmedName = name.toLowerCase().trim();
+        let found = catalog.find(i => (i.name || '').toLowerCase().trim() === trimmedName);
         if (!found) {
-            found = bakeryCatalog.find(i => i.name.toLowerCase() === name.toLowerCase()) || {
+            found = catalog.find(i => (i.name || '').toLowerCase().includes(trimmedName));
+        }
+        if (found) {
+            openProductDetail(found);
+        } else {
+            openProductDetail({
                 name: name,
-                category: 'Artisan Bread',
+                category: 'Artisan Bakery',
                 price: '₱35.00',
                 raw_price: 35.00,
                 stock: 15,
                 desc: 'Handcrafted with natural ingredients and baked fresh daily in our brick ovens.',
                 image: 'assets/breads-e1656042972619.png'
-            };
+            });
         }
-        openProductDetail(found);
     };
 
     // --- Booking / Reservation Modal Connected to Database ---
@@ -473,14 +541,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function populateBookingSelect() {
         if (!bookingItemSelect) return;
         const currentVal = bookingItemSelect.value;
-        const items = (window.SERVER_PRODUCTS && window.SERVER_PRODUCTS.length) ? window.SERVER_PRODUCTS : bakeryCatalog;
+        const items = getBakeryCatalog();
         bookingItemSelect.innerHTML = '<option value="">-- Select Favorite Bread or Beverage --</option>' +
             items.map(item => {
                 const stock = (item.stock !== undefined) ? parseInt(item.stock) : 999;
                 const isOut = stock <= 0;
                 const priceStr = item.price.toString().startsWith('₱') ? item.price : '₱' + parseFloat(item.price).toFixed(2);
                 const label = isOut ? `${item.name} (${priceStr}) — [OUT OF STOCK]` : `${item.name} (${priceStr}) — ${stock} in stock`;
-                return `<option value="${item.name}" ${isOut ? 'disabled' : ''}>${label}</option>`;
+                return `<option value="${escapeHtml(item.name)}" ${isOut ? 'disabled' : ''}>${label}</option>`;
             }).join('');
         if (currentVal) bookingItemSelect.value = currentVal;
     }
@@ -488,9 +556,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openBookingWithItem(itemName = '') {
         if (!window.isLoggedIn) {
-            showToast('<strong>Account Required:</strong> Guests can explore the menu, but please sign in or register to place bakery orders and reservations.<br><a href="auth.php?redirect=index.php&msg=login_to_order" style="color:var(--color-yellow); font-weight:700; text-decoration:underline;">Click here to Sign In or Create Account →</a>', 'info');
+            showToast('<strong>Account Required:</strong> Guests can explore the menu, but please sign in or register to place bakery orders and reservations.<br><a href="Login/auth.php?redirect=index.php&msg=login_to_order" style="color:var(--color-yellow); font-weight:700; text-decoration:underline;">Click here to Sign In or Create Account →</a>', 'info');
             setTimeout(() => {
-                window.location.href = 'auth.php?redirect=index.php&msg=login_to_order';
+                window.location.href = 'Login/auth.php?redirect=index.php&msg=login_to_order';
             }, 1800);
             return;
         }
@@ -524,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             if (!window.isLoggedIn) {
                 showToast('<strong>Account Required:</strong> Please sign in to submit your reservation.', 'info');
-                setTimeout(() => { window.location.href = 'auth.php?redirect=index.php&msg=login_to_order'; }, 1200);
+                setTimeout(() => { window.location.href = 'Login/auth.php?redirect=index.php&msg=login_to_order'; }, 1200);
                 return;
             }
 
@@ -540,7 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const response = await fetch('order_process.php', {
+                const response = await fetch('Cart/order_process.php', {
                     method: 'POST',
                     body: formData,
                     headers: { 
@@ -553,14 +621,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (result.require_auth) {
                     showToast(`<strong>Account Required:</strong> ${result.message}`, 'info');
-                    setTimeout(() => { window.location.href = result.redirect || 'auth.php?msg=login_to_order'; }, 1500);
+                    setTimeout(() => { window.location.href = result.redirect || 'Login/auth.php?msg=login_to_order'; }, 1500);
                     return;
                 }
 
                 if (result.success) {
                     closeModal(bookingModal);
                     bookingForm.reset();
-                    showToast(`<strong>Order #${result.order_id} Received!</strong> ${result.message} <br><a href="dashboard.php" style="color:var(--color-yellow); text-decoration:underline;">View in Orders Portal →</a>`, 'success');
+                    showToast(`<strong>Order #${result.order_id} Received!</strong> ${result.message} <br><a href="User/dashboard.php" style="color:var(--color-yellow); text-decoration:underline;">View in Orders Portal →</a>`, 'success');
                 } else {
                     alert(result.message || 'There was an error saving your order.');
                 }

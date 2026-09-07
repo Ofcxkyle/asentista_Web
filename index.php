@@ -10,7 +10,7 @@ require_once __DIR__ . '/database/function.php';
 
 // Site Entry Rule: If not logged in and not in guest mode, redirect directly to Auth Portal
 if (!isLoggedIn() && empty($_SESSION['guest_mode']) && !isset($_GET['guest'])) {
-    header('Location: auth.php');
+    header('Location: Login/auth.php');
     exit;
 }
 
@@ -48,8 +48,8 @@ foreach ($dbProducts as $p) {
         $breadMenuItems[] = $itemData;
     }
 
-    if ($p['category'] === 'Bread') {
-        $breadPrices[] = [
+    if (strcasecmp($p['category'], 'Beverage') === 0) {
+        $beveragePrices[] = [
             'id'        => $p['id'],
             'item'      => $p['name'],
             'price'     => '₱' . number_format($p['price'], 2),
@@ -57,8 +57,8 @@ foreach ($dbProducts as $p) {
             'stock'     => (int)$p['stock'],
             'img'       => $p['image']
         ];
-    } elseif ($p['category'] === 'Beverage') {
-        $beveragePrices[] = [
+    } else {
+        $breadPrices[] = [
             'id'        => $p['id'],
             'item'      => $p['name'],
             'price'     => '₱' . number_format($p['price'], 2),
@@ -112,7 +112,49 @@ $instagramPhotos = [
     <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="<?php echo isAdmin($pdo) ? 'admin-logged-in' : ''; ?>">
+
+    <?php if (isAdmin($pdo)): ?>
+    <!-- ==========================================
+         EXECUTIVE ADMIN STOREFRONT BAR
+         ========================================== -->
+    <aside class="admin-storefront-bar" id="adminStorefrontBar" aria-label="Administrator Operations Bar">
+        <div class="container admin-bar-container">
+            <div class="admin-bar-left">
+                <span class="admin-bar-badge">
+                    <span class="admin-bar-crown">👑</span> Admin Mode
+                </span>
+                <span class="admin-bar-user">
+                    Storefront Live Preview &bull; Logged in as <strong><?php echo htmlspecialchars($currentUser['name'] ?? 'Admin'); ?></strong>
+                </span>
+            </div>
+            <div class="admin-bar-actions">
+                <a href="Admin/admin.php" class="admin-bar-btn admin-bar-btn-primary" title="Return to Executive Admin Console">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    <span>Back to Admin Console</span>
+                </a>
+                <a href="Admin/admin.php?tab=orders" class="admin-bar-btn admin-bar-btn-ghost" title="View Real-Time Dispatch Queue">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    <span>Dispatch Orders</span>
+                </a>
+                <a href="Admin/admin.php?tab=products" class="admin-bar-btn admin-bar-btn-ghost" title="Manage Catalog & Stock">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
+                    <span>Manage Catalog</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+    <?php endif; ?>
 
     <!-- ==========================================
          NAVIGATION BAR
@@ -136,7 +178,12 @@ $instagramPhotos = [
                 <a href="#fresh-bread" class="nav-link">ABOUT</a>
                 <a href="#bread-menu" class="nav-link">MENUS</a>
                 <a href="#price-section" class="nav-link">PRICES</a>
-                <a href="dashboard.php" class="nav-link" title="View Orders & Database Portal">ORDERS PORTAL</a>
+                <a href="User/dashboard.php" class="nav-link" title="View Orders & Database Portal">ORDERS PORTAL</a>
+                <?php if (isAdmin($pdo)): ?>
+                    <a href="Admin/admin.php" class="nav-link nav-link-admin" title="Return to Executive Admin Console">
+                        <span>👑</span> ADMIN CONSOLE
+                    </a>
+                <?php endif; ?>
                 <a href="#site-footer" class="nav-link">CONTACT</a>
             </div>
 
@@ -150,7 +197,7 @@ $instagramPhotos = [
                 </button>
 
                 <!-- Shopping Cart Icon Button with Live Counter Badge -->
-                <a href="cart.php" class="nav-cart-btn" id="navCartBtn" title="View Shopping Cart">
+                <a href="Cart/cart.php" class="nav-cart-btn" id="navCartBtn" title="View Shopping Cart">
                     <span style="font-size: 1.15rem;">🛒</span>
                     <span class="cart-count-badge <?php echo $cartCount > 0 ? 'active' : ''; ?>" id="cartCountBadge">
                         <?php echo $cartCount; ?>
@@ -159,18 +206,28 @@ $instagramPhotos = [
 
                 <!-- Auth State Button (Login / Register or User Profile) -->
                 <?php if ($currentUser): ?>
-                    <a href="dashboard.php" class="order-badge" style="background-color: var(--color-brown-mid);" title="Logged in as <?php echo htmlspecialchars($currentUser['name']); ?>">
-                        <span style="font-size: 0.9rem;">👤</span>
-                        <div>
-                            <div class="order-text-top"><?php echo strtoupper($currentUser['role']); ?></div>
-                            <div class="order-text-bottom"><?php echo htmlspecialchars(explode(' ', $currentUser['name'])[0]); ?></div>
-                        </div>
-                    </a>
-                    <a href="logout.php" class="search-btn" title="Log Out" aria-label="Log Out" style="font-size: 0.72rem; font-weight: 700;">
+                    <?php if (isAdmin($pdo)): ?>
+                        <a href="Admin/admin.php" class="order-badge admin-badge-highlight" style="background-color: var(--color-brown-mid);" title="👑 Admin Account: Return to Executive Admin Console">
+                            <span style="font-size: 0.9rem;">👑</span>
+                            <div>
+                                <div class="order-text-top" style="color: var(--color-yellow);">ADMIN CONSOLE</div>
+                                <div class="order-text-bottom"><?php echo htmlspecialchars(explode(' ', $currentUser['name'])[0]); ?> ⚡</div>
+                            </div>
+                        </a>
+                    <?php else: ?>
+                        <a href="User/dashboard.php" class="order-badge" style="background-color: var(--color-brown-mid);" title="Logged in as <?php echo htmlspecialchars($currentUser['name']); ?>">
+                            <span style="font-size: 0.9rem;">👤</span>
+                            <div>
+                                <div class="order-text-top"><?php echo strtoupper($currentUser['role']); ?></div>
+                                <div class="order-text-bottom"><?php echo htmlspecialchars(explode(' ', $currentUser['name'])[0]); ?></div>
+                            </div>
+                        </a>
+                    <?php endif; ?>
+                    <a href="Login/logout.php" class="search-btn" title="Log Out" aria-label="Log Out" style="font-size: 0.72rem; font-weight: 700;">
                         EXIT
                     </a>
                 <?php else: ?>
-                    <a href="auth.php" class="order-badge" style="background-color: var(--color-brown-mid); text-decoration: none;" title="Customer & Admin Login">
+                    <a href="Login/auth.php" class="order-badge" style="background-color: var(--color-brown-mid); text-decoration: none;" title="Customer & Admin Login">
                         <span style="font-size: 0.9rem;">🔐</span>
                         <div>
                             <div class="order-text-top">ACCOUNT</div>
@@ -200,16 +257,21 @@ $instagramPhotos = [
 
         <!-- Mobile Navigation Drawer -->
         <div class="mobile-nav-drawer" id="mobileNavDrawer">
+            <?php if (isAdmin($pdo)): ?>
+                <a href="Admin/admin.php" class="mobile-nav-link" style="background: rgba(255,174,52,0.14); color: var(--color-yellow); font-weight: 700; border-left: 3px solid var(--color-yellow);">
+                    👑 BACK TO ADMIN CONSOLE
+                </a>
+            <?php endif; ?>
             <a href="#hero" class="mobile-nav-link">HOME</a>
             <a href="#fresh-bread" class="mobile-nav-link">ABOUT</a>
             <a href="#bread-menu" class="mobile-nav-link">MENUS</a>
             <a href="#price-section" class="mobile-nav-link">PRICES</a>
-            <a href="cart.php" class="mobile-nav-link">🛒 VIEW CART (<?php echo $cartCount; ?>)</a>
-            <a href="dashboard.php" class="mobile-nav-link">ORDERS PORTAL</a>
+            <a href="Cart/cart.php" class="mobile-nav-link">🛒 VIEW CART (<?php echo $cartCount; ?>)</a>
+            <a href="User/dashboard.php" class="mobile-nav-link">ORDERS PORTAL</a>
             <?php if ($currentUser): ?>
-                <a href="logout.php" class="mobile-nav-link">LOGOUT (<?php echo htmlspecialchars($currentUser['name']); ?>)</a>
+                <a href="Login/logout.php" class="mobile-nav-link">LOGOUT (<?php echo htmlspecialchars($currentUser['name']); ?>)</a>
             <?php else: ?>
-                <a href="auth.php" class="mobile-nav-link">LOGIN / REGISTER</a>
+                <a href="Login/auth.php" class="mobile-nav-link">LOGIN / REGISTER</a>
             <?php endif; ?>
             <a href="#site-footer" class="mobile-nav-link">CONTACT</a>
         </div>
@@ -357,7 +419,7 @@ $instagramPhotos = [
                                     Sold Out
                                 </button>
                             <?php else: ?>
-                                <button type="button" class="btn-card-add-cart" onclick="quickAddToCart('<?php echo htmlspecialchars(addslashes($item['name'])); ?>', <?php echo $item['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($item['image'])); ?>')">
+                                <button type="button" class="btn-card-add-cart" onclick="event.stopPropagation(); quickAddToCart('<?php echo htmlspecialchars(addslashes($item['name'])); ?>', <?php echo $item['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($item['image'])); ?>')">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <line x1="12" y1="5" x2="12" y2="19"></line>
                                         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -411,7 +473,7 @@ $instagramPhotos = [
                                             Sold Out
                                         </button>
                                     <?php else: ?>
-                                        <button type="button" class="btn-add-price-cart" onclick="quickAddToCart('<?php echo htmlspecialchars(addslashes($entry['item'])); ?>', <?php echo $entry['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($entry['img'])); ?>')">
+                                        <button type="button" class="btn-add-price-cart" onclick="event.stopPropagation(); quickAddToCart('<?php echo htmlspecialchars(addslashes($entry['item'])); ?>', <?php echo $entry['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($entry['img'])); ?>')">
                                             + Cart
                                         </button>
                                     <?php endif; ?>
@@ -447,7 +509,7 @@ $instagramPhotos = [
                                             Sold Out
                                         </button>
                                     <?php else: ?>
-                                        <button type="button" class="btn-add-price-cart" onclick="quickAddToCart('<?php echo htmlspecialchars(addslashes($entry['item'])); ?>', <?php echo $entry['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($entry['img'])); ?>')">
+                                        <button type="button" class="btn-add-price-cart" onclick="event.stopPropagation(); quickAddToCart('<?php echo htmlspecialchars(addslashes($entry['item'])); ?>', <?php echo $entry['raw_price']; ?>, '<?php echo htmlspecialchars(addslashes($entry['img'])); ?>')">
                                             + Cart
                                         </button>
                                     <?php endif; ?>
@@ -553,7 +615,7 @@ $instagramPhotos = [
         </div>
     </div>
 
-    <!-- 2. Booking & Custom Order Modal (Connected to order_process.php) -->
+    <!-- 2. Booking & Custom Order Modal (Connected to Cart/order_process.php) -->
     <div class="modal-backdrop" id="bookingModal" role="dialog" aria-modal="true" aria-label="Book Bakery Order">
         <div class="modal-window">
             <div class="modal-header">
@@ -561,7 +623,7 @@ $instagramPhotos = [
                 <button type="button" class="modal-close-btn" aria-label="Close booking">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="bakeryBookingForm" action="order_process.php" method="POST">
+                <form id="bakeryBookingForm" action="Cart/order_process.php" method="POST">
                     <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                     <?php if ($currentUser): ?>
                         <input type="hidden" name="user_id" value="<?php echo $currentUser['id']; ?>">
@@ -673,7 +735,7 @@ $instagramPhotos = [
     <script>
         window.isLoggedIn = <?php echo isLoggedIn() ? 'true' : 'false'; ?>;
         window.CSRF_TOKEN = '<?php echo get_csrf_token(); ?>';
-        window.SERVER_PRODUCTS = <?php echo json_encode($dbProducts); ?>;
+        window.SERVER_PRODUCTS = <?php echo json_encode($dbProducts, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     </script>
     <script src="script.js?v=<?php echo filemtime(__DIR__ . '/script.js'); ?>" defer></script>
 </body>
