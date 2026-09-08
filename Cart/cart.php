@@ -1,8 +1,5 @@
 <?php
-/**
- * Asentista Bakery - Shopping Cart & Checkout Page
- * Full cart management & multi-item checkout connected to MySQL database.
- */
+// Shopping cart and checkout page.
 
 require_once __DIR__ . '/../database/config.php';
 require_once __DIR__ . '/../database/function.php';
@@ -45,7 +42,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
     <base href="<?php echo htmlspecialchars($appBasePath); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Bakery Cart - Asentista's Bakery</title>
-    <!-- Website Favicon / Main Logo -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/ASENTISTA FINAL.png">
     <link rel="apple-touch-icon" href="assets/ASENTISTA FINAL.png">
     <link rel="stylesheet" href="style.css">
@@ -226,7 +223,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
 </head>
 <body class="<?php echo isAdmin($pdo) ? 'admin-logged-in' : ''; ?>">
 
-    <!-- Header Navigation -->
+    <!-- Navbar -->
     <nav class="site-nav">
         <div class="container nav-container">
             <a href="index.php" class="brand-logo-wrap">
@@ -277,7 +274,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             </div>
         <?php else: ?>
             <div class="cart-grid-layout">
-                <!-- Left: Cart Items Table -->
+                <!-- Cart items table -->
                 <div class="cart-items-card">
                     <div class="card-header-bar">
                         <span class="card-header-title">Items in Your Cart (<?php echo $cartSummary['total_items']; ?>)</span>
@@ -353,7 +350,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                     </div>
                 </div>
 
-                <!-- Right: Fast Checkout Form (Account Required) -->
+                <!-- Checkout form -->
                 <div class="checkout-card">
                     <div class="card-header-bar">
                         <span class="card-header-title">Order Details & Checkout</span>

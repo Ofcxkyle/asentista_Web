@@ -1,9 +1,5 @@
 <?php
-/**
- * Asentista Bakery - Order Processing Endpoint
- * Handles POST requests for placing orders & table bookings into the MySQL database.
- * Strictly requires authenticated user session (guests can browse, but cannot place orders).
- */
+// Handles order and booking form submissions. Users must be logged in.
 
 require_once __DIR__ . '/../database/config.php';
 require_once __DIR__ . '/../database/function.php';
@@ -35,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Collect data (supporting both form-urlencoded and JSON payload)
+    // Read POST data or JSON body
     $inputData = $_POST;
     if (empty($inputData)) {
         $raw = file_get_contents('php://input');
@@ -53,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Standard POST form submission fallback
+    // Redirect for normal form submission
     if ($result['success']) {
         $_SESSION['flash_order'] = $result['data'];
         header('Location: ' . $rootPrefix . 'database/success.php?order_id=' . $result['order_id']);
@@ -64,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 } else {
-    // Non-POST request
+    // Redirect if not POST
     header('Location: ' . $rootPrefix . 'index.php');
     exit;
 }

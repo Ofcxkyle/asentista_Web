@@ -1,15 +1,12 @@
 <?php
-/**
- * Asentista Bakery - Orders & Bookings Management Dashboard
- * Pure PHP CRUD Portal connected to MySQL database with search, filters & export.
- */
+// Orders and bookings dashboard for users and admins.
 
 require_once __DIR__ . '/../database/config.php';
 require_once __DIR__ . '/../database/function.php';
 
 $user = getCurrentUser();
 
-// SECURITY: Dashboard requires authentication — guests must log in first
+// Must be logged in to view dashboard
 if (!$user) {
     header('Location: ../Login/auth.php?redirect=User/dashboard.php&msg=login_required');
     exit;
@@ -18,9 +15,9 @@ if (!$user) {
 $filterStatus = isset($_GET['status']) && !empty($_GET['status']) ? sanitize_input($_GET['status']) : null;
 $searchKeyword = isset($_GET['q']) ? sanitize_input($_GET['q']) : '';
 
-// CSV Export Feature (Admin or Customer export)
+// Export orders to CSV
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-    // Customers only export their own orders; admins export all
+    // Customers only see their own orders; admins see all
     $exportUserId = ($user['role'] === 'customer') ? $user['id'] : null;
     $exportOrders = searchOrders($pdo, $searchKeyword, $filterStatus, $exportUserId);
 
@@ -49,7 +46,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     exit;
 }
 
-// Handle Status Updates (Protected: Only authenticated Administrators can update order statuses)
+// Handle status updates and deletes (admin only)
 $actionMsg = '';
 $errorMsg  = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -77,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Fetch filtered orders list — customers see only their own; admins see all
+// Fetch orders for customer or admin
 if ($user['role'] === 'customer') {
     $orders = searchOrders($pdo, $searchKeyword, $filterStatus, $user['id']);
     $pageTitle = "My Bakery Orders";
@@ -86,12 +83,24 @@ if ($user['role'] === 'customer') {
     $pageTitle = "All Customer Orders & Reservations";
 }
 
-// Calculate Global Stats
-$allOrders = getAllOrders($pdo);
-$totalCount = count($allOrders);
-$pendingCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Pending'));
-$confirmedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Confirmed'));
-$completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Completed'));
+// Calculate summary stats
+if ($user['role'] === 'customer') {
+    $statOrders = getUserOrders($pdo, $user['id']);
+    $statTotalLabel = 'My Total Orders';
+    $statPendingLabel = 'Pending Confirmation';
+    $statConfirmedLabel = 'Confirmed & Baking';
+    $statCompletedLabel = 'Completed / Picked Up';
+} else {
+    $statOrders = getAllOrders($pdo);
+    $statTotalLabel = 'Total Orders in DB';
+    $statPendingLabel = 'Pending Confirmation';
+    $statConfirmedLabel = 'Confirmed & Baking';
+    $statCompletedLabel = 'Completed / Picked Up';
+}
+$totalCount = count($statOrders);
+$pendingCount = count(array_filter($statOrders, fn($o) => $o['status'] === 'Pending'));
+$confirmedCount = count(array_filter($statOrders, fn($o) => $o['status'] === 'Confirmed'));
+$completedCount = count(array_filter($statOrders, fn($o) => $o['status'] === 'Completed'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -99,7 +108,7 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> - Asentista's Bakery</title>
-    <!-- Website Favicon / Main Logo -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="../assets/ASENTISTA FINAL.png">
     <link rel="apple-touch-icon" href="../assets/ASENTISTA FINAL.png">
     <link rel="stylesheet" href="../style.css">
@@ -264,7 +273,7 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
 </head>
 <body class="<?php echo isAdmin($pdo) ? 'admin-logged-in' : ''; ?>">
 
-    <!-- Header Navigation -->
+    <!-- Navbar -->
     <nav class="site-nav">
         <div class="container nav-container">
             <a href="../index.php" class="brand-logo-wrap">
@@ -330,27 +339,27 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
             </div>
         <?php endif; ?>
 
-        <!-- Stats Overview -->
+        <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value"><?php echo $totalCount; ?></div>
-                <div class="stat-label">Total Orders in DB</div>
+                <div class="stat-label"><?php echo htmlspecialchars($statTotalLabel); ?></div>
             </div>
             <div class="stat-card pending">
                 <div class="stat-value"><?php echo $pendingCount; ?></div>
-                <div class="stat-label">Pending Confirmation</div>
+                <div class="stat-label"><?php echo htmlspecialchars($statPendingLabel); ?></div>
             </div>
             <div class="stat-card confirmed">
                 <div class="stat-value"><?php echo $confirmedCount; ?></div>
-                <div class="stat-label">Confirmed & Baking</div>
+                <div class="stat-label"><?php echo htmlspecialchars($statConfirmedLabel); ?></div>
             </div>
             <div class="stat-card completed">
                 <div class="stat-value"><?php echo $completedCount; ?></div>
-                <div class="stat-label">Completed / Picked Up</div>
+                <div class="stat-label"><?php echo htmlspecialchars($statCompletedLabel); ?></div>
             </div>
         </div>
 
-        <!-- Controls Row: Filter Tabs & Search Bar -->
+        <!-- Filter tabs & search -->
         <div class="controls-row">
             <div class="filter-bar">
                 <a href="dashboard.php<?php echo $searchKeyword ? '?q=' . urlencode($searchKeyword) : ''; ?>" class="filter-btn <?php echo !$filterStatus ? 'active' : ''; ?>">All Orders</a>
@@ -360,7 +369,7 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
                 <a href="dashboard.php?status=Cancelled<?php echo $searchKeyword ? '&q=' . urlencode($searchKeyword) : ''; ?>" class="filter-btn <?php echo $filterStatus === 'Cancelled' ? 'active' : ''; ?>">Cancelled</a>
             </div>
 
-            <!-- Search Form -->
+            <!-- Search form -->
             <form method="GET" action="dashboard.php" class="search-orders-form">
                 <?php if ($filterStatus): ?>
                     <input type="hidden" name="status" value="<?php echo htmlspecialchars($filterStatus); ?>">
@@ -370,7 +379,7 @@ $completedCount = count(array_filter($allOrders, fn($o) => $o['status'] === 'Com
             </form>
         </div>
 
-        <!-- Orders Table -->
+        <!-- Orders table -->
         <div class="orders-table-card">
             <?php if (empty($orders)): ?>
                 <div style="padding: 3.5rem 2rem; text-align: center; color: var(--color-text-muted);">

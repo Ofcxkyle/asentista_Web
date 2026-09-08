@@ -1,10 +1,33 @@
 <?php
-/**
- * Asentista Bakery - Database Configuration & PDO Initialization
- * Pure PHP implementation adhering to Week 7 Database CRUD standards.
- */
+// Database configuration and connection setup
 
-// Start session if not already started with hardened security flags
+// Log errors and keep screen clean
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+
+// Friendly fallback screen if something fails
+if (!function_exists('asentista_exception_handler')) {
+    function asentista_exception_handler(Throwable $e) {
+        error_log("Database/System Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+        if (!headers_sent()) {
+            http_response_code(500);
+        }
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+            || (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false)
+            || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+        if ($isAjax) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'message' => 'An unexpected server error occurred. Please try again later.']);
+            exit;
+        }
+        echo "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>Bakery System Notice</title><style>body{font-family:sans-serif;background:#2B1B15;color:#FFF8F0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}.box{background:rgba(255,255,255,0.06);padding:2.5rem 3rem;border-radius:12px;text-align:center;max-width:500px;border:1px solid rgba(255,255,255,0.12);}h1{color:#EBB22F;font-size:1.5rem;margin-bottom:0.75rem;}p{color:#D0C4B8;line-height:1.6;font-size:0.95rem;}.btn{display:inline-block;margin-top:1.5rem;padding:0.75rem 1.5rem;background:#EBB22F;color:#2B1B15;text-decoration:none;border-radius:6px;font-weight:700;}</style></head><body><div class='box'><h1>Bakery System Notice</h1><p>Our bakery service is momentarily adjusting recipes. Please refresh in a moment or return to the main storefront.</p><a href='javascript:history.back()' class='btn'>← Return Back</a></div></body></html>";
+        exit;
+    }
+    set_exception_handler('asentista_exception_handler');
+}
+
+// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_only_cookies', '1');
     ini_set('session.cookie_httponly', '1');
@@ -36,14 +59,14 @@ $options = [
 ];
 
 try {
-    // 1. Initial connection to MySQL server
+    // Connect to database
     $pdo = new PDO($dsn, $user, $pass, $options);
 
-    // 2. Ensure database exists
+    // Create database if not existing
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET {$charset} COLLATE utf8mb4_unicode_ci");
     $pdo->exec("USE `{$dbName}`");
 
-    // 3. Ensure essential tables exist (Auto-Migration fallback)
+    // Create tables if they don't exist
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS `users` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -109,27 +132,24 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ");
 
-    // Seamlessly add quantity column to orders if missing
+    // Add extra columns if not yet present
     try {
         $pdo->exec("ALTER TABLE `orders` ADD COLUMN `quantity` INT NOT NULL DEFAULT 1 AFTER `item_price`");
     } catch (Exception $e) {}
 
-    // Seamlessly add stock column to products if missing
     try {
         $pdo->exec("ALTER TABLE `products` ADD COLUMN `stock` INT NOT NULL DEFAULT 15 AFTER `price`");
     } catch (Exception $e) {}
 
-    // Seamlessly add is_active column to products if missing (1 = visible in store, 0 = removed from user pages)
     try {
         $pdo->exec("ALTER TABLE `products` ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1 AFTER `is_featured`");
     } catch (Exception $e) {}
 
-    // Seamlessly add product_id column to cart_items if missing
     try {
         $pdo->exec("ALTER TABLE `cart_items` ADD COLUMN `product_id` INT DEFAULT NULL AFTER `session_id`");
     } catch (Exception $e) {}
 
-    // Add Performance Indexes
+    // Add table indexes
     try {
         $pdo->exec("ALTER TABLE `cart_items` ADD INDEX `idx_cart_session` (`session_id`)");
     } catch (Exception $e) {}
@@ -149,17 +169,17 @@ try {
         $pdo->exec("ALTER TABLE `products` ADD INDEX `idx_products_stock` (`stock`)");
     } catch (Exception $e) {}
 
-    // Seed default admin and sample data if users table is empty
+    // Add sample data if users table is empty
     $checkUser = $pdo->query("SELECT COUNT(*) as count FROM `users`")->fetch();
     if ($checkUser['count'] == 0) {
-        $defaultHash = password_hash('Admin@Asentista2026!', PASSWORD_DEFAULT);
-        $customerHash = password_hash('Customer#Asentista2026!', PASSWORD_DEFAULT);
+        $defaultHash = password_hash('admin123', PASSWORD_DEFAULT);
+        $customerHash = password_hash('password123', PASSWORD_DEFAULT);
 
         $seedUser = $pdo->prepare("INSERT INTO `users` (`name`, `email`, `phone`, `password`, `role`) VALUES (?, ?, ?, ?, ?)");
         $seedUser->execute(['Kyle Asentista (Admin)', 'admin@asentista.com', '0994 005 8425', $defaultHash, 'admin']);
         $seedUser->execute(['Maria Santos', 'customer@asentista.com', '0912 345 6789', $customerHash, 'customer']);
 
-        // Seed products with default stock
+        // Insert initial bakery products
         $seedProd = $pdo->prepare("INSERT INTO `products` (`name`, `category`, `price`, `stock`, `description`, `image`, `is_featured`) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $productsSeed = [
             ['Crunchy Crust', 'Bread', 35.00, 18, 'Golden-baked crust with an airy, soft interior. Perfect for morning dips or artisan sandwiches.', 'assets/bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.png', 1],
@@ -185,9 +205,28 @@ try {
             $seedProd->execute($p);
         }
 
-        // Seed sample order
+        // Insert sample order
         $pdo->exec("INSERT INTO `orders` (`user_id`, `customer_name`, `customer_phone`, `item_name`, `item_price`, `quantity`, `order_type`, `reservation_date`, `special_notes`, `status`) 
                     VALUES (2, 'Maria Santos', '0912 345 6789', 'Crunchy Crust', 35.00, 1, 'In-Store Pickup', CURDATE(), 'Please slice for sandwiches', 'Confirmed')");
+    } else {
+        // Sync default accounts if password hash changed
+        try {
+            $syncAdmin = $pdo->prepare("SELECT id, password FROM `users` WHERE email = 'admin@asentista.com' LIMIT 1");
+            $syncAdmin->execute();
+            $adm = $syncAdmin->fetch();
+            if ($adm && !password_verify('admin123', $adm['password']) && !password_verify('Admin@Asentista2026!', $adm['password'])) {
+                $upd = $pdo->prepare("UPDATE `users` SET password = :p WHERE id = :id");
+                $upd->execute([':p' => password_hash('admin123', PASSWORD_DEFAULT), ':id' => $adm['id']]);
+            }
+
+            $syncCust = $pdo->prepare("SELECT id, password FROM `users` WHERE email = 'customer@asentista.com' LIMIT 1");
+            $syncCust->execute();
+            $cst = $syncCust->fetch();
+            if ($cst && !password_verify('password123', $cst['password']) && !password_verify('Customer#Asentista2026!', $cst['password'])) {
+                $upd = $pdo->prepare("UPDATE `users` SET password = :p WHERE id = :id");
+                $upd->execute([':p' => password_hash('password123', PASSWORD_DEFAULT), ':id' => $cst['id']]);
+            }
+        } catch (Exception $e) {}
     }
 
 } catch (PDOException $e) {

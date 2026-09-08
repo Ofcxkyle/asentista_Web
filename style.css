@@ -1,11 +1,8 @@
-/* ==========================================================================
-   ASENTISTA BAKERY - OFFICIAL DESIGN SYSTEM & STYLESHEET
-   Crafted with Emil Kowalski Design Engineering & Impeccable UI Principles
-   ========================================================================== */
+/* Main stylesheet for Asentista Bakery */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Cinzel:wght@600;700&display=swap');
 
-/* --- Root Design System Tokens & Curves --- */
+/* Variables and tokens */
 :root {
   /* Harmonious Color Palette */
   --color-cream: #DBC8B6;
@@ -28,20 +25,20 @@
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --max-width: 1240px;
 
-  /* Emil Kowalski Motion Curves & Spring Dynamics */
+  /* Transitions */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-in-quad: cubic-bezier(0.55, 0.085, 0.68, 0.53);
   --transition-fast: transform 150ms var(--ease-out-expo), background-color 150ms ease, box-shadow 150ms ease, color 150ms ease;
   --transition-normal: transform 220ms var(--ease-out-expo), background-color 200ms ease, box-shadow 220ms ease, opacity 200ms ease;
 
-  /* Layered Elevation System */
+  /* Shadows */
   --shadow-sm: 0 2px 8px rgba(43, 27, 21, 0.06), 0 1px 2px rgba(43, 27, 21, 0.04);
   --shadow-md: 0 8px 24px rgba(43, 27, 21, 0.09), 0 2px 6px rgba(43, 27, 21, 0.05);
   --shadow-lg: 0 20px 48px rgba(43, 27, 21, 0.14), 0 4px 12px rgba(43, 27, 21, 0.06);
   --shadow-focus: 0 0 0 3px rgba(255, 174, 52, 0.35);
 
-  /* Minimum Ergonomic Tap Targets */
+  /* Tap targets */
   --touch-target-min: 44px;
 
   /* Storefront Admin Bar */
@@ -92,12 +89,7 @@ button {
   transition: var(--transition-fast);
 }
 
-/* ==========================================================================
-   PRO DESIGN SYSTEM - BUTTON PRIMITIVES & HIERARCHY
-   (Emil Kowalski Design Engineering & Impeccable Craft Standards)
-   ========================================================================== */
-
-/* Universal Base Button Primitive */
+/* Button styles */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -128,18 +120,18 @@ button {
   transition: transform 140ms var(--ease-out-expo);
 }
 
-/* Tactile Active States (Physical Depression Simulation) */
+/* Active state button press */
 .btn:active, button:active, .btn-book-now:active, .btn-submit-modal:active, .btn-card-add-cart:active, .btn-search-cart:active, .btn-table-action:active {
   transform: translateY(1px) scale(0.97) !important;
 }
 
-/* Accessible Focus Rings */
+/* Focus outlines */
 .btn:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--color-white), 0 0 0 4px rgba(217, 119, 6, 0.55);
 }
 
-/* Standardized Button Sizing */
+/* Button sizes */
 .btn-sm {
   padding: 0.42rem 0.8rem;
   font-size: 0.78rem;
@@ -161,7 +153,7 @@ button {
   gap: 10px;
 }
 
-/* Tier 1: Primary Roast Espresso with Bevel Highlight */
+/* Primary button */
 .btn-primary {
   background: linear-gradient(180deg, #3A231A 0%, #251610 100%);
   color: #FFFFFF !important;
@@ -183,7 +175,7 @@ button {
   transform: translateX(1.5px);
 }
 
-/* Tier 2: Secondary Warm Linen / Outlined Parchment */
+/* Secondary button */
 .btn-secondary {
   background: #FFFFFF;
   color: #2B1B15 !important;
@@ -199,7 +191,7 @@ button {
   box-shadow: 0 2px 6px rgba(43, 27, 21, 0.08);
 }
 
-/* Tier 3: Warm Baked Golden Crust Accent */
+/* Accent button */
 .btn-accent {
   background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
   color: #FFFFFF !important;
@@ -216,7 +208,7 @@ button {
   color: #FFFFFF !important;
 }
 
-/* Tier 4: Emerald Forest Sage (Restock & Growth) */
+/* Green button */
 .btn-emerald, .btn-success {
   background: linear-gradient(180deg, #059669 0%, #047857 100%);
   color: #FFFFFF !important;
@@ -233,7 +225,7 @@ button {
   color: #FFFFFF !important;
 }
 
-/* Tier 5: Refined Destructive Wine (Soft idle, confident hover) */
+/* Red / delete button */
 .btn-destructive, .btn-danger {
   background: #FEF2F2;
   color: #991B1B !important;
@@ -250,7 +242,7 @@ button {
   transform: translateY(-1px);
 }
 
-/* Tier 6: Ghost Neutral */
+/* Ghost button */
 .btn-ghost {
   background: transparent;
   color: var(--color-brown-soft);
@@ -285,9 +277,7 @@ button {
   padding-right: 24px;
 }
 
-/* ==========================================================================
-   NAVIGATION BAR
-   ========================================================================== */
+/* Navigation */
 .site-nav {
   background-color: rgba(237, 224, 212, 0.95);
   backdrop-filter: blur(12px);
@@ -605,9 +595,7 @@ button {
   border-bottom: 1px solid rgba(43, 27, 21, 0.1);
 }
 
-/* ==========================================================================
-   HERO SECTION
-   ========================================================================== */
+/* Hero section */
 .hero-section {
   background-color: var(--color-cream);
   position: relative;
@@ -785,9 +773,7 @@ button {
   box-shadow: var(--shadow-md);
 }
 
-/* ==========================================================================
-   SERVING FRESH BREAD SECTION
-   ========================================================================== */
+/* About section */
 .fresh-bread-section {
   background-color: var(--color-white);
   padding: 5.5rem 0;
@@ -944,9 +930,7 @@ button {
   transform: rotate(30deg) translate(100%, 100%);
 }
 
-/* ==========================================================================
-   FULL-WIDTH QUOTE BANNER SECTION
-   ========================================================================== */
+/* Quote banner */
 .quote-section {
   position: relative;
   height: 420px;
@@ -1004,9 +988,7 @@ button {
   opacity: 0.75;
 }
 
-/* ==========================================================================
-   CHECKOUT BREAD MENU SECTION
-   ========================================================================== */
+/* Bread menu */
 .bread-menu-section {
   background-color: var(--color-cream);
   padding: 5rem 0;
@@ -1158,9 +1140,7 @@ button {
   box-shadow: 0 2px 5px rgba(43, 27, 21, 0.06);
 }
 
-/* ==========================================================================
-   PRICING MENU TABLES SECTION
-   ========================================================================== */
+/* Price table */
 .price-section {
   background-color: var(--color-white);
   padding: 5rem 0;
@@ -1265,9 +1245,7 @@ button {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 3px 6px rgba(217, 119, 6, 0.3);
 }
 
-/* ==========================================================================
-   STOCK BADGES & OUT-OF-STOCK STATES
-   ========================================================================== */
+/* Stock badges */
 .bread-card-item.item-out-of-stock {
   opacity: 0.75;
 }
@@ -1349,9 +1327,7 @@ button {
   opacity: 0.7;
 }
 
-/* ==========================================================================
-   FOOTER SECTION
-   ========================================================================== */
+/* Footer */
 .site-footer {
   background-color: var(--color-cream);
   border-top: 1px solid var(--color-border-subtle);
@@ -1501,9 +1477,7 @@ button {
   letter-spacing: 0.05em;
 }
 
-/* ==========================================================================
-   MODAL COMPONENT STYLES (Emil Kowalski Physics & Focus Traps)
-   ========================================================================== */
+/* Modals */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1951,15 +1925,9 @@ button {
   to { transform: translateX(100%); opacity: 0; }
 }
 
-/* ==========================================================================
-   RESPONSIVE DESIGN SYSTEM — Impeccable 5-Breakpoint Coverage
-   Emil Kowalski: "Nothing breaks. Everything adapts. Every size feels intentional."
-   Breakpoints: 1200 → 992 → 768 → 480 → 375
-   ========================================================================== */
+/* Responsive styles */
 
-/* --- Fluid Typography Foundation ---
-   clamp(min, preferred, max) ensures text scales smoothly between viewport widths
-   without any abrupt jumps at breakpoints */
+/* Fluid typography */
 .hero-text-special,
 .hero-text-bread {
   font-size: clamp(2.8rem, 7vw, 6.5rem);
@@ -2637,12 +2605,9 @@ img, video, canvas, svg {
 }
 
 
-/* ==========================================================================
-   FINAL UI / UX POLISH LAYER
-   Emil Kowalski × Impeccable Craft — "Every micro-detail compounds."
-   ========================================================================== */
+/* UI polish and utilities */
 
-/* --- Performance: GPU-composited properties only --- */
+/* Hardware acceleration */
 .btn,
 .btn-book-now,
 .btn-submit-modal,
@@ -2661,22 +2626,21 @@ img, video, canvas, svg {
   will-change: transform;
 }
 
-/* --- Improved focus ring consistency ---
-   Every interactive element gets the same warm amber ring */
+/* Focus outlines */
 *:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--color-cream-lighter), 0 0 0 4px rgba(217, 119, 6, 0.6);
   border-radius: 4px;
 }
 
-/* --- Disabled state: always clearly non-interactive --- */
+/* Disabled states */
 [disabled], .disabled, [aria-disabled="true"] {
   cursor: not-allowed !important;
   opacity: 0.55 !important;
   pointer-events: none;
 }
 
-/* --- Price row: larger tap target on touch devices --- */
+/* Touch device adjustments */
 @media (hover: none) and (pointer: coarse) {
   .price-row-entry {
     padding: 0.9rem 0.8rem;
@@ -2711,7 +2675,7 @@ img, video, canvas, svg {
   }
 }
 
-/* --- Shimmer loading skeleton animation --- */
+/* Loading shimmer */
 @keyframes shimmerLoad {
   0%   { background-position: -400px 0; }
   100% { background-position: 400px 0; }
@@ -2724,7 +2688,7 @@ img, video, canvas, svg {
   border-radius: 4px;
 }
 
-/* --- Smooth page transitions (on navigation) --- */
+/* Page animation */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -2734,7 +2698,7 @@ img, video, canvas, svg {
   animation: fadeInUp 300ms var(--ease-out-expo) forwards;
 }
 
-/* --- Improved scrollbar on all scrollable containers --- */
+/* Scrollbar */
 .search-results-list,
 .modal-window,
 .cart-items-scroll {
@@ -2742,7 +2706,7 @@ img, video, canvas, svg {
   scrollbar-color: rgba(43, 27, 21, 0.25) transparent;
 }
 
-/* --- Number inputs: remove spinners for cleaner look --- */
+/* Remove input spinners */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -2754,13 +2718,13 @@ input[type="number"] {
   appearance: textfield;
 }
 
-/* --- Consistent selection highlight using brand color --- */
+/* Highlight color */
 ::selection {
   background-color: rgba(255, 174, 52, 0.28);
   color: var(--color-brown-deep);
 }
 
-/* --- Better link hover states for footer and text links --- */
+/* Link underlines */
 .footer-contact-link {
   text-decoration-thickness: 1.5px;
   text-underline-offset: 4px;
@@ -2771,7 +2735,7 @@ input[type="number"] {
   text-decoration-color: var(--color-brown-deep);
 }
 
-/* --- Organic card: better image fill on mobile --- */
+/* Card image on mobile */
 @media (max-width: 768px) {
   .organic-thumb-img {
     border-radius: 4px 4px 0 0;
@@ -2779,7 +2743,7 @@ input[type="number"] {
   }
 }
 
-/* --- Auth page responsive improvements (Login/auth.php) --- */
+/* Login page on mobile */
 @media (max-width: 768px) {
   .auth-page-wrap {
     min-height: 100vh;
@@ -2793,7 +2757,7 @@ input[type="number"] {
   }
 }
 
-/* --- Dashboard table: horizontal scroll on mobile --- */
+/* Table mobile scrolling */
 @media (max-width: 768px) {
   .table-responsive-wrap,
   table {
@@ -2805,14 +2769,14 @@ input[type="number"] {
   }
 }
 
-/* --- Admin panel: ensure content wraps correctly --- */
+/* Admin mobile fix */
 @media (max-width: 992px) {
   .admin-page-wrap {
     overflow-x: hidden;
   }
 }
 
-/* --- Final accessibility: reduce motion for users who prefer it --- */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

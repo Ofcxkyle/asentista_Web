@@ -1,13 +1,10 @@
 <?php
-/**
- * Asentista Bakery - Executive Admin Console Home Page
- * Pure PHP implementation providing full bakery management: Analytics, Live Order Dispatching, Product Catalog CRUD, and Customer Management.
- */
+// Admin dashboard for managing orders, products, sales, and customers.
 
 require_once __DIR__ . '/../database/config.php';
 require_once __DIR__ . '/../database/function.php';
 
-// Strict Admin Access Guard
+// Make sure only logged-in admins can access this page
 if (!isAdmin()) {
     header('Location: ../Login/auth.php?msg=admin_required&redirect=Admin/admin.php');
     exit;
@@ -18,7 +15,7 @@ $actionMsg = '';
 $errorMsg = '';
 $activeTab = isset($_GET['tab']) ? sanitize_input($_GET['tab']) : 'orders';
 
-// CSV Export Feature
+// Export orders to CSV file
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     $filterStatus = isset($_GET['status']) ? sanitize_input($_GET['status']) : null;
     $searchKw = isset($_GET['q']) ? sanitize_input($_GET['q']) : '';
@@ -49,22 +46,22 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     exit;
 }
 
-// Handle Form Submissions (Order Status Updates, Product CRUD & Restocking)
+// Handle admin form actions (orders, products, restock)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_action'])) {
-    // CSRF Protection Guard for all administrative actions
+    // Verify CSRF token
     if (!validate_csrf_token($_POST['csrf_token'] ?? null)) {
         $errorMsg = "Security token invalid or expired. Please refresh the page.";
     } else {
         $action = $_POST['admin_action'];
 
         if ($action === 'update_order_status') {
-            $orderId = (int)$_POST['order_id'];
-            $newStatus = sanitize_input($_POST['new_status']);
-            if (updateOrderStatus($pdo, $orderId, $newStatus)) {
-                $actionMsg = "Order #{$orderId} status successfully updated to <strong>{$newStatus}</strong>.";
-                $activeTab = 'orders';
+            $orderId   = (int)($_POST['order_id'] ?? 0);
+            $newStatus = $_POST['new_status'] ?? 'Pending';
+
+            if ($orderId > 0 && updateOrderStatus($pdo, $orderId, $newStatus)) {
+                $actionMsg = "Order <strong>#{$orderId}</strong> status successfully moved to <strong>{$newStatus}</strong>!";
             } else {
-                $errorMsg = "Failed to update order status.";
+                $errorMsg = "Failed to update status for order #{$orderId}.";
             }
         } elseif ($action === 'delete_order') {
             $orderId = (int)$_POST['order_id'];
@@ -81,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_action'])) {
             $pImage    = $_POST['product_image'] ?? 'assets/breads-e1656042972619.png';
             $pFeatured = isset($_POST['is_featured']) ? 1 : 0;
 
-            // Handle custom uploaded photo
+            // Check if a photo was uploaded
             if (!empty($_FILES['product_photo']['name'])) {
                 $uploadRes = handleProductImageUpload($_FILES['product_photo']);
                 if ($uploadRes['success']) {
@@ -113,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_action'])) {
             $pFeatured = isset($_POST['is_featured']) ? 1 : 0;
             $pActive   = isset($_POST['is_active']) ? 1 : 0;
 
-            // Handle optional new photo upload
+            // Handle uploaded photo if provided
             if (!empty($_FILES['product_photo']['name'])) {
                 $uploadRes = handleProductImageUpload($_FILES['product_photo']);
                 if ($uploadRes['success']) {
@@ -176,15 +173,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_action'])) {
     }
 }
 
-// Load Data
+// Fetch dashboard data
 $metrics = getAdminMetrics($pdo);
 $orderSearchKw = isset($_GET['q']) ? sanitize_input($_GET['q']) : '';
 $orderStatusFilter = isset($_GET['status']) && !empty($_GET['status']) ? sanitize_input($_GET['status']) : null;
 $ordersList = searchOrders($pdo, $orderSearchKw, $orderStatusFilter, null);
-$productsList = getAllProducts($pdo, true); // true = include hidden/removed products for admin management
+$productsList = getAllProducts($pdo, true);
 $customersList = getAllCustomers($pdo);
 
-// Sales Ratings & Most Sold Analytics
+// Product sales analytics and best sellers
 $salesAnalytics = getProductSalesAnalytics($pdo);
 $analyticsMap = [];
 foreach ($salesAnalytics as $a) {
@@ -216,7 +213,7 @@ foreach ($salesAnalytics as $a) {
             min-height: 100vh;
             padding-bottom: 5rem;
         }
-        /* Top Command Navigation */
+        /* Admin top nav */
         .admin-nav-bar {
             background-color: var(--color-brown-deep);
             color: var(--color-white);
@@ -292,7 +289,7 @@ foreach ($salesAnalytics as $a) {
             transform: translateY(-1px);
         }
 
-        /* Executive Header Banner */
+        /* Header banner */
         .admin-hero-banner {
             background: linear-gradient(135deg, #2B1B15 0%, #3D2B22 100%);
             color: var(--color-white);
@@ -320,7 +317,7 @@ foreach ($salesAnalytics as $a) {
             margin-top: 4px;
         }
 
-        /* KPI Cards Grid */
+        /* Stat cards */
         .kpi-cards-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -364,7 +361,7 @@ foreach ($salesAnalytics as $a) {
             letter-spacing: 0.06em;
         }
 
-        /* Tabbed Workspace Segmented Control */
+        /* Navigation tabs */
         .admin-tab-nav {
             display: flex;
             gap: 6px;
@@ -403,7 +400,7 @@ foreach ($salesAnalytics as $a) {
             box-shadow: 0 2px 6px rgba(43, 27, 21, 0.08), 0 1px 2px rgba(43, 27, 21, 0.04);
         }
 
-        /* Content Cards & Tables */
+        /* Cards and tables */
         .admin-content-card {
             background-color: var(--color-white);
             border-radius: 6px;
@@ -428,7 +425,7 @@ foreach ($salesAnalytics as $a) {
             color: var(--color-brown-deep);
         }
 
-        /* Data Tables */
+        /* Data tables */
         .admin-table {
             width: 100%;
             border-collapse: collapse;
@@ -452,7 +449,7 @@ foreach ($salesAnalytics as $a) {
             background-color: var(--color-cream-lighter);
         }
 
-        /* Status Badge Pills */
+        /* Status badges */
         .status-badge {
             display: inline-block;
             padding: 4px 10px;
@@ -483,7 +480,7 @@ foreach ($salesAnalytics as $a) {
             transform: translateY(-1px);
         }
 
-        /* Product Grid View */
+        /* Products grid */
         .products-crud-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -512,7 +509,7 @@ foreach ($salesAnalytics as $a) {
             margin-bottom: 0.8rem;
         }
 
-        /* Best Sellers Podium & Leaderboard */
+        /* Best sellers */
         .podium-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -571,8 +568,8 @@ foreach ($salesAnalytics as $a) {
             border-radius: 4px;
         }
 
-        /* Upload photo preview */
-        .upload-dropzone {
+        /* Photo preview */
+        #photoUploadPreview {
             background: #F9FAFB;
             border: 2px dashed #D1D5DB;
             border-radius: 6px;
@@ -599,7 +596,7 @@ foreach ($salesAnalytics as $a) {
 </head>
 <body>
 
-    <!-- Executive Nav Bar -->
+    <!-- Admin nav bar -->
     <nav class="admin-nav-bar">
         <div class="admin-brand-block">
             <div class="brand-svg-logo">
@@ -635,7 +632,7 @@ foreach ($salesAnalytics as $a) {
         </div>
     </nav>
 
-    <!-- Hero Header -->
+    <!-- Header -->
     <header class="admin-hero-banner">
         <div class="container admin-hero-flex">
             <div>
@@ -680,7 +677,7 @@ foreach ($salesAnalytics as $a) {
     </header>
 
     <main class="container admin-page-wrap" style="padding-top: 3.5rem;">
-        <!-- Flash Feedback Messages -->
+        <!-- Alert messages -->
         <?php if (!empty($actionMsg)): ?>
             <div style="background-color: #D1FAE5; color: #065F46; padding: 1rem 1.2rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 4px solid #10B981; box-shadow: var(--shadow-sm);">
                 <?php echo $actionMsg; ?>
@@ -693,7 +690,7 @@ foreach ($salesAnalytics as $a) {
             </div>
         <?php endif; ?>
 
-        <!-- Executive KPI Metrics Cards -->
+        <!-- Stats cards -->
         <section class="kpi-cards-grid" style="grid-template-columns: repeat(6, 1fr);">
             <div class="kpi-card revenue">
                 <span class="kpi-label">Total Revenue</span>
@@ -726,7 +723,7 @@ foreach ($salesAnalytics as $a) {
             </div>
         </section>
 
-        <!-- Navigation Tabs Segmented Control -->
+        <!-- Navigation tabs -->
         <div class="admin-tab-nav">
             <button type="button" class="admin-tab-btn <?php echo $activeTab === 'orders' ? 'active' : ''; ?>" onclick="switchAdminTab('orders')">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -768,9 +765,7 @@ foreach ($salesAnalytics as $a) {
             </button>
         </div>
 
-        <!-- ==============================================================================
-             TAB 1: LIVE ORDERS PIPELINE
-             ============================================================================== -->
+        <!-- Orders tab -->
         <section id="tab-orders" class="admin-content-card" style="display: <?php echo $activeTab === 'orders' ? 'block' : 'none'; ?>;">
             <div class="card-title-row">
                 <div>
@@ -778,7 +773,7 @@ foreach ($salesAnalytics as $a) {
                     <p style="font-size: 0.85rem; color: var(--color-text-muted);">Manage real-time customer orders, update statuses, and track special requests.</p>
                 </div>
 
-                <!-- Filters & Search -->
+                <!-- Search and filter -->
                 <form method="GET" action="Admin/admin.php" style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <input type="hidden" name="tab" value="orders">
                     <select name="status" class="form-select" style="width: auto; padding: 0.45rem 0.8rem; font-size: 0.82rem;" onchange="this.form.submit()">
@@ -874,9 +869,7 @@ foreach ($salesAnalytics as $a) {
             <?php endif; ?>
         </section>
 
-        <!-- ==============================================================================
-             TAB 2: PRODUCT CATALOG MANAGEMENT (CRUD)
-             ============================================================================== -->
+        <!-- Products tab -->
         <section id="tab-products" class="admin-content-card" style="display: <?php echo $activeTab === 'products' ? 'block' : 'none'; ?>;">
             <div class="card-title-row">
                 <div>
@@ -914,7 +907,7 @@ foreach ($salesAnalytics as $a) {
                             <div style="position: relative;">
                                 <img src="<?php echo htmlspecialchars($prod['image']); ?>" alt="<?php echo htmlspecialchars($prod['name']); ?>" class="product-crud-thumb">
                                 
-                                <!-- Storefront Visibility Badge -->
+                                <!-- Storefront visibility badge -->
                                 <?php if ($isActive): ?>
                                     <span style="position: absolute; top: 8px; left: 8px; background: #059669; color: #fff; font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 4px;">
                                         <span>🟢</span> Live in Store
@@ -925,7 +918,7 @@ foreach ($salesAnalytics as $a) {
                                     </span>
                                 <?php endif; ?>
 
-                                <!-- Stock Badge -->
+                                <!-- Stock badge -->
                                 <?php if ($isStockOut): ?>
                                     <span style="position: absolute; top: 8px; right: 8px; background: #DC2626; color: #fff; font-size: 0.7rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; box-shadow: var(--shadow-sm);">
                                         OUT OF STOCK (0)
@@ -978,7 +971,7 @@ foreach ($salesAnalytics as $a) {
                                 <?php echo htmlspecialchars($prod['description']); ?>
                             </p>
 
-                            <!-- Quick Restock Widget -->
+                            <!-- Quick restock -->
                             <form method="POST" action="Admin/admin.php" style="margin-top: 10px; background: rgba(43,27,21,0.04); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(43,27,21,0.06); display: flex; align-items: center; justify-content: space-between; gap: 6px;">
                                 <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                 <input type="hidden" name="admin_action" value="restock_product">
@@ -993,7 +986,7 @@ foreach ($salesAnalytics as $a) {
                             </form>
                         </div>
 
-                        <!-- Product Action Buttons: Edit, Remove from Store, and Delete Permanently -->
+                        <!-- Product actions -->
                         <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 0.9rem;">
                             <div style="display: flex; gap: 6px;">
                                 <button type="button" class="btn btn-secondary btn-sm" style="flex: 1;" onclick='openEditProductModal(<?php echo json_encode($prod); ?>)' title="Edit product details">
@@ -1034,7 +1027,7 @@ foreach ($salesAnalytics as $a) {
                                 <?php endif; ?>
                             </div>
 
-                            <!-- Permanent Delete Option -->
+                            <!-- Delete product -->
                             <form method="POST" action="Admin/admin.php" onsubmit="return confirm('Permanently delete \'<?php echo htmlspecialchars(addslashes($prod['name'])); ?>\' from the database catalog? This action cannot be undone.');">
                                 <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                 <input type="hidden" name="admin_action" value="delete_product">
@@ -1053,9 +1046,7 @@ foreach ($salesAnalytics as $a) {
             </div>
         </section>
 
-        <!-- ==============================================================================
-             TAB 3: BEST-SELLERS & SALES RATINGS LEADERBOARD
-             ============================================================================== -->
+        <!-- Best sellers & ratings tab -->
         <section id="tab-analytics" class="admin-content-card" style="display: <?php echo $activeTab === 'analytics' ? 'block' : 'none'; ?>;">
             <div class="card-title-row">
                 <div>
@@ -1071,7 +1062,7 @@ foreach ($salesAnalytics as $a) {
                 </div>
             </div>
 
-            <!-- Top 3 Best-Seller Showcase Podium -->
+            <!-- Top 3 best sellers -->
             <h3 style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--color-brown-deep); margin-bottom: 1rem;">
                 🏆 Bakery Best-Sellers Showcase
             </h3>
@@ -1119,7 +1110,7 @@ foreach ($salesAnalytics as $a) {
                 <?php endfor; ?>
             </div>
 
-            <!-- Complete Sales Ratings & Units Sold Table -->
+            <!-- Sales rankings table -->
             <h3 style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--color-brown-deep); margin: 1.5rem 0 1rem 0;">
                 📊 Complete Catalog Sales Rankings & Ratings (<?php echo count($salesAnalytics); ?> Products)
             </h3>
@@ -1209,9 +1200,7 @@ foreach ($salesAnalytics as $a) {
             </table>
         </section>
 
-        <!-- ==============================================================================
-             TAB 4: CUSTOMER DIRECTORY
-             ============================================================================== -->
+        <!-- Customers tab -->
         <section id="tab-customers" class="admin-content-card" style="display: <?php echo $activeTab === 'customers' ? 'block' : 'none'; ?>;">
             <div class="card-title-row">
                 <div>
@@ -1253,7 +1242,7 @@ foreach ($salesAnalytics as $a) {
         </section>
     </main>
 
-    <!-- Product Modal (Add / Edit) -->
+    <!-- Product modal -->
     <div class="modal-backdrop" id="productFormModal">
         <div class="modal-window">
             <div class="modal-header">
@@ -1297,7 +1286,7 @@ foreach ($salesAnalytics as $a) {
                         </div>
                     </div>
 
-                    <!-- Preset Photo Quick Chooser -->
+                    <!-- Preset photos -->
                     <div class="form-group" style="background: #FDF8F3; border: 1px solid #F3E8DC; border-radius: 6px; padding: 10px 12px; margin-bottom: 1rem;">
                         <label class="form-label" style="font-size:0.8rem; font-weight:700; color:var(--color-brown-deep); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
                             <span>🖼️</span> Quick Photo Presets (Click to Select)
@@ -1313,7 +1302,7 @@ foreach ($salesAnalytics as $a) {
                         </div>
                     </div>
 
-                    <!-- Photo Upload with Live Preview -->
+                    <!-- Custom photo upload -->
                     <div class="form-group" style="background: #F9FAFB; border: 2px dashed #D1D5DB; padding: 12px; border-radius: 6px;">
                         <label class="form-label" for="prodPhotoFile" style="margin-bottom: 4px; display: block; font-weight: 700; color: var(--color-brown-deep);">
                             📸 Or Upload Custom Product Photo (JPG, PNG, WEBP)
@@ -1350,7 +1339,7 @@ foreach ($salesAnalytics as $a) {
         </div>
     </div>
 
-    <!-- Dedicated Restock Inventory Modal -->
+    <!-- Restock modal -->
     <div class="modal-backdrop" id="restockFormModal">
         <div class="modal-window" style="max-width: 500px;">
             <div class="modal-header">
@@ -1398,7 +1387,7 @@ foreach ($salesAnalytics as $a) {
         </div>
     </div>
 
-    <!-- Dedicated Remove Product Feature Modal -->
+    <!-- Remove product modal -->
     <div class="modal-backdrop" id="removeProductModal">
         <div class="modal-window" style="max-width: 580px;">
             <div class="modal-header" style="border-bottom: 2px solid #FEE2E2;">
@@ -1435,7 +1424,7 @@ foreach ($salesAnalytics as $a) {
                     </select>
                 </div>
 
-                <!-- Live Item Preview Card -->
+                <!-- Product preview -->
                 <div id="removeProductPreviewCard" style="display: flex; gap: 14px; align-items: center; background: #FFF5F5; border: 1.5px solid #FECACA; border-radius: 8px; padding: 12px 14px; margin-bottom: 1.25rem;">
                     <img id="removePreviewImg" src="assets/breads-e1656042972619.png" alt="Preview" style="width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid #E5E7EB;">
                     <div style="flex: 1; min-width: 0;">
@@ -1454,7 +1443,7 @@ foreach ($salesAnalytics as $a) {
                     </div>
                 </div>
 
-                <!-- Guidance Box -->
+                <!-- Info notes -->
                 <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px 12px; margin-bottom: 1.25rem; font-size: 0.8rem; color: #4B5563; line-height: 1.45;">
                     💡 <strong>Safe Storefront Removal:</strong>
                     <ul style="margin: 4px 0 0 16px; padding: 0;">
@@ -1463,9 +1452,9 @@ foreach ($salesAnalytics as $a) {
                     </ul>
                 </div>
 
-                <!-- Action Forms -->
+                <!-- Action forms -->
                 <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <!-- Hide / Restore Form -->
+                    <!-- Hide or restore form -->
                     <form method="POST" action="Admin/admin.php" id="removeToggleForm" onsubmit="return confirmRemoveToggle()">
                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                         <input type="hidden" name="admin_action" value="toggle_product_store">
@@ -1480,7 +1469,7 @@ foreach ($salesAnalytics as $a) {
                         </button>
                     </form>
 
-                    <!-- Permanent Delete Form -->
+                    <!-- Delete permanently form -->
                     <form method="POST" action="Admin/admin.php" id="deletePermanentForm" onsubmit="return confirmDeletePermanent()">
                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                         <input type="hidden" name="admin_action" value="delete_product">
@@ -1495,7 +1484,7 @@ foreach ($salesAnalytics as $a) {
                     </form>
                 </div>
 
-                <!-- Quick Restore Section if any items are currently hidden -->
+                <!-- Quick restore hidden items -->
                 <?php 
                 $hiddenItems = array_filter($productsList, function($p) {
                     return isset($p['is_active']) && (int)$p['is_active'] === 0;

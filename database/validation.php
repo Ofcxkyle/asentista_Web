@@ -1,16 +1,7 @@
 <?php
-/**
- * Asentista Bakery - Form Validation & Sanitization Module
- * Based on Week 7: PHP Forms, Validation & Database CRUD
- */
+// Form validation and sanitization functions
 
-/**
- * Sanitize text input by trimming and escaping special HTML characters.
- * Prevents Cross-Site Scripting (XSS).
- *
- * @param string|null $data
- * @return string
- */
+// Clean input text and escape special characters to prevent XSS
 function sanitize_input($data) {
     if ($data === null) {
         return '';
@@ -21,14 +12,7 @@ function sanitize_input($data) {
     return $data;
 }
 
-/**
- * Validate required field.
- *
- * @param string $value
- * @param string $fieldName
- * @param array &$errors
- * @return bool
- */
+// Check that a required field is not empty
 function validate_required($value, $fieldName, &$errors) {
     if ($value === '' || $value === null) {
         $errors[] = "{$fieldName} is required.";
@@ -37,13 +21,7 @@ function validate_required($value, $fieldName, &$errors) {
     return true;
 }
 
-/**
- * Validate email using filter_var.
- *
- * @param string $email
- * @param array &$errors
- * @return bool
- */
+// Validate email format
 function validate_email($email, &$errors) {
     if (empty($email)) {
         $errors[] = "Email address is required.";
@@ -56,19 +34,12 @@ function validate_email($email, &$errors) {
     return true;
 }
 
-/**
- * Validate phone number.
- *
- * @param string $phone
- * @param array &$errors
- * @return bool
- */
+// Validate phone number format
 function validate_phone($phone, &$errors) {
     if (empty($phone)) {
         $errors[] = "Phone number is required.";
         return false;
     }
-    // Allow digits, spaces, plus, dashes, parentheses
     if (!preg_match('/^[0-9\-\+\s\(\)]{7,25}$/', $phone)) {
         $errors[] = "Please provide a valid phone number.";
         return false;
@@ -76,16 +47,7 @@ function validate_phone($phone, &$errors) {
     return true;
 }
 
-/**
- * Validate length of input string.
- *
- * @param string $value
- * @param string $fieldName
- * @param int $min
- * @param int $max
- * @param array &$errors
- * @return bool
- */
+// Check min and max character length
 function validate_length($value, $fieldName, $min, $max, &$errors) {
     $len = strlen($value);
     if ($len < $min) {
@@ -99,17 +61,11 @@ function validate_length($value, $fieldName, $min, $max, &$errors) {
     return true;
 }
 
-// ==============================================================================
-// CSRF (CROSS-SITE REQUEST FORGERY) PROTECTION
-// ==============================================================================
+// CSRF Protection Helpers
 
-/**
- * Get current CSRF token or generate a new cryptographically secure token.
- *
- * @return string
- */
+// Get or generate CSRF token for the session
 function get_csrf_token() {
-    if (session_status() === PHP_SESSION_NONE) {
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
         session_start();
     }
     if (empty($_SESSION['csrf_token'])) {
@@ -118,15 +74,9 @@ function get_csrf_token() {
     return $_SESSION['csrf_token'];
 }
 
-/**
- * Validate submitted CSRF token against session token using timing-safe comparison.
- * Checks $_POST['csrf_token'], $_GET['csrf_token'], or HTTP X-CSRF-Token header.
- *
- * @param string|null $token
- * @return bool
- */
+// Check if submitted CSRF token matches session
 function validate_csrf_token($token = null) {
-    if (session_status() === PHP_SESSION_NONE) {
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
         session_start();
     }
 
@@ -135,7 +85,6 @@ function validate_csrf_token($token = null) {
     }
 
     if ($token === null) {
-        // Look in POST, GET, or HTTP request headers
         $token = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
     }
 
@@ -146,19 +95,9 @@ function validate_csrf_token($token = null) {
     return hash_equals($_SESSION['csrf_token'], $token);
 }
 
-// ==============================================================================
-// BRUTE FORCE & RATE LIMITING DEFENSE
-// ==============================================================================
+// Login Rate Limiting (Brute Force Defense)
 
-/**
- * Check if the client or email is temporarily locked out from login attempts.
- * Uses persistent database table `login_throttles` keyed by IP + identifier hash.
- * Max 5 attempts within a 15-minute rolling window.
- *
- * @param string $identifier Usually email or IP
- * @param PDO|null $pdo
- * @return array ['allowed' => bool, 'wait_seconds' => int, 'remaining_attempts' => int]
- */
+// Check if user or IP is currently locked out from trying to log in
 function check_login_attempts($identifier, ?PDO $pdo = null) {
     if (!$pdo) {
         global $pdo;
@@ -181,7 +120,7 @@ function check_login_attempts($identifier, ?PDO $pdo = null) {
                         'remaining_attempts' => 0
                     ];
                 }
-                // Rolling 15-minute window expiration
+                // Reset after 15 minutes have passed
                 if ($now - (int)$record['first_attempt'] > 900) {
                     $reset = $pdo->prepare("DELETE FROM `login_throttles` WHERE identifier = :key");
                     $reset->execute([':key' => $key]);
@@ -199,8 +138,8 @@ function check_login_attempts($identifier, ?PDO $pdo = null) {
         }
     }
 
-    // Session fallback if PDO is not initialized
-    if (session_status() === PHP_SESSION_NONE) session_start();
+    // Fallback using session
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) session_start();
     $sKey = 'login_throttle_' . md5(strtolower(trim($identifier)));
     $attempts = $_SESSION[$sKey] ?? ['count' => 0, 'first_attempt' => $now, 'lockout_until' => 0];
     if (!empty($attempts['lockout_until']) && $attempts['lockout_until'] > $now) {
@@ -213,12 +152,7 @@ function check_login_attempts($identifier, ?PDO $pdo = null) {
     return ['allowed' => true, 'wait_seconds' => 0, 'remaining_attempts' => max(0, 5 - $attempts['count'])];
 }
 
-/**
- * Record a failed login attempt. If attempts exceed 5, lock out for 15 minutes.
- *
- * @param string $identifier
- * @param PDO|null $pdo
- */
+// Record a failed login attempt; lockout for 15 minutes after 5 failures
 function record_failed_attempt($identifier, ?PDO $pdo = null) {
     if (!$pdo) {
         global $pdo;
@@ -252,7 +186,7 @@ function record_failed_attempt($identifier, ?PDO $pdo = null) {
         }
     }
 
-    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) session_start();
     $sKey = 'login_throttle_' . md5(strtolower(trim($identifier)));
     $attempts = $_SESSION[$sKey] ?? ['count' => 0, 'first_attempt' => $now, 'lockout_until' => 0];
     if ($now - $attempts['first_attempt'] > 900) {
@@ -265,12 +199,7 @@ function record_failed_attempt($identifier, ?PDO $pdo = null) {
     $_SESSION[$sKey] = $attempts;
 }
 
-/**
- * Reset failed login attempts upon successful authentication.
- *
- * @param string $identifier
- * @param PDO|null $pdo
- */
+// Clear failed login attempts after user logs in successfully
 function reset_login_attempts($identifier, ?PDO $pdo = null) {
     if (!$pdo) {
         global $pdo;
@@ -291,4 +220,3 @@ function reset_login_attempts($identifier, ?PDO $pdo = null) {
     $sKey = 'login_throttle_' . md5(strtolower(trim($identifier)));
     unset($_SESSION[$sKey]);
 }
-

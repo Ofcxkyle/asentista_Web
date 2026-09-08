@@ -1,8 +1,5 @@
 <?php
-/**
- * Asentista Bakery - Shopping Cart AJAX Action Handler
- * Returns JSON for all client-side cart interactions.
- */
+// Handles AJAX cart requests and returns JSON.
 
 require_once __DIR__ . '/../database/config.php';
 require_once __DIR__ . '/../database/function.php';
@@ -11,7 +8,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 $action = $_REQUEST['action'] ?? 'get_cart';
 
-// SECURITY: All cart mutations MUST have a valid CSRF token — no Referer/XHR fallback
+// Check CSRF token for cart changes
 if (in_array($action, ['add', 'update_qty', 'remove', 'clear'])) {
     if (!validate_csrf_token()) {
         echo json_encode([
@@ -21,14 +18,14 @@ if (in_array($action, ['add', 'update_qty', 'remove', 'clear'])) {
         exit;
     }
 
-    // SECURITY: Simple per-session rate limit — max 60 cart mutations per minute
+    // Limit requests to 60 per minute per session
     $rateLimitKey = 'cart_rate_' . session_id();
     $now = time();
     $windowStart = $now - 60; // 1-minute rolling window
     if (!isset($_SESSION[$rateLimitKey])) {
         $_SESSION[$rateLimitKey] = [];
     }
-    // Remove timestamps older than 1 minute
+    // Remove expired timestamps
     $_SESSION[$rateLimitKey] = array_filter($_SESSION[$rateLimitKey], fn($t) => $t > $windowStart);
     if (count($_SESSION[$rateLimitKey]) >= 60) {
         echo json_encode([

@@ -1,7 +1,5 @@
 <?php
-/**
- * Asentista Bakery - Order Success & Receipt Confirmation
- */
+// Order confirmation and receipt page
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/function.php';
@@ -23,7 +21,7 @@ if (!$order && isset($_SESSION['flash_order'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Confirmed - Asentista's Bakery</title>
-    <!-- Website Favicon / Main Logo -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="../assets/ASENTISTA FINAL.png">
     <link rel="apple-touch-icon" href="../assets/ASENTISTA FINAL.png">
     <link rel="stylesheet" href="../style.css">
@@ -99,7 +97,7 @@ if (!$order && isset($_SESSION['flash_order'])) {
 </head>
 <body class="<?php echo isAdmin($pdo) ? 'admin-logged-in' : ''; ?>">
 
-    <!-- Header Navigation -->
+    <!-- Navbar -->
     <nav class="site-nav">
         <div class="container nav-container">
             <a href="../index.php" class="brand-logo-wrap">

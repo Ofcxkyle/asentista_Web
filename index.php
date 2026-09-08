@@ -1,14 +1,11 @@
 <?php
-/**
- * Asentista Bakery - Official Web Application
- * Pure PHP implementation matching Figma design specifications with complete interactive & database functionality.
- */
+// Main landing page for Asentista Bakery.
 
-// Include modular database configuration & helper functions
+// Database config and functions
 require_once __DIR__ . '/database/config.php';
 require_once __DIR__ . '/database/function.php';
 
-// Site Entry Rule: If not logged in and not in guest mode, redirect directly to Auth Portal
+// If the user isn't logged in and not browsing as guest, send them to login
 if (!isLoggedIn() && empty($_SESSION['guest_mode']) && !isset($_GET['guest'])) {
     header('Location: Login/auth.php');
     exit;
@@ -17,17 +14,17 @@ if (!isLoggedIn() && empty($_SESSION['guest_mode']) && !isset($_GET['guest'])) {
 // Asset path
 $assetPath = 'assets/';
 
-// Get currently logged-in user if available
+// Current user if logged in
 $currentUser = getCurrentUser();
 
-// Get live Cart Summary
+// Cart item count and summary
 $cartSummary = getCartSummary($pdo);
 $cartCount = $cartSummary['total_items'];
 
-// Fetch all live bakery catalog products from MySQL database
+// Get all products from database
 $dbProducts = getAllProducts($pdo);
 
-// Featured Breads for Checkout Bread Menu (is_featured = 1)
+// Separate products into featured items, breads, and drinks
 $breadMenuItems = [];
 $breadPrices = [];
 $beveragePrices = [];
@@ -115,9 +112,7 @@ $instagramPhotos = [
 <body class="<?php echo isAdmin($pdo) ? 'admin-logged-in' : ''; ?>">
 
     <?php if (isAdmin($pdo)): ?>
-    <!-- ==========================================
-         EXECUTIVE ADMIN STOREFRONT BAR
-         ========================================== -->
+    <!-- Admin top bar (only visible to admin) -->
     <aside class="admin-storefront-bar" id="adminStorefrontBar" aria-label="Administrator Operations Bar">
         <div class="container admin-bar-container">
             <div class="admin-bar-left">
@@ -156,9 +151,7 @@ $instagramPhotos = [
     </aside>
     <?php endif; ?>
 
-    <!-- ==========================================
-         NAVIGATION BAR
-         ========================================== -->
+    <!-- Navigation bar -->
     <nav class="site-nav" id="mainNav">
         <div class="container nav-container">
             <!-- Brand Logo (Scroll to Top) -->
@@ -277,9 +270,7 @@ $instagramPhotos = [
         </div>
     </nav>
 
-    <!-- ==========================================
-         HERO SECTION (Special Bread)
-         ========================================== -->
+    <!-- Hero section -->
     <section class="hero-section" id="hero">
         <div class="container">
             <div class="hero-grid">
@@ -317,9 +308,7 @@ $instagramPhotos = [
         </div>
     </section>
 
-    <!-- ==========================================
-         SERVING FRESH BREAD EVERY DAY SECTION
-         ========================================== -->
+    <!-- About section -->
     <section class="fresh-bread-section" id="fresh-bread">
         <div class="container">
             <div class="fresh-bread-grid">
@@ -358,9 +347,7 @@ $instagramPhotos = [
         </div>
     </section>
 
-    <!-- ==========================================
-         FULL-WIDTH QUOTE BANNER SECTION
-         ========================================== -->
+    <!-- Quote banner -->
     <section class="quote-section" id="quote-section">
         <img src="<?php echo $assetPath; ?>AdobeStock_2042265063.png" alt="Artisan bakery table spread" class="quote-bg-img">
         <div class="quote-overlay"></div>
@@ -377,9 +364,7 @@ $instagramPhotos = [
         </div>
     </section>
 
-    <!-- ==========================================
-         CHECKOUT BREAD MENU SECTION
-         ========================================== -->
+    <!-- Bread menu section -->
     <section class="bread-menu-section" id="bread-menu">
         <div class="container">
             <h2 class="menu-main-heading">Checkout Bread Menu</h2>
@@ -441,9 +426,7 @@ $instagramPhotos = [
         </div>
     </section>
 
-    <!-- ==========================================
-         PRICE MENU SECTION (Bread & Beverages)
-         ========================================== -->
+    <!-- Price list section -->
     <section class="price-section" id="price-section">
         <div class="container">
             <div class="price-grid-layout">
@@ -522,9 +505,7 @@ $instagramPhotos = [
         </div>
     </section>
 
-    <!-- ==========================================
-         FOOTER SECTION
-         ========================================== -->
+    <!-- Footer -->
     <footer class="site-footer" id="site-footer">
         <div class="container">
             <!-- Upward Arrow Box (Scroll to Top) -->
@@ -589,11 +570,9 @@ $instagramPhotos = [
         </div>
     </footer>
 
-    <!-- ==========================================
-         INTERACTIVE MODALS & OVERLAYS
-         ========================================== -->
+    <!-- Modals -->
 
-    <!-- 1. Search Modal -->
+    <!-- Search modal -->
     <div class="modal-backdrop" id="searchModal" role="dialog" aria-modal="true" aria-label="Search Bakery Menu">
         <div class="modal-window search-modal-window">
             <div class="modal-header">
@@ -615,7 +594,7 @@ $instagramPhotos = [
         </div>
     </div>
 
-    <!-- 2. Booking & Custom Order Modal (Connected to Cart/order_process.php) -->
+    <!-- Order reservation modal -->
     <div class="modal-backdrop" id="bookingModal" role="dialog" aria-modal="true" aria-label="Book Bakery Order">
         <div class="modal-window">
             <div class="modal-header">
@@ -684,7 +663,7 @@ $instagramPhotos = [
         </div>
     </div>
 
-    <!-- 3. Bread Product Detail Modal -->
+    <!-- Product detail modal -->
     <div class="modal-backdrop" id="productModal" role="dialog" aria-modal="true" aria-label="Product Details">
         <div class="modal-window">
             <div class="modal-header">
@@ -718,7 +697,7 @@ $instagramPhotos = [
         </div>
     </div>
 
-    <!-- 4. Instagram Lightbox Modal -->
+    <!-- Instagram photo preview lightbox -->
     <div class="lightbox-backdrop" id="lightboxModal" role="dialog" aria-modal="true" aria-label="Instagram Photo Preview">
         <div class="lightbox-img-wrap">
             <button type="button" class="lightbox-close-btn" aria-label="Close preview">&times;</button>
@@ -728,10 +707,10 @@ $instagramPhotos = [
         </div>
     </div>
 
-    <!-- 5. Toast Notifications Container -->
+    <!-- Toast notifications -->
     <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
-    <!-- JavaScript Controller & Data Hydration -->
+    <!-- Pass data to JS -->
     <script>
         window.isLoggedIn = <?php echo isLoggedIn() ? 'true' : 'false'; ?>;
         window.CSRF_TOKEN = '<?php echo get_csrf_token(); ?>';

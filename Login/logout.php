@@ -1,7 +1,5 @@
 <?php
-/**
- * Asentista Bakery - Logout Controller
- */
+// Logs out the user and redirects to home page
 require_once __DIR__ . '/../database/config.php';
 require_once __DIR__ . '/../database/function.php';
 

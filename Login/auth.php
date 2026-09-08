@@ -1,9 +1,5 @@
 <?php
-/**
- * Asentista Bakery - World-Class Authentication Portal
- * Crafted with Emil Kowalski Design Engineering & Impeccable UI Principles.
- * Full-stack PHP/MySQL session management with CSRF protection, rate limiting, and interactive client UX.
- */
+// User login and registration page.
 
 require_once __DIR__ . '/../database/config.php';
 require_once __DIR__ . '/../database/function.php';
@@ -12,7 +8,7 @@ $errorMsg = '';
 $successMsg = '';
 $activeTab = isset($_GET['tab']) && $_GET['tab'] === 'register' ? 'register' : 'login';
 
-// If already logged in, redirect based on role
+// Redirect if already logged in
 if (isLoggedIn() && !isset($_GET['action'])) {
     if (isAdmin()) {
         header('Location: ../Admin/admin.php');
@@ -22,44 +18,42 @@ if (isLoggedIn() && !isset($_GET['action'])) {
     exit;
 }
 
-// Handle Guest Mode Skip
+// Handle guest mode
 if (isset($_GET['guest'])) {
     $_SESSION['guest_mode'] = true;
     header('Location: ../index.php');
     exit;
 }
 
-// Helper to determine safe relative redirect destination
-// SECURITY: Only allows relative paths within this application.
-// Absolute URLs (http://, https://, //host, etc.) are always rejected.
+// Return a safe relative redirect path
 function getSafeRedirectUrl($target, $default = '../index.php') {
     if (empty($target)) return $default;
 
-    // Strip whitespace and null bytes to prevent bypass tricks
+    // Remove unwanted characters
     $target = trim(str_replace(["\0", "\r", "\n"], '', $target));
 
-    // Reject anything that looks like an absolute URL or protocol-relative URL
+    // Don't allow external URLs
     if (preg_match('#^(https?:)?//#i', $target)) {
         return $default;
     }
 
-    // Reject data: javascript: and other scheme URLs
+    // Block script schemes
     if (preg_match('#^[a-z][a-z0-9+\-.]*:#i', $target)) {
         return $default;
     }
 
-    // Only allow known internal relative paths (alphanumeric, /, ., _, -, ?, =, &, %)
+    // Allow only safe relative path characters
     if (!preg_match('#^[a-zA-Z0-9/._\-?=&%+#]+$#', $target)) {
         return $default;
     }
 
-    // Remove leading slashes to ensure we stay relative
+    // Make sure path is relative
     $target = ltrim($target, '/');
 
     return '../' . $target;
 }
 
-// Handle Form Submissions
+// Handle login and registration form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validate_csrf_token($_POST['csrf_token'] ?? null)) {
         $errorMsg = 'Security validation failed (CSRF token expired or invalid). Please refresh the page.';
@@ -95,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($loginResult['success']) {
                 $userRole = $loginResult['user']['role'] ?? 'customer';
                 
-                // Custom redirect if provided, otherwise route admins to admin.php and customers to index.php
+                // Redirect based on role or destination
                 if (!empty($_GET['redirect'])) {
                     $redirectUrl = getSafeRedirectUrl($_GET['redirect'], '../index.php');
                 } else {
@@ -126,7 +120,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
     <base href="<?php echo htmlspecialchars($appBasePath); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In & Register - Asentista's Bakery</title>
-    <!-- Favicon & Touch Icon -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/ASENTISTA FINAL.png">
     <link rel="apple-touch-icon" href="assets/ASENTISTA FINAL.png">
     
@@ -138,9 +132,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
     <link rel="stylesheet" href="style.css">
     
     <style>
-        /* ==========================================================================
-           WORLD-CLASS AUTH PORTAL DESIGN (Emil Kowalski & Impeccable Standards)
-           ========================================================================== */
+        /* Auth page styles */
         
         :root {
             --auth-bg-ambient: #FAF7F2;
@@ -176,9 +168,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             position: relative;
         }
 
-        /* --------------------------------------------------------------------------
-           LEFT PANE: Atmospheric Artisan Showcase
-           -------------------------------------------------------------------------- */
+        /* Left hero pane */
         .auth-hero-pane {
             position: relative;
             background: linear-gradient(145deg, rgba(25, 15, 12, 0.95) 0%, rgba(43, 27, 21, 0.88) 100%),
@@ -192,7 +182,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* Ambient Glow Backdrop */
+        /* Glow background */
         .auth-hero-pane::before {
             content: '';
             position: absolute;
@@ -205,7 +195,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             pointer-events: none;
         }
 
-        /* Subtle Bread Crumb Texture Overlay */
+        /* Texture pattern */
         .auth-hero-pane::after {
             content: '';
             position: absolute;
@@ -309,7 +299,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             font-weight: 400;
         }
 
-        /* Live Trust & Proof Bar */
+        /* Stats bar */
         .hero-stats-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -354,7 +344,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             letter-spacing: 0.02em;
         }
 
-        /* Glassmorphism Feature Badges */
+        /* Feature cards */
         .hero-features-group {
             display: flex;
             flex-direction: column;
@@ -418,7 +408,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             margin-top: 2px;
         }
 
-        /* Founder Quote */
+        /* Founder quote */
         .hero-founder-quote {
             position: relative;
             z-index: 2;
@@ -449,9 +439,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             text-transform: uppercase;
         }
 
-        /* --------------------------------------------------------------------------
-           RIGHT PANE: Luxury Authentication Concierge
-           -------------------------------------------------------------------------- */
+        /* Right auth card pane */
         .auth-form-pane {
             display: flex;
             align-items: center;
@@ -461,7 +449,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             position: relative;
         }
 
-        /* Ambient Glow behind the card */
+        /* Glow behind card */
         .auth-form-pane::before {
             content: '';
             position: absolute;
@@ -478,7 +466,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             z-index: 2;
         }
 
-        /* Elevated Card with Multi-layered Optical Shadows */
+        /* Card container */
         .auth-luxury-card {
             background-color: var(--auth-card-bg);
             border-radius: var(--auth-radius-card);
@@ -498,7 +486,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                 0 32px 56px -12px rgba(43, 27, 21, 0.1);
         }
 
-        /* Card Brand Header */
+        /* Card header */
         .card-header-block {
             text-align: center;
             margin-bottom: 1.6rem;
@@ -544,9 +532,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             line-height: 1.45;
         }
 
-        /* --------------------------------------------------------------------------
-           SEGMENTED PILL CONTROL (Linear / iOS Style Tab Switcher)
-           -------------------------------------------------------------------------- */
+        /* Tab switcher */
         .auth-segmented-wrapper {
             position: relative;
             background: #F3EDE4;
@@ -597,9 +583,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
         }
 
 
-        /* --------------------------------------------------------------------------
-           ALERTS & NOTICES
-           -------------------------------------------------------------------------- */
+        /* Alert messages */
         .auth-alert {
             padding: 11px 14px;
             border-radius: 10px;
@@ -637,9 +621,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             border-left: 4px solid #DC2626;
         }
 
-        /* --------------------------------------------------------------------------
-           FORM FIELDS & LUXURY INPUT COMPONENTS
-           -------------------------------------------------------------------------- */
+        /* Form fields */
         .auth-form {
             display: flex;
             flex-direction: column;
@@ -679,7 +661,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             align-items: center;
         }
 
-        /* Leading SVG Icon */
+        /* Field icon */
         .auth-input-icon {
             position: absolute;
             left: 14px;
@@ -699,7 +681,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             stroke-width: 2;
         }
 
-        /* The Input Itself */
+        /* Input field */
         .auth-luxury-input {
             width: 100%;
             font-family: var(--font-sans);
@@ -737,14 +719,12 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             box-shadow: 0 0 0 3px var(--auth-focus-ring), 0 1px 2px rgba(43, 27, 21, 0.04);
         }
 
-        /* Activate icon color when field is focused */
+        /* Icon color on focus */
         .auth-input-container:focus-within .auth-input-icon {
             color: var(--auth-brand-gold-deep);
         }
 
-        /* ==========================================================================
-           CRITICAL CHROME AUTOFILL FIX (No ugly blue background!)
-           ========================================================================== */
+        /* Chrome autofill background fix */
         input.auth-luxury-input:-webkit-autofill,
         input.auth-luxury-input:-webkit-autofill:hover,
         input.auth-luxury-input:-webkit-autofill:focus,
@@ -762,7 +742,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             border-color: var(--auth-border-focus) !important;
         }
 
-        /* Password Reveal Button */
+        /* Password toggle button */
         .auth-pwd-toggle-btn {
             position: absolute;
             right: 12px;
@@ -798,7 +778,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             stroke-width: 2;
         }
 
-        /* Password Match Live Feedback Indicator */
+        /* Password match indicator */
         .pwd-match-indicator {
             font-size: 0.72rem;
             font-weight: 500;
@@ -817,9 +797,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             color: #DC2626;
         }
 
-        /* --------------------------------------------------------------------------
-           PRIMARY SUBMIT BUTTON (Emil Kowalski Tactile Depth)
-           -------------------------------------------------------------------------- */
+        /* Submit button */
         .auth-submit-btn {
             position: relative;
             width: 100%;
@@ -876,9 +854,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             transform: translateX(4px);
         }
 
-        /* --------------------------------------------------------------------------
-           SECONDARY ACTIONS & GUEST BROWSE LINK
-           -------------------------------------------------------------------------- */
+        /* Secondary actions */
         .auth-footer-divider {
             display: flex;
             align-items: center;
@@ -938,7 +914,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             stroke-width: 2;
         }
 
-        /* Security Verification Footer */
+        /* Footer note */
         .auth-security-badge {
             margin-top: 1.4rem;
             display: flex;
@@ -956,9 +932,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             color: #059669;
         }
 
-        /* --------------------------------------------------------------------------
-           RESPONSIVE BREAKPOINTS
-           -------------------------------------------------------------------------- */
+        /* Responsive styles */
         @media (max-width: 1024px) {
             .auth-viewport {
                 grid-template-columns: 1fr;
@@ -1001,12 +975,10 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
 <body>
 
     <div class="auth-viewport">
-        <!-- ==================================================================
-             LEFT PANE: High-End Bakery Atmosphere & Brand Heritage
-             ================================================================== -->
+        <!-- Left branding pane -->
         <div class="auth-hero-pane">
             <div class="hero-brand-block">
-                <!-- Header Pill -->
+                <!-- Badge pill -->
                 <div class="hero-brand-header">
                     <div class="brand-logo-disc">
                         <img src="assets/ASENTISTA FINAL.png" alt="Asentista Crest">
@@ -1017,7 +989,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                     </div>
                 </div>
 
-                <!-- Main Display Headline -->
+                <!-- Headline -->
                 <h1 class="hero-title-main">
                     Artisan Sourdough & <span>Freshly Brewed</span> Craft.
                 </h1>
@@ -1025,7 +997,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                     Handmade daily in small batches using naturally fermented wild levain, stone-ground flours, and zero artificial preservatives.
                 </p>
 
-                <!-- Live Social Proof & Trust Stats -->
+                <!-- Trust stats -->
                 <div class="hero-stats-row">
                     <div class="hero-stat-card">
                         <div class="stat-value">12,000+</div>
@@ -1041,7 +1013,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                     </div>
                 </div>
 
-                <!-- Feature Highlights -->
+                <!-- Features -->
                 <div class="hero-features-group">
                     <div class="hero-feature-card">
                         <div class="hero-feat-icon-box">🥖</div>
@@ -1069,7 +1041,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                 </div>
             </div>
 
-            <!-- Founder Quote Block -->
+            <!-- Quote -->
             <div class="hero-founder-quote">
                 <div class="quote-body">
                     "The smell of good bread baking is indescribable in its evocation of innocence and delight."
@@ -1078,14 +1050,12 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             </div>
         </div>
 
-        <!-- ==================================================================
-             RIGHT PANE: Luxury Authentication Concierge
-             ================================================================== -->
+        <!-- Right auth card pane -->
         <div class="auth-form-pane">
             <div class="auth-card-container">
                 <div class="auth-luxury-card">
                     
-                    <!-- Card Crest & Title -->
+                    <!-- Card title -->
                     <div class="card-header-block">
                         <div class="card-brand-crest">
                             <img src="assets/ASENTISTA FINAL.png" alt="Asentista Bakery">
@@ -1098,7 +1068,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                         </p>
                     </div>
 
-                    <!-- Fluid Segmented Switcher (Tabs) -->
+                    <!-- Tabs -->
                     <div class="auth-segmented-wrapper" role="tablist">
                         <button type="button" class="auth-segment-btn <?php echo $activeTab === 'login' ? 'active' : ''; ?>" id="tabBtnLogin" onclick="switchAuthTab('login')" role="tab">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1119,7 +1089,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                         </button>
                     </div>
 
-                    <!-- Alert / Context Notices -->
+                    <!-- Alert messages -->
                     <?php if (isset($_GET['msg']) && $_GET['msg'] === 'login_to_order'): ?>
                         <div class="auth-alert auth-alert-warning">
                             <span style="font-size: 1.15rem; flex-shrink: 0;">🔒</span>
@@ -1139,14 +1109,12 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                         </div>
                     <?php endif; ?>
 
-                    <!-- ==============================================================
-                         FORM 1: SIGN IN FORM
-                         ============================================================== -->
+                    <!-- Login form -->
                     <form action="Login/auth.php<?php echo !empty($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''; ?>" method="POST" id="formLogin" class="auth-form" style="display: <?php echo $activeTab === 'login' ? 'flex' : 'none'; ?>;">
                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                         <input type="hidden" name="auth_action" value="login">
 
-                        <!-- Email or Username Field -->
+                        <!-- Email or username -->
                         <div class="auth-field-group">
                             <label class="auth-label" for="loginEmail">
                                 <span>Email Address or Username <span class="required-star">*</span></span>
@@ -1158,11 +1126,11 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                                         <polyline points="22,6 12,13 2,6"></polyline>
                                     </svg>
                                 </span>
-                                <input type="text" id="loginEmail" name="email" class="auth-luxury-input" placeholder="admin@asentista.com or asentista" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" autocomplete="username">
+                                <input type="text" id="loginEmail" name="email" class="auth-luxury-input" placeholder="Enter your email address or username" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" autocomplete="username">
                             </div>
                         </div>
 
-                        <!-- Password Field -->
+                        <!-- Password -->
                         <div class="auth-field-group">
                             <label class="auth-label" for="loginPassword">
                                 <span>Password <span class="required-star">*</span></span>
@@ -1184,7 +1152,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                             </div>
                         </div>
 
-                        <!-- Submit Button -->
+                        <!-- Submit button -->
                         <button type="submit" class="auth-submit-btn" id="loginSubmitBtn">
                             <span>Sign In & Enter Bakery</span>
                             <svg class="auth-submit-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -1194,14 +1162,12 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                         </button>
                     </form>
 
-                    <!-- ==============================================================
-                         FORM 2: CREATE ACCOUNT FORM
-                         ============================================================== -->
+                    <!-- Register form -->
                     <form action="Login/auth.php<?php echo !empty($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : ''; ?>" method="POST" id="formRegister" class="auth-form" style="display: <?php echo $activeTab === 'register' ? 'flex' : 'none'; ?>;">
                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                         <input type="hidden" name="auth_action" value="register">
 
-                        <!-- Full Name -->
+                        <!-- Full name -->
                         <div class="auth-field-group">
                             <label class="auth-label" for="regName">
                                 <span>Full Name <span class="required-star">*</span></span>
@@ -1217,7 +1183,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                             </div>
                         </div>
 
-                        <!-- Email & Phone in 2-Column Row -->
+                        <!-- Email and phone -->
                         <div class="auth-row-2col">
                             <div class="auth-field-group">
                                 <label class="auth-label" for="regEmail">
@@ -1249,7 +1215,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                             </div>
                         </div>
 
-                        <!-- Passwords in 2-Column Row -->
+                        <!-- Password and confirmation -->
                         <div class="auth-row-2col">
                             <div class="auth-field-group">
                                 <label class="auth-label" for="regPassword">
@@ -1294,10 +1260,10 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                             </div>
                         </div>
 
-                        <!-- Live Password Match Status Message -->
+                        <!-- Password match message -->
                         <div id="pwdMatchMsg" class="pwd-match-indicator" style="display: none;"></div>
 
-                        <!-- Registration Submit Button -->
+                        <!-- Submit button -->
                         <button type="submit" class="auth-submit-btn" id="regSubmitBtn">
                             <span>Create Account & Enter Bakery</span>
                             <svg class="auth-submit-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -1312,7 +1278,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                         <span>or continue exploring</span>
                     </div>
 
-                    <!-- Guest Access Link -->
+                    <!-- Guest link -->
                     <a href="Login/auth.php?guest=1" class="guest-browse-btn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -1321,7 +1287,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                         <span>Browse Bakery Menu as Guest</span>
                     </a>
 
-                    <!-- Security Badge -->
+                    <!-- Security note -->
                     <div class="auth-security-badge">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -1334,9 +1300,9 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
         </div>
     </div>
 
-    <!-- Interactive Client-side Scripting -->
+    <!-- Scripts -->
     <script>
-        // Tab Switcher with Fluid State Updates
+        // Switch between login and register tabs
         function switchAuthTab(tab) {
             const formLogin = document.getElementById('formLogin');
             const formRegister = document.getElementById('formRegister');
@@ -1362,7 +1328,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             }
         }
 
-        // Interactive Password Visibility Peek Toggle
+        // Toggle password visibility
         function togglePasswordVisibility(inputId, btn) {
             const input = document.getElementById(inputId);
             if (!input) return;
@@ -1389,7 +1355,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             }
         }
 
-        // Live Password Confirmation Feedback
+        // Check if passwords match
         function validateLivePasswordMatch() {
             const pwd = document.getElementById('regPassword').value;
             const confirm = document.getElementById('regConfirm').value;

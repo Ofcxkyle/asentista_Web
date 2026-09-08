@@ -1,16 +1,13 @@
--- ==============================================================================
--- ASENTISTA BAKERY - COMPLETE DATABASE MIGRATION & SEED SCRIPT
--- Compatible with MySQL / MariaDB (XAMPP phpMyAdmin / MySQL Workbench / CLI)
--- ==============================================================================
+-- Asentista Bakery database schema and sample data
 
--- 1. Create Database if it does not exist
+-- 1. Create database
 CREATE DATABASE IF NOT EXISTS `asentista_bakery_db` 
 CHARACTER SET utf8mb4 
 COLLATE utf8mb4_unicode_ci;
 
 USE `asentista_bakery_db`;
 
--- 2. Drop existing tables in reverse order of foreign keys
+-- 2. Drop existing tables
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `cart_items`;
 DROP TABLE IF EXISTS `orders`;
@@ -18,9 +15,7 @@ DROP TABLE IF EXISTS `products`;
 DROP TABLE IF EXISTS `users`;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- ==============================================================================
--- 3. Create Users Table
--- ==============================================================================
+-- 3. Users table
 CREATE TABLE `users` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(100) NOT NULL,
@@ -32,13 +27,11 @@ CREATE TABLE `users` (
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ==============================================================================
--- 4. Create Products Catalog Table
--- ==============================================================================
+-- 4. Products table
 CREATE TABLE `products` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(100) NOT NULL,
-  `category` VARCHAR(50) NOT NULL, -- 'Bread', 'Beverage', 'Organic Special'
+  `category` VARCHAR(50) NOT NULL,
   `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `stock` INT NOT NULL DEFAULT 15,
   `description` TEXT NOT NULL,
@@ -47,9 +40,7 @@ CREATE TABLE `products` (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ==============================================================================
--- 5. Create Cart Items Table (Shopping Cart Persistence)
--- ==============================================================================
+-- 5. Cart items table
 CREATE TABLE `cart_items` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `user_id` INT DEFAULT NULL,
@@ -64,9 +55,7 @@ CREATE TABLE `cart_items` (
   CONSTRAINT `fk_cart_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ==============================================================================
--- 6. Create Orders & Bookings Table
--- ==============================================================================
+-- 6. Orders and bookings table
 CREATE TABLE `orders` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `user_id` INT DEFAULT NULL,
@@ -75,7 +64,7 @@ CREATE TABLE `orders` (
   `item_name` VARCHAR(255) NOT NULL,
   `item_price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `quantity` INT NOT NULL DEFAULT 1,
-  `order_type` VARCHAR(50) NOT NULL DEFAULT 'In-Store Pickup', -- 'In-Store Pickup', 'Dine-in Table Booking', 'Direct Delivery'
+  `order_type` VARCHAR(50) NOT NULL DEFAULT 'In-Store Pickup',
   `reservation_date` DATE NOT NULL,
   `special_notes` TEXT DEFAULT NULL,
   `status` ENUM('Pending', 'Confirmed', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Pending',
@@ -84,9 +73,7 @@ CREATE TABLE `orders` (
   CONSTRAINT `fk_orders_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ==============================================================================
--- 6b. Create Login Throttles Table (Brute Force Defense)
--- ==============================================================================
+-- 7. Login throttles table (tracks failed attempts)
 CREATE TABLE `login_throttles` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `identifier` VARCHAR(128) NOT NULL,
@@ -96,7 +83,7 @@ CREATE TABLE `login_throttles` (
   INDEX `idx_throttle_lookup` (`identifier`, `lockout_until`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Performance Composite Indexes
+-- Indexes
 ALTER TABLE `cart_items` ADD INDEX `idx_cart_session` (`session_id`);
 ALTER TABLE `cart_items` ADD INDEX `idx_cart_product` (`product_id`);
 ALTER TABLE `orders` ADD INDEX `idx_orders_status_date` (`status`, `created_at`);
@@ -104,18 +91,14 @@ ALTER TABLE `orders` ADD INDEX `idx_orders_user` (`user_id`);
 ALTER TABLE `products` ADD INDEX `idx_products_cat_feat` (`category`, `is_featured`);
 ALTER TABLE `products` ADD INDEX `idx_products_stock` (`stock`);
 
--- ==============================================================================
--- 7. Insert Default Seed Data
--- ==============================================================================
+-- 8. Seed data
 
--- Default Users:
--- Admin User: admin@asentista.com / admin123
--- Customer User: customer@asentista.com / password123
+-- Default users (admin: admin@asentista.com / admin123, customer: customer@asentista.com / password123)
 INSERT INTO `users` (`id`, `name`, `email`, `phone`, `password`, `role`) VALUES
-(1, 'Kyle Asentista (Admin)', 'admin@asentista.com', '0994 005 8425', '$2y$10$v7g0l1eCskvVn6WnEcwv2.b2o65sBfqDfgZlqK5K62x4Y2aH2oVge', 'admin'),
-(2, 'Maria Santos', 'customer@asentista.com', '0912 345 6789', '$2y$10$v7g0l1eCskvVn6WnEcwv2.b2o65sBfqDfgZlqK5K62x4Y2aH2oVge', 'customer');
+(1, 'Kyle Asentista (Admin)', 'admin@asentista.com', '0994 005 8425', '$2y$10$bea5BvcP2OSI5VyEedLNFuNov0d.TJrce.lSDIXqtaKOAMkrmthqS', 'admin'),
+(2, 'Maria Santos', 'customer@asentista.com', '0912 345 6789', '$2y$10$hs5cl0VIVShDi6r3CCTjRueyxbHD7.f9mnPmNwDl/yU6P9nhXtTdC', 'customer');
 
--- Default Bakery Products
+-- Default products
 INSERT INTO `products` (`id`, `name`, `category`, `price`, `stock`, `description`, `image`, `is_featured`) VALUES
 (1, 'Crunchy Crust', 'Bread', 35.00, 18, 'Golden-baked crust with an airy, soft interior. Perfect for morning dips or artisan sandwiches.', 'assets/bread-with-appetizing-crunchy-crust-top-view-isolated-on-white-e1656042939392.png', 1),
 (2, 'Crescent Roll', 'Bread', 30.00, 20, 'Buttery, flaky crescent roll sprinkled with aromatic toasted poppy seeds.', 'assets/top-view-of-crescent-roll-with-poppy-seeds-on-white-background-e1656042946947.png', 1),
@@ -136,7 +119,7 @@ INSERT INTO `products` (`id`, `name`, `category`, `price`, `stock`, `description
 (17, 'Cortado', 'Beverage', 69.00, 35, 'Equal parts rich espresso and warm textured whole milk.', 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png', 0),
 (18, 'Macchiato', 'Beverage', 69.00, 35, 'Fresh espresso stained with a dollop of velvety foamed milk.', 'assets/banana-bread-slice-of-cake-with-banana-and-blueberries-morning-breakfast-with-coffee-e1656043186302 (1).png', 0);
 
--- Default Sample Orders
+-- Sample orders
 INSERT INTO `orders` (`id`, `user_id`, `customer_name`, `customer_phone`, `item_name`, `item_price`, `quantity`, `order_type`, `reservation_date`, `special_notes`, `status`) VALUES
 (1, 2, 'Maria Santos', '0912 345 6789', 'Crunchy Crust (x2), Cold Brew (x1)', 125.00, 3, 'In-Store Pickup', CURDATE(), 'Please slice the crunchy crust bread for sandwiches.', 'Confirmed'),
 (2, NULL, 'Juan Dela Cruz', '0998 765 4321', 'Sourdough (x1)', 25.00, 1, 'Direct Delivery', CURDATE(), 'Deliver around 10:00 AM at Sibulan plaza.', 'Pending'),

@@ -1,5 +1,3 @@
 <?php
-/**
- * Asentista Bakery - Login Alias Controller
- */
+// Redirects to auth.php
 require_once __DIR__ . '/auth.php';

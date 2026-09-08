@@ -1,14 +1,11 @@
-/**
- * Asentista Bakery - Interactive Features & Database UI Controller
- * Powers all interactive navigation, search, shopping cart AJAX, product details, lightbox, and toast notifications.
- */
+// Main JavaScript for storefront interactions (cart, modals, search, gallery)
 
-// Global Quick Add to Cart accessible from HTML onclick attributes
+// Quick add to cart function
 const inflightCartRequests = new Set();
 window.quickAddToCart = async function(productName, price = 0, image = '', qty = 1) {
     const lockKey = `${productName}`;
     if (inflightCartRequests.has(lockKey)) {
-        return; // Debounce rapid multi-clicks
+        return; // ignore spam clicks
     }
     inflightCartRequests.add(lockKey);
 
@@ -73,7 +70,7 @@ function updateCartBadge(count) {
     }
 }
 
-// Global Toast helper
+// Show toast notifications
 window.showToast = function(message, type = 'success') {
     const toastContainer = document.getElementById('toastContainer');
     if (!toastContainer) return;
@@ -100,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/'/g, '&#039;');
     }
 
-    // Default static fallback catalog only if database products are completely absent
+    // Fallback products if database catalog is empty
     const fallbackBakeryCatalog = [
         {
             id: 'bread-1',
@@ -184,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
-    // Build live catalog dynamically from database server products so storefront adds/removes sync instantly
+    // Get products loaded from server
     function getBakeryCatalog() {
         if (window.SERVER_PRODUCTS && Array.isArray(window.SERVER_PRODUCTS) && window.SERVER_PRODUCTS.length > 0) {
             return window.SERVER_PRODUCTS.map(p => {
@@ -206,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return fallbackBakeryCatalog;
     }
 
-    // --- DOM Elements ---
+    // DOM elements
     const mobileToggleBtn = document.getElementById('mobileToggleBtn');
     const mobileNavDrawer = document.getElementById('mobileNavDrawer');
     const searchModal = document.getElementById('searchModal');
@@ -214,13 +211,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const productModal = document.getElementById('productModal');
     const lightboxModal = document.getElementById('lightboxModal');
 
-    // Clean query parameters from URL without displaying popups
+    // Clean url params
     if (window.location.search.includes('auth_success')) {
         const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     }
 
-    // --- Modal Open/Close Controls ---
+    // Modal controls
     function openModal(modalEl) {
         if (!modalEl) return;
         modalEl.classList.add('active');
@@ -255,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Mobile Menu Toggle ---
+    // Mobile navigation drawer
     if (mobileToggleBtn && mobileNavDrawer) {
         mobileToggleBtn.addEventListener('click', () => {
             const isOpen = mobileNavDrawer.classList.toggle('open');
@@ -270,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Smooth Scrolling & Active State (ScrollSpy) ---
+    // Update active nav link on scroll
     const navLinks = document.querySelectorAll('.nav-link');
     const sections = document.querySelectorAll('section[id], footer[id]');
 
@@ -290,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.addEventListener('scroll', highlightNavOnScroll);
 
-    // --- Downward Arrow in Hero -> Scroll to Fresh Bread ---
+    // Scroll down button
     const heroScrollDownBtn = document.getElementById('heroScrollDownBtn');
     if (heroScrollDownBtn) {
         heroScrollDownBtn.addEventListener('click', () => {
@@ -301,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Upward Arrow in Footer -> Scroll to Top ---
+    // Scroll to top button
     const footerScrollTopBtn = document.getElementById('footerScrollTopBtn');
     if (footerScrollTopBtn) {
         footerScrollTopBtn.addEventListener('click', () => {
@@ -309,14 +306,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Brand Logos -> Scroll to Top ---
+    // Click logo to scroll top
     document.querySelectorAll('.brand-logo-wrap, .footer-brand-center').forEach(brand => {
         brand.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     });
 
-    // --- Organic Product Card -> Open Details Modal ---
+    // Organic bread click
     const organicProductCard = document.getElementById('organicProductCard');
     if (organicProductCard) {
         organicProductCard.addEventListener('click', () => {
@@ -331,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Search Feature ---
+    // Search modal and filtering
     const searchTriggerBtn = document.getElementById('searchTriggerBtn');
     const searchInputField = document.getElementById('searchInputField');
     const searchResultsList = document.getElementById('searchResultsList');
@@ -432,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Global shortcut '/' to open search
+    // Press '/' to search
     document.addEventListener('keydown', (e) => {
         if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
             e.preventDefault();
@@ -440,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Product Detail Modal ---
+    // Product detail modal
     let currentModalProduct = null;
 
     function openProductDetail(product) {
@@ -458,7 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (priceEl) priceEl.textContent = product.price;
         if (descEl) descEl.textContent = product.desc;
 
-        // Stock and availability
+        // Check stock status
         const stock = (product.stock !== undefined) ? parseInt(product.stock) : 999;
         const isOutOfStock = (stock <= 0);
 
@@ -533,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Booking / Reservation Modal Connected to Database ---
+    // Booking & reservation modal
     const bookNowBtns = document.querySelectorAll('.btn-book-now, #bookNowHeroBtn, .trigger-booking-modal');
     const bookingForm = document.getElementById('bakeryBookingForm');
     const bookingItemSelect = document.getElementById('bookingItemSelect');
@@ -641,7 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Instagram Lightbox Gallery ---
+    // Instagram gallery lightbox
     const instaThumbs = document.querySelectorAll('.insta-thumb-wrap');
     const lightboxImg = document.getElementById('lightboxImg');
     const lightboxPrevBtn = document.getElementById('lightboxPrevBtn');
@@ -686,7 +683,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Social Links Notice ---
+    // Social icon clicks
     document.querySelectorAll('.social-box-icon').forEach(icon => {
         icon.addEventListener('click', () => {
             const platform = icon.getAttribute('data-platform') || 'Social Media';
