@@ -1100,6 +1100,11 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                             <span style="font-size: 1.15rem; flex-shrink: 0;">👑</span>
                             <div><strong>Admin Access Required:</strong> You must sign in with an authorized Administrator account to enter the Management Console.</div>
                         </div>
+                    <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'password_reset_success'): ?>
+                        <div class="auth-alert" style="background-color: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; border-left: 4px solid #10B981;">
+                            <span style="font-size: 1.15rem; flex-shrink: 0;">✅</span>
+                            <div><strong>Password Updated:</strong> Your password has been successfully reset! Please sign in with your new password.</div>
+                        </div>
                     <?php endif; ?>
 
                     <?php if (!empty($errorMsg)): ?>
@@ -1132,9 +1137,14 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
 
                         <!-- Password -->
                         <div class="auth-field-group">
-                            <label class="auth-label" for="loginPassword">
-                                <span>Password <span class="required-star">*</span></span>
-                            </label>
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
+                                <label class="auth-label" for="loginPassword" style="margin-bottom: 0;">
+                                    <span>Password <span class="required-star">*</span></span>
+                                </label>
+                                <a href="Login/forgot_password.php" style="font-size: 0.78rem; color: #B45309; text-decoration: none; font-weight: 600; transition: color 0.15s ease;" onmouseover="this.style.color='#92400E'; this.style.textDecoration='underline';" onmouseout="this.style.color='#B45309'; this.style.textDecoration='none';">
+                                    Forgot Password?
+                                </a>
+                            </div>
                             <div class="auth-input-container">
                                 <span class="auth-input-icon">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
