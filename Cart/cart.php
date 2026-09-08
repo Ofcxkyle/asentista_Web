@@ -177,24 +177,114 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             justify-content: space-between;
             align-items: center;
         }
+        /* Buttons & micro-interactions */
         .btn-clear-cart {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             font-size: 0.78rem;
-            font-weight: 600;
+            font-weight: 700;
             color: #991B1B;
             cursor: pointer;
             background: #FEF2F2;
             border: 1px solid #FECACA;
-            padding: 5px 12px;
-            border-radius: 6px;
-            transition: transform 140ms var(--ease-out-expo), background-color 140ms ease, color 140ms ease;
+            padding: 6px 14px;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(153, 27, 27, 0.06);
+            transition: transform 140ms var(--ease-out-expo), background-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
         }
         .btn-clear-cart:hover {
             background: #991B1B;
             color: #FFFFFF;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(153, 27, 27, 0.22);
+        }
+        .btn-clear-cart:active {
+            transform: translateY(0) scale(0.97);
+        }
+
+        /* Payment Method Selector */
+        .payment-method-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 0.6rem;
+            margin-bottom: 0.75rem;
+        }
+        .payment-option-card {
+            border: 2px solid rgba(43, 27, 21, 0.12);
+            border-radius: 10px;
+            padding: 12px 8px;
+            cursor: pointer;
+            background: #FFFFFF;
+            transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            user-select: none;
+        }
+        .payment-option-card:hover {
+            border-color: #D97706;
+            background: #FFFDF9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.12);
+        }
+        .payment-option-card.active {
+            border-color: #D97706;
+            background: linear-gradient(180deg, #FFFBEB 0%, #FEF3C7 100%);
+            box-shadow: 0 0 0 1px #D97706, 0 4px 14px rgba(217, 119, 6, 0.18);
+        }
+        .payment-radio {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .payment-card-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+        }
+        .payment-card-top {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .payment-icon {
+            font-size: 1.55rem;
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+        .payment-name {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--color-brown-deep);
+            line-height: 1.2;
+        }
+        .payment-tag {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            line-height: 1.1;
+        }
+        .payment-option-card.active .payment-name {
+            color: #78350F;
+        }
+        .payment-option-card.active .payment-tag {
+            color: #92400E;
+            font-weight: 700;
+        }
+        .payment-instruction-box {
+            background: #FAF7F2;
+            border: 1px solid rgba(43, 27, 21, 0.12);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 1.2rem;
+            transition: all 200ms ease;
         }
         .checkout-body {
             padding: 1.5rem;
@@ -223,24 +313,28 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
 </head>
 <body class="<?php echo isAdmin($pdo) ? 'admin-logged-in' : ''; ?>">
 
-    <!-- Navbar -->
-    <nav class="site-nav">
-        <div class="container nav-container">
-            <a href="index.php" class="brand-logo-wrap">
-                <div class="brand-svg-logo">
-                    <img src="assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img">
+    <!-- Modern Luxury Navbar -->
+    <nav class="site-nav" style="background: #2B1B15; border-bottom: 2px solid #FFAE34; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+        <div class="container nav-container" style="display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.5rem;">
+            <a href="index.php" class="brand-logo-wrap" style="text-decoration: none; display: flex; align-items: center; gap: 12px;">
+                <div class="brand-svg-logo" style="width: 44px; height: 44px; border-radius: 50%; background: #FFF; padding: 2px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                    <img src="assets/ASENTISTA FINAL.png" alt="Asentista's Bakery Logo" class="brand-logo-img" style="width: 38px; height: 38px; object-fit: contain;">
                 </div>
                 <div class="brand-text-block">
-                    <span class="brand-title">ASENTISTA'S</span>
-                    <span class="brand-subtitle">BAKERY</span>
+                    <span class="brand-title" style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 800; color: #FFAE34; letter-spacing: 0.05em; display: block;">ASENTISTA'S</span>
+                    <span class="brand-subtitle" style="font-size: 0.68rem; color: #FAF7F2; letter-spacing: 0.15em; display: block; opacity: 0.85;">ARTISAN BAKERY</span>
                 </div>
             </a>
             
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <a href="index.php" class="nav-link">← Continue Shopping</a>
-                <a href="User/dashboard.php" class="nav-link">Orders Portal</a>
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <a href="index.php" class="btn btn-secondary btn-sm" style="text-decoration: none; font-weight: 600;">
+                    ← Continue Shopping
+                </a>
+                <a href="User/dashboard.php" class="btn btn-secondary btn-sm" style="text-decoration: none; font-weight: 600;">
+                    Orders Portal
+                </a>
                 <?php if (isAdmin($pdo)): ?>
-                    <a href="Admin/admin.php" class="nav-link" style="color: var(--color-yellow); font-weight: 700; display: inline-flex; align-items: center; gap: 5px;" title="Return to Executive Admin Console">
+                    <a href="Admin/admin.php" class="btn btn-accent btn-sm" style="text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;" title="Return to Executive Admin Console">
                         <span>👑</span> Admin Console
                     </a>
                 <?php endif; ?>
@@ -260,16 +354,19 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
         <?php endif; ?>
 
         <?php if (empty($cartItems)): ?>
-            <div class="cart-items-card" style="padding: 4rem 2rem; text-align: center;">
-                <span style="font-size: 3.5rem; display: block; margin-bottom: 1rem;">🧺</span>
-                <h2 style="font-family: var(--font-serif); font-size: 1.6rem; color: var(--color-brown-deep); margin-bottom: 0.5rem;">
+            <div class="cart-items-card" style="padding: 4.5rem 2rem; text-align: center; border-radius: 12px; box-shadow: 0 10px 30px rgba(43,27,21,0.08); background: #FFFFFF;">
+                <div style="width: 84px; height: 84px; margin: 0 auto 1.5rem auto; background: #FFFBEB; border: 2px dashed #FDE68A; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.1);">
+                    🧺
+                </div>
+                <h2 style="font-family: var(--font-serif); font-size: 1.75rem; color: var(--color-brown-deep); margin-bottom: 0.6rem; font-weight: 800;">
                     Your Bakery Cart is Empty
                 </h2>
-                <p style="color: var(--color-text-muted); font-size: 0.95rem; margin-bottom: 2rem;">
-                    Explore our fresh daily sourdough, crunchy crusts, warm rolls, and specialty beverages!
+                <p style="color: var(--color-text-muted); font-size: 0.96rem; max-width: 440px; margin: 0 auto 2.2rem auto; line-height: 1.6;">
+                    Explore our fresh daily sourdough, crunchy crusts, warm rolls, and artisan bakery delights!
                 </p>
-                <a href="index.php#bread-menu" class="btn-book-now" style="text-decoration: none; padding: 1rem 2.5rem;">
-                    Browse Bread Menu →
+                <a href="index.php#bread-menu" class="btn btn-primary btn-lg btn-shimmer" style="text-decoration: none; display: inline-flex; align-items: center; gap: 10px; padding: 0.95rem 2.5rem; font-size: 0.92rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">
+                    <span>Browse Bread Menu</span>
+                    <span style="font-size: 1.1rem;">→</span>
                 </a>
             </div>
         <?php else: ?>
@@ -415,6 +512,92 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                                     </div>
                                 </div>
 
+                                <!-- Select Payment Method Section -->
+                                <div class="form-group" style="margin-top: 1rem; margin-bottom: 1.25rem;">
+                                    <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span>Payment Method *</span>
+                                        <span style="font-size: 0.72rem; color: #059669; font-weight: 700; background: #ECFDF5; padding: 2px 8px; border-radius: 999px;">✓ Verified Options</span>
+                                    </label>
+                                    
+                                    <div class="payment-method-selector">
+                                        <!-- GCash Option -->
+                                        <label class="payment-option-card" id="opt-gcash" onclick="selectPaymentMethod('GCash')">
+                                            <input type="radio" name="payment_method" value="GCash" class="payment-radio" id="radio-gcash">
+                                            <div class="payment-card-inner">
+                                                <div class="payment-card-top">
+                                                    <span class="payment-icon">📱</span>
+                                                    <span class="payment-name">GCash</span>
+                                                </div>
+                                                <span class="payment-tag">e-Wallet</span>
+                                            </div>
+                                        </label>
+
+                                        <!-- Bank Transfer Option -->
+                                        <label class="payment-option-card" id="opt-bank" onclick="selectPaymentMethod('Bank Transfer')">
+                                            <input type="radio" name="payment_method" value="Bank Transfer" class="payment-radio" id="radio-bank">
+                                            <div class="payment-card-inner">
+                                                <div class="payment-card-top">
+                                                    <span class="payment-icon">🏦</span>
+                                                    <span class="payment-name">Bank</span>
+                                                </div>
+                                                <span class="payment-tag">BDO / BPI</span>
+                                            </div>
+                                        </label>
+
+                                        <!-- COD Option (Default) -->
+                                        <label class="payment-option-card active" id="opt-cod" onclick="selectPaymentMethod('Cash on Delivery (COD)')">
+                                            <input type="radio" name="payment_method" value="Cash on Delivery (COD)" class="payment-radio" id="radio-cod" checked>
+                                            <div class="payment-card-inner">
+                                                <div class="payment-card-top">
+                                                    <span class="payment-icon">💵</span>
+                                                    <span class="payment-name">COD</span>
+                                                </div>
+                                                <span class="payment-tag">Pay on Pickup</span>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <!-- Dynamic Payment Instruction Box -->
+                                    <div id="payment-instruction-box" class="payment-instruction-box">
+                                        <div id="instruction-cod" class="instruction-panel">
+                                            <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                                <span style="font-size: 1.15rem;">💵</span>
+                                                <div>
+                                                    <strong style="color: var(--color-brown-deep); font-size: 0.84rem;">Cash on Delivery / In-Store Cashier:</strong>
+                                                    <p style="margin: 3px 0 0 0; font-size: 0.77rem; color: var(--color-text-muted); line-height: 1.4;">Pay with cash upon collecting your bread at the bakery counter or when your delivery arrives.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="instruction-gcash" class="instruction-panel" style="display: none;">
+                                            <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                                <span style="font-size: 1.15rem;">📱</span>
+                                                <div style="width: 100%;">
+                                                    <strong style="color: #1E40AF; font-size: 0.84rem;">GCash Transfer Details:</strong>
+                                                    <div style="background: #EFF6FF; border: 1px dashed #93C5FD; border-radius: 6px; padding: 6px 10px; margin-top: 4px; font-size: 0.82rem; color: #1E3A8A;">
+                                                        <div>Account Name: <strong>Asentista Bakery (Kyle A.)</strong></div>
+                                                        <div>GCash Number: <strong style="letter-spacing: 0.04em;">0994 005 8425</strong></div>
+                                                    </div>
+                                                    <p style="margin: 4px 0 0 0; font-size: 0.74rem; color: var(--color-text-muted);">Please keep your transaction reference number handy upon pickup or dispatch.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="instruction-bank" class="instruction-panel" style="display: none;">
+                                            <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                                <span style="font-size: 1.15rem;">🏦</span>
+                                                <div style="width: 100%;">
+                                                    <strong style="color: #065F46; font-size: 0.84rem;">Online Bank Transfer Details:</strong>
+                                                    <div style="background: #ECFDF5; border: 1px dashed #6EE7B7; border-radius: 6px; padding: 6px 10px; margin-top: 4px; font-size: 0.82rem; color: #064E3B;">
+                                                        <div>Bank: <strong>BDO Unibank / BPI</strong></div>
+                                                        <div>Account Name: <strong>Asentista Artisan Bakery</strong></div>
+                                                        <div>Account Number: <strong style="letter-spacing: 0.04em;">1234-5678-9012</strong></div>
+                                                    </div>
+                                                    <p style="margin: 4px 0 0 0; font-size: 0.74rem; color: var(--color-text-muted);">Transfers are automatically verified by our kitchen team during preparation.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="form-group">
                                     <label class="form-label" for="notes">Special Preparation Notes</label>
                                     <textarea id="notes" name="special_notes" class="form-textarea" rows="2" placeholder="e.g. Please slice for breakfast sandwiches, deliver at 9 AM."></textarea>
@@ -433,7 +616,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                                     <span style="color: var(--color-amber-accessible, #92400E); font-weight: 800;"><?php echo $cartSummary['total_formatted']; ?></span>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary btn-lg shimmer-btn" style="width: 100%; margin-top: 1.2rem; <?php echo !empty($cartSummary['has_out_of_stock']) ? 'opacity:0.5; cursor:not-allowed;' : ''; ?>" <?php echo !empty($cartSummary['has_out_of_stock']) ? 'disabled title="Adjust out-of-stock items first"' : ''; ?>>
+                                <button type="submit" class="btn btn-primary btn-lg btn-shimmer" style="width: 100%; margin-top: 1.2rem; font-weight: 800; letter-spacing: 0.03em; <?php echo !empty($cartSummary['has_out_of_stock']) ? 'opacity:0.5; cursor:not-allowed;' : ''; ?>" <?php echo !empty($cartSummary['has_out_of_stock']) ? 'disabled title="Adjust out-of-stock items first"' : ''; ?>>
                                     <span><?php echo !empty($cartSummary['has_out_of_stock']) ? 'Items Out of Stock - Adjust Cart' : 'Confirm & Place Bakery Order →'; ?></span>
                                 </button>
                             </form>
@@ -446,6 +629,27 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
 
     <script>
         const CSRF_TOKEN = '<?php echo get_csrf_token(); ?>';
+
+        function selectPaymentMethod(method) {
+            // Remove active from all cards
+            document.querySelectorAll('.payment-option-card').forEach(c => c.classList.remove('active'));
+            // Hide all instruction panels
+            document.querySelectorAll('.instruction-panel').forEach(p => p.style.display = 'none');
+
+            if (method === 'GCash') {
+                document.getElementById('opt-gcash').classList.add('active');
+                document.getElementById('radio-gcash').checked = true;
+                document.getElementById('instruction-gcash').style.display = 'block';
+            } else if (method === 'Bank Transfer') {
+                document.getElementById('opt-bank').classList.add('active');
+                document.getElementById('radio-bank').checked = true;
+                document.getElementById('instruction-bank').style.display = 'block';
+            } else {
+                document.getElementById('opt-cod').classList.add('active');
+                document.getElementById('radio-cod').checked = true;
+                document.getElementById('instruction-cod').style.display = 'block';
+            }
+        }
 
         async function updateQtyAsync(cartId, qty) {
             const formData = new FormData();

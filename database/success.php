@@ -163,6 +163,21 @@ if (!$order && isset($_SESSION['flash_order'])) {
                         <span class="receipt-value"><?php echo htmlspecialchars($order['order_type'] ?? 'In-Store Pickup'); ?></span>
                     </div>
                     <div class="receipt-row">
+                        <span class="receipt-label">Payment Method</span>
+                        <span class="receipt-value" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+                            <?php 
+                                $pm = $order['payment_method'] ?? 'Cash on Delivery (COD)';
+                                if (stripos($pm, 'gcash') !== false) {
+                                    echo '📱 GCash (e-Wallet)';
+                                } elseif (stripos($pm, 'bank') !== false) {
+                                    echo '🏦 Bank Transfer';
+                                } else {
+                                    echo '💵 Cash on Delivery (COD)';
+                                }
+                            ?>
+                        </span>
+                    </div>
+                    <div class="receipt-row">
                         <span class="receipt-label">Scheduled Date</span>
                         <span class="receipt-value"><?php echo htmlspecialchars($order['reservation_date'] ?? ''); ?></span>
                     </div>
@@ -178,6 +193,18 @@ if (!$order && isset($_SESSION['flash_order'])) {
                             <span class="receipt-status-pill"><?php echo htmlspecialchars($order['status'] ?? 'Pending'); ?></span>
                         </span>
                     </div>
+                    <?php 
+                        $pm = $order['payment_method'] ?? 'Cash on Delivery (COD)';
+                        if (stripos($pm, 'gcash') !== false):
+                    ?>
+                        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; padding: 10px 12px; margin-top: 1rem; font-size: 0.8rem; color: #1E3A8A; text-align: left;">
+                            <strong>📱 GCash Payment Note:</strong> Please transfer the total to <strong>0994 005 8425 (Kyle A.)</strong> and have your transaction SMS or reference number ready upon collecting your order.
+                        </div>
+                    <?php elseif (stripos($pm, 'bank') !== false): ?>
+                        <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 6px; padding: 10px 12px; margin-top: 1rem; font-size: 0.8rem; color: #064E3B; text-align: left;">
+                            <strong>🏦 Bank Transfer Note:</strong> Send to BDO/BPI Acct: <strong>1234-5678-9012 (Asentista Bakery)</strong>. Our kitchen verifies bank transfers upon confirmation.
+                        </div>
+                    <?php endif; ?>
                 <?php else: ?>
                     <p style="text-align: center; color: var(--color-text-muted);">
                         No active order receipt found.
