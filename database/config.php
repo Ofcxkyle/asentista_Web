@@ -114,6 +114,7 @@ try {
             `item_price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
             `quantity` INT NOT NULL DEFAULT 1,
             `order_type` VARCHAR(50) NOT NULL DEFAULT 'In-Store Pickup',
+            `payment_method` VARCHAR(50) NOT NULL DEFAULT 'Cash on Delivery (COD)',
             `reservation_date` DATE NOT NULL,
             `special_notes` TEXT DEFAULT NULL,
             `status` ENUM('Pending', 'Confirmed', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Pending',
@@ -130,11 +131,25 @@ try {
             `lockout_until` INT NOT NULL DEFAULT 0,
             INDEX `idx_throttle_lookup` (`identifier`, `lockout_until`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+        CREATE TABLE IF NOT EXISTS `password_resets` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `email` VARCHAR(150) NOT NULL,
+            `token_hash` VARCHAR(64) NOT NULL,
+            `expires_at` INT NOT NULL,
+            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX `idx_reset_token` (`token_hash`),
+            INDEX `idx_reset_email` (`email`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ");
 
     // Add extra columns if not yet present
     try {
         $pdo->exec("ALTER TABLE `orders` ADD COLUMN `quantity` INT NOT NULL DEFAULT 1 AFTER `item_price`");
+    } catch (Exception $e) {}
+
+    try {
+        $pdo->exec("ALTER TABLE `orders` ADD COLUMN `payment_method` VARCHAR(50) NOT NULL DEFAULT 'Cash on Delivery (COD)' AFTER `order_type`");
     } catch (Exception $e) {}
 
     try {

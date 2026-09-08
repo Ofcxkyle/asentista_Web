@@ -567,6 +567,12 @@ function checkoutCart(PDO $pdo, array $formData) {
     $customerName    = sanitize_input($formData['customer_name'] ?? '');
     $customerPhone   = sanitize_input($formData['customer_phone'] ?? '');
     $orderType       = sanitize_input($formData['order_type'] ?? 'In-Store Pickup');
+    $paymentMethod   = sanitize_input($formData['payment_method'] ?? 'Cash on Delivery (COD)');
+    $allowedPayments = ['GCash', 'Bank Transfer', 'Cash on Delivery (COD)'];
+    if (!in_array($paymentMethod, $allowedPayments)) {
+        $paymentMethod = 'Cash on Delivery (COD)';
+    }
+
     $reservationDate = sanitize_input($formData['reservation_date'] ?? '');
     $specialNotes    = sanitize_input($formData['special_notes'] ?? '');
     $userId          = isLoggedIn() ? (int)$_SESSION['user_id'] : null;
@@ -635,8 +641,8 @@ function checkoutCart(PDO $pdo, array $formData) {
         }
 
         $sql = "INSERT INTO `orders` 
-                (user_id, customer_name, customer_phone, item_name, item_price, quantity, order_type, reservation_date, special_notes, status) 
-                VALUES (:user_id, :customer_name, :customer_phone, :item_name, :item_price, :quantity, :order_type, :reservation_date, :special_notes, 'Pending')";
+                (user_id, customer_name, customer_phone, item_name, item_price, quantity, order_type, payment_method, reservation_date, special_notes, status) 
+                VALUES (:user_id, :customer_name, :customer_phone, :item_name, :item_price, :quantity, :order_type, :payment_method, :reservation_date, :special_notes, 'Pending')";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':user_id', $userId, $userId ? PDO::PARAM_INT : PDO::PARAM_NULL);
@@ -646,6 +652,7 @@ function checkoutCart(PDO $pdo, array $formData) {
         $stmt->bindValue(':item_price', $totalPrice);
         $stmt->bindValue(':quantity', $totalQty, PDO::PARAM_INT);
         $stmt->bindValue(':order_type', $orderType, PDO::PARAM_STR);
+        $stmt->bindValue(':payment_method', $paymentMethod, PDO::PARAM_STR);
         $stmt->bindValue(':reservation_date', $reservationDate, PDO::PARAM_STR);
         $stmt->bindValue(':special_notes', $specialNotes, PDO::PARAM_STR);
         $stmt->execute();
@@ -658,7 +665,7 @@ function checkoutCart(PDO $pdo, array $formData) {
 
         return [
             'success'  => true,
-            'message'  => "Thank you, {$customerName}! Your bakery order (#{$orderId}) for {$totalQty} item(s) has been placed successfully. Stock has been deducted.",
+            'message'  => "Thank you, {$customerName}! Your bakery order (#{$orderId}) for {$totalQty} item(s) has been placed successfully via {$paymentMethod}. Stock has been deducted.",
             'order_id' => $orderId,
             'data'     => [
                 'order_id'         => $orderId,
@@ -668,6 +675,7 @@ function checkoutCart(PDO $pdo, array $formData) {
                 'item_price'       => $totalPrice,
                 'quantity'         => $totalQty,
                 'order_type'       => $orderType,
+                'payment_method'   => $paymentMethod,
                 'reservation_date' => $reservationDate,
                 'special_notes'    => $specialNotes
             ]
@@ -698,6 +706,11 @@ function createOrder(PDO $pdo, array $data) {
     $itemPrice       = isset($data['item_price']) ? (float)$data['item_price'] : 0.00;
     $quantity        = isset($data['quantity']) ? max(1, (int)$data['quantity']) : 1;
     $orderType       = sanitize_input($data['order_type'] ?? 'In-Store Pickup');
+    $paymentMethod   = sanitize_input($data['payment_method'] ?? 'Cash on Delivery (COD)');
+    $allowedPayments = ['GCash', 'Bank Transfer', 'Cash on Delivery (COD)'];
+    if (!in_array($paymentMethod, $allowedPayments)) {
+        $paymentMethod = 'Cash on Delivery (COD)';
+    }
     $reservationDate = sanitize_input($data['reservation_date'] ?? '');
     $specialNotes    = sanitize_input($data['special_notes'] ?? '');
     
@@ -752,8 +765,8 @@ function createOrder(PDO $pdo, array $data) {
         }
 
         $sql = "INSERT INTO `orders` 
-                (user_id, customer_name, customer_phone, item_name, item_price, quantity, order_type, reservation_date, special_notes, status) 
-                VALUES (:user_id, :customer_name, :customer_phone, :item_name, :item_price, :quantity, :order_type, :reservation_date, :special_notes, 'Pending')";
+                (user_id, customer_name, customer_phone, item_name, item_price, quantity, order_type, payment_method, reservation_date, special_notes, status) 
+                VALUES (:user_id, :customer_name, :customer_phone, :item_name, :item_price, :quantity, :order_type, :payment_method, :reservation_date, :special_notes, 'Pending')";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':user_id', $userId, $userId ? PDO::PARAM_INT : PDO::PARAM_NULL);
@@ -763,6 +776,7 @@ function createOrder(PDO $pdo, array $data) {
         $stmt->bindValue(':item_price', $itemPrice);
         $stmt->bindValue(':quantity', $quantity, PDO::PARAM_INT);
         $stmt->bindValue(':order_type', $orderType, PDO::PARAM_STR);
+        $stmt->bindValue(':payment_method', $paymentMethod, PDO::PARAM_STR);
         $stmt->bindValue(':reservation_date', $reservationDate, PDO::PARAM_STR);
         $stmt->bindValue(':special_notes', $specialNotes, PDO::PARAM_STR);
         $stmt->execute();
@@ -782,6 +796,7 @@ function createOrder(PDO $pdo, array $data) {
                 'item_price'       => $itemPrice,
                 'quantity'         => $quantity,
                 'order_type'       => $orderType,
+                'payment_method'   => $paymentMethod,
                 'reservation_date' => $reservationDate
             ]
         ];
@@ -1289,3 +1304,213 @@ function getProductSalesAnalytics(PDO $pdo) {
 
     return $stats;
 }
+
+// ==============================================================================
+// PASSWORD RECOVERY & MANAGEMENT FUNCTIONS
+// ==============================================================================
+
+/**
+ * Generate a cryptographically secure password reset token for a registered user.
+ */
+function createPasswordReset(PDO $pdo, $email) {
+    $email = strtolower(trim($email));
+    
+    // Validate email format
+    $errors = [];
+    validate_email($email, $errors);
+    if (!empty($errors)) {
+        return ['success' => false, 'message' => implode('<br>', $errors)];
+    }
+
+    // Check if user exists
+    $stmt = $pdo->prepare("SELECT id, name, email FROM `users` WHERE LOWER(TRIM(email)) = :email LIMIT 1");
+    $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+    $stmt->execute();
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        return [
+            'success' => false,
+            'message' => 'No bakery account is registered with the email address <strong>' . htmlspecialchars($email) . '</strong>. Please check for typos or create a new account.'
+        ];
+    }
+
+    // Clean up any old tokens for this email
+    $del = $pdo->prepare("DELETE FROM `password_resets` WHERE LOWER(TRIM(email)) = :email OR expires_at < :now");
+    $del->bindValue(':email', $email, PDO::PARAM_STR);
+    $del->bindValue(':now', time(), PDO::PARAM_INT);
+    $del->execute();
+
+    // Generate 64-character hex token from 32 cryptographically secure random bytes
+    $rawToken = bin2hex(random_bytes(32));
+    $tokenHash = hash('sha256', $rawToken);
+    $expiresAt = time() + 3600; // 1 hour expiration
+
+    $ins = $pdo->prepare("INSERT INTO `password_resets` (email, token_hash, expires_at) VALUES (:email, :token_hash, :expires_at)");
+    $ins->bindValue(':email', $email, PDO::PARAM_STR);
+    $ins->bindValue(':token_hash', $tokenHash, PDO::PARAM_STR);
+    $ins->bindValue(':expires_at', $expiresAt, PDO::PARAM_INT);
+    $ins->execute();
+
+    return [
+        'success'    => true,
+        'message'    => 'A password reset token has been generated successfully.',
+        'raw_token'  => $rawToken,
+        'user'       => $user,
+        'expires_at' => $expiresAt
+    ];
+}
+
+/**
+ * Verify if a given raw reset token is valid and unexpired.
+ */
+function verifyPasswordResetToken(PDO $pdo, $rawToken) {
+    if (empty($rawToken) || !is_string($rawToken) || strlen($rawToken) < 32) {
+        return ['valid' => false, 'message' => 'Invalid or malformed password reset link.'];
+    }
+
+    $tokenHash = hash('sha256', trim($rawToken));
+    $now = time();
+
+    $stmt = $pdo->prepare("SELECT * FROM `password_resets` WHERE token_hash = :hash AND expires_at > :now LIMIT 1");
+    $stmt->bindValue(':hash', $tokenHash, PDO::PARAM_STR);
+    $stmt->bindValue(':now', $now, PDO::PARAM_INT);
+    $stmt->execute();
+    $reset = $stmt->fetch();
+
+    if (!$reset) {
+        return [
+            'valid' => false,
+            'message' => 'This password reset link is invalid or has expired (links remain active for 1 hour). Please request a fresh reset link.'
+        ];
+    }
+
+    // Fetch the associated user
+    $uStmt = $pdo->prepare("SELECT id, name, email FROM `users` WHERE LOWER(TRIM(email)) = :email LIMIT 1");
+    $uStmt->bindValue(':email', strtolower(trim($reset['email'])), PDO::PARAM_STR);
+    $uStmt->execute();
+    $user = $uStmt->fetch();
+
+    if (!$user) {
+        return ['valid' => false, 'message' => 'The user account associated with this reset link no longer exists.'];
+    }
+
+    return [
+        'valid' => true,
+        'reset' => $reset,
+        'user'  => $user
+    ];
+}
+
+/**
+ * Reset a user's password using a valid reset token.
+ */
+function resetUserPassword(PDO $pdo, $rawToken, $newPassword, $confirmPassword) {
+    $verify = verifyPasswordResetToken($pdo, $rawToken);
+    if (!$verify['valid']) {
+        return ['success' => false, 'message' => $verify['message']];
+    }
+
+    $errors = [];
+    validate_required($newPassword, 'New Password', $errors);
+    validate_length($newPassword, 'New Password', 8, 255, $errors);
+
+    if (strlen($newPassword) >= 8 && !preg_match('/[0-9!@#$%^&*()_\-+=\[\]{};:\'"\\|,.<>\/?`~]/', $newPassword)) {
+        $errors[] = 'New password must contain at least one number or special character (e.g. !@#$%&*).';
+    }
+
+    if ($newPassword !== $confirmPassword) {
+        $errors[] = 'New password and confirmation password do not match.';
+    }
+
+    if (!empty($errors)) {
+        return ['success' => false, 'message' => implode('<br>', $errors)];
+    }
+
+    $user = $verify['user'];
+    $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+
+    try {
+        // Update user password
+        $upd = $pdo->prepare("UPDATE `users` SET password = :password WHERE id = :id");
+        $upd->bindValue(':password', $hashedPassword, PDO::PARAM_STR);
+        $upd->bindValue(':id', $user['id'], PDO::PARAM_INT);
+        $upd->execute();
+
+        // Invalidate token
+        $del = $pdo->prepare("DELETE FROM `password_resets` WHERE LOWER(TRIM(email)) = :email");
+        $del->bindValue(':email', strtolower(trim($user['email'])), PDO::PARAM_STR);
+        $del->execute();
+
+        return [
+            'success' => true,
+            'message' => "Password for <strong>{$user['name']}</strong> has been updated successfully! You can now sign in with your new credentials."
+        ];
+    } catch (PDOException $e) {
+        error_log("Password Reset Error: " . $e->getMessage());
+        return ['success' => false, 'message' => 'A database error occurred while updating your password. Please try again.'];
+    }
+}
+
+/**
+ * Change password for an authenticated user with current password verification.
+ */
+function changeUserPassword(PDO $pdo, $userId, $currentPassword, $newPassword, $confirmPassword) {
+    $userId = (int)$userId;
+    if ($userId <= 0) {
+        return ['success' => false, 'message' => 'User must be authenticated to change password.'];
+    }
+
+    $errors = [];
+    validate_required($currentPassword, 'Current Password', $errors);
+    validate_required($newPassword, 'New Password', $errors);
+    validate_length($newPassword, 'New Password', 8, 255, $errors);
+
+    if (strlen($newPassword) >= 8 && !preg_match('/[0-9!@#$%^&*()_\-+=\[\]{};:\'"\\|,.<>\/?`~]/', $newPassword)) {
+        $errors[] = 'New password must contain at least one number or special character (e.g. !@#$%&*).';
+    }
+
+    if ($newPassword !== $confirmPassword) {
+        $errors[] = 'New password and confirmation do not match.';
+    }
+
+    if (!empty($errors)) {
+        return ['success' => false, 'message' => implode('<br>', $errors)];
+    }
+
+    // Fetch user to verify current password
+    $stmt = $pdo->prepare("SELECT id, name, password FROM `users` WHERE id = :id LIMIT 1");
+    $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
+    $stmt->execute();
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        return ['success' => false, 'message' => 'User account not found.'];
+    }
+
+    if (!password_verify($currentPassword, $user['password'])) {
+        return ['success' => false, 'message' => 'The current password you entered is incorrect. Please verify and try again.'];
+    }
+
+    if (password_verify($newPassword, $user['password'])) {
+        return ['success' => false, 'message' => 'Your new password cannot be the same as your current password. Please choose a different password.'];
+    }
+
+    $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+
+    try {
+        $upd = $pdo->prepare("UPDATE `users` SET password = :password WHERE id = :id");
+        $upd->bindValue(':password', $hashedPassword, PDO::PARAM_STR);
+        $upd->bindValue(':id', $userId, PDO::PARAM_INT);
+        $upd->execute();
+
+        return [
+            'success' => true,
+            'message' => 'Your password has been changed successfully! Your account credentials are now updated.'
+        ];
+    } catch (PDOException $e) {
+        error_log("Change Password Error: " . $e->getMessage());
+        return ['success' => false, 'message' => 'A database error occurred while updating your password. Please try again.'];
+    }
+}
+
