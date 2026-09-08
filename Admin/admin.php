@@ -169,6 +169,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_action'])) {
                 $errorMsg = "Failed to delete product from database.";
                 $activeTab = 'products';
             }
+        } elseif ($action === 'change_password') {
+            $currentPwd = $_POST['current_password'] ?? '';
+            $newPwd     = $_POST['new_password'] ?? '';
+            $confirmPwd = $_POST['confirm_password'] ?? '';
+
+            $pwdResult = changeUserPassword($pdo, $currentUser['id'], $currentPwd, $newPwd, $confirmPwd);
+            if ($pwdResult['success']) {
+                $actionMsg = $pwdResult['message'];
+            } else {
+                $errorMsg = $pwdResult['message'];
+            }
         }
     }
 }
@@ -328,13 +339,16 @@ foreach ($salesAnalytics as $a) {
         }
         .kpi-card {
             background-color: var(--color-white);
-            padding: 1.4rem 1.2rem;
-            border-radius: 6px;
+            padding: 1.3rem 1.2rem;
+            border-radius: 8px;
             box-shadow: var(--shadow-md);
+            border: 1px solid rgba(43, 27, 21, 0.08);
             border-top: 4px solid var(--color-brown-deep);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            min-height: 106px;
+            box-sizing: border-box;
             transition: var(--transition-fast);
         }
         .kpi-card:hover {
@@ -345,6 +359,8 @@ foreach ($salesAnalytics as $a) {
         .kpi-card.pending { border-top-color: #F59E0B; }
         .kpi-card.baking { border-top-color: #3B82F6; }
         .kpi-card.customers { border-top-color: #8B5CF6; }
+        .kpi-card.catalog { border-top-color: #6366F1; }
+        .kpi-card.topsold { border-top-color: #F59E0B; }
 
         .kpi-value {
             font-size: 1.75rem;
@@ -451,17 +467,32 @@ foreach ($salesAnalytics as $a) {
 
         /* Status badges */
         .status-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.74rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 11px;
+            border-radius: 999px;
+            font-size: 0.76rem;
             font-weight: 700;
-            letter-spacing: 0.03em;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
         }
-        .status-Pending { background-color: #FEF3C7; color: #92400E; }
-        .status-Confirmed { background-color: #DBEAFE; color: #1E40AF; }
-        .status-Completed { background-color: #D1FAE5; color: #065F46; }
-        .status-Cancelled { background-color: #FEE2E2; color: #991B1B; }
+        .status-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-Pending { background-color: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+        .status-Pending::before { background-color: #D97706; }
+        .status-Confirmed { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #BFDBFE; }
+        .status-Confirmed::before { background-color: #2563EB; }
+        .status-Completed { background-color: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+        .status-Completed::before { background-color: #059669; }
+        .status-Cancelled { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+        .status-Cancelled::before { background-color: #DC2626; }
 
         .btn-table-action {
             display: inline-flex;
@@ -621,6 +652,13 @@ foreach ($salesAnalytics as $a) {
             <span style="font-size: 0.8rem; opacity: 0.85;">
                 Logged in: <strong><?php echo htmlspecialchars($currentUser['name']); ?></strong>
             </span>
+            <button type="button" onclick="openAdminChangePwdModal()" class="btn-store-preview" style="cursor: pointer; background: rgba(235, 178, 47, 0.15); border-color: rgba(235, 178, 47, 0.4); color: var(--color-yellow);" title="Change Admin Password">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span>Change Password</span>
+            </button>
             <a href="Login/logout.php" class="btn-admin-logout" title="Sign Out">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -708,11 +746,11 @@ foreach ($salesAnalytics as $a) {
                 <span class="kpi-label">Registered Customers</span>
                 <span class="kpi-value" style="color: #7C3AED;"><?php echo $metrics['customer_count']; ?></span>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card catalog">
                 <span class="kpi-label">Catalog Menu Items</span>
-                <span class="kpi-value"><?php echo $metrics['product_count']; ?></span>
+                <span class="kpi-value" style="color: #4F46E5;"><?php echo $metrics['product_count']; ?></span>
             </div>
-            <div class="kpi-card" style="border-left: 4px solid #F59E0B;">
+            <div class="kpi-card topsold">
                 <span class="kpi-label">⭐ Top Sold Product</span>
                 <span class="kpi-value" style="font-size: 1.05rem; color: #D97706; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php echo !empty($salesAnalytics[0]) ? htmlspecialchars($salesAnalytics[0]['name']) : 'N/A'; ?>">
                     <?php echo !empty($salesAnalytics[0]) ? htmlspecialchars($salesAnalytics[0]['name']) : 'None yet'; ?>
@@ -805,9 +843,10 @@ foreach ($salesAnalytics as $a) {
                             <th>Items Breakdown</th>
                             <th>Total (₱)</th>
                             <th>Order Type</th>
+                            <th>Payment</th>
                             <th>Pickup Date</th>
                             <th>Status</th>
-                            <th>Quick Status Transition</th>
+                            <th style="min-width: 185px;">Quick Status Transition</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -829,24 +868,49 @@ foreach ($salesAnalytics as $a) {
                                     ₱<?php echo number_format($ord['item_price'], 2); ?>
                                 </td>
                                 <td><?php echo htmlspecialchars($ord['order_type']); ?></td>
+                                <td>
+                                    <?php 
+                                        $pm = $ord['payment_method'] ?? 'Cash on Delivery (COD)';
+                                        $pmBadgeBg = '#F3F4F6';
+                                        $pmBadgeColor = '#374151';
+                                        $pmBadgeBorder = '#E5E7EB';
+                                        $pmText = '💵 COD';
+                                        if (stripos($pm, 'gcash') !== false) {
+                                            $pmBadgeBg = '#EFF6FF';
+                                            $pmBadgeColor = '#1E40AF';
+                                            $pmBadgeBorder = '#BFDBFE';
+                                            $pmText = '📱 GCash';
+                                        } elseif (stripos($pm, 'bank') !== false) {
+                                            $pmBadgeBg = '#ECFDF5';
+                                            $pmBadgeColor = '#065F46';
+                                            $pmBadgeBorder = '#A7F3D0';
+                                            $pmText = '🏦 Bank';
+                                        }
+                                    ?>
+                                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px; font-size: 0.74rem; font-weight: 700; background: <?php echo $pmBadgeBg; ?>; color: <?php echo $pmBadgeColor; ?>; border: 1px solid <?php echo $pmBadgeBorder; ?>; white-space: nowrap;">
+                                        <?php echo $pmText; ?>
+                                    </span>
+                                </td>
                                 <td><?php echo htmlspecialchars($ord['reservation_date']); ?></td>
                                 <td>
                                     <span class="status-badge status-<?php echo htmlspecialchars($ord['status']); ?>">
                                         <?php echo htmlspecialchars($ord['status']); ?>
                                     </span>
                                 </td>
-                                <td>
-                                    <form method="POST" action="Admin/admin.php" style="display: flex; gap: 6px; align-items: center;">
+                                <td style="white-space: nowrap; min-width: 185px;">
+                                    <form method="POST" action="Admin/admin.php" style="display: inline-flex; align-items: center; gap: 7px; margin: 0;">
                                         <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
                                         <input type="hidden" name="admin_action" value="update_order_status">
                                         <input type="hidden" name="order_id" value="<?php echo $ord['id']; ?>">
-                                        <select name="new_status" class="form-select" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 6px;">
+                                        <select name="new_status" style="width: 110px; min-width: 110px; padding: 5px 8px; font-size: 0.82rem; font-weight: 600; border-radius: 6px; border: 1px solid rgba(43,27,21,0.2); background: #FAF7F2; color: #2B1B15; cursor: pointer;">
                                             <option value="Pending" <?php echo $ord['status'] === 'Pending' ? 'selected' : ''; ?>>Pending</option>
                                             <option value="Confirmed" <?php echo $ord['status'] === 'Confirmed' ? 'selected' : ''; ?>>Confirmed</option>
                                             <option value="Completed" <?php echo $ord['status'] === 'Completed' ? 'selected' : ''; ?>>Completed</option>
                                             <option value="Cancelled" <?php echo $ord['status'] === 'Cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                                         </select>
-                                        <button type="submit" class="btn btn-primary btn-sm" style="padding: 4px 10px; font-size: 0.74rem;">Save</button>
+                                        <button type="submit" class="btn btn-primary btn-sm btn-shimmer" style="padding: 5px 11px; font-size: 0.76rem; font-weight: 700; white-space: nowrap; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                            <span>✓ Save</span>
+                                        </button>
                                     </form>
                                 </td>
                                 <td>
@@ -1770,6 +1834,59 @@ foreach ($salesAnalytics as $a) {
                 if (e.target === removeProductModal) closeRemoveProductModal();
             });
         }
+
+        function openAdminChangePwdModal() {
+            const m = document.getElementById('adminChangePwdModal');
+            if (m) m.style.display = 'flex';
+        }
+
+        function closeAdminChangePwdModal() {
+            const m = document.getElementById('adminChangePwdModal');
+            if (m) m.style.display = 'none';
+        }
+
+        const adminPwdModalEl = document.getElementById('adminChangePwdModal');
+        if (adminPwdModalEl) {
+            adminPwdModalEl.addEventListener('click', (e) => {
+                if (e.target === adminPwdModalEl) closeAdminChangePwdModal();
+            });
+        }
     </script>
+
+    <!-- Admin Change Password Modal -->
+    <div class="admin-modal" id="adminChangePwdModal" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 1rem;">
+        <div class="admin-modal-card" style="background: #fff; border-radius: 12px; max-width: 440px; width: 100%; padding: 2rem; box-shadow: var(--shadow-lg); border: 1px solid rgba(43,27,21,0.15);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 style="margin: 0; font-size: 1.2rem; color: var(--color-brown-deep); display: flex; align-items: center; gap: 8px;">
+                    <span>🔑</span> Change Admin Password
+                </h3>
+                <button type="button" onclick="closeAdminChangePwdModal()" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #8C7A70;">&times;</button>
+            </div>
+            <form method="POST" action="Admin/admin.php">
+                <input type="hidden" name="csrf_token" value="<?php echo get_csrf_token(); ?>">
+                <input type="hidden" name="admin_action" value="change_password">
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="form-label" style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">Current Admin Password *</label>
+                    <input type="password" name="current_password" class="form-control" required style="width: 100%; padding: 8px 12px; border: 1px solid #D1D5DB; border-radius: 6px; box-sizing: border-box;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="form-label" style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">New Password * (Min 8 chars, 1 number/symbol)</label>
+                    <input type="password" name="new_password" class="form-control" required minlength="8" style="width: 100%; padding: 8px 12px; border: 1px solid #D1D5DB; border-radius: 6px; box-sizing: border-box;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label" style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">Confirm New Password *</label>
+                    <input type="password" name="confirm_password" class="form-control" required minlength="8" style="width: 100%; padding: 8px 12px; border: 1px solid #D1D5DB; border-radius: 6px; box-sizing: border-box;">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" onclick="closeAdminChangePwdModal()" class="btn btn-secondary btn-sm" style="padding: 8px 14px; border-radius: 6px; cursor: pointer;">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm" style="padding: 8px 16px; border-radius: 6px; cursor: pointer; background: var(--color-brown-deep); color: #fff;">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
