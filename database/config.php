@@ -184,6 +184,11 @@ try {
         $pdo->exec("ALTER TABLE `products` ADD INDEX `idx_products_stock` (`stock`)");
     } catch (Exception $e) {}
 
+    try {
+        $pdo->exec("UPDATE `users` SET `phone` = REPLACE(`phone`, ' ', '') WHERE `phone` LIKE '% %'");
+        $pdo->exec("UPDATE `orders` SET `customer_phone` = REPLACE(`customer_phone`, ' ', '') WHERE `customer_phone` LIKE '% %'");
+    } catch (Exception $e) {}
+
     // Add sample data if users table is empty
     $checkUser = $pdo->query("SELECT COUNT(*) as count FROM `users`")->fetch();
     if ($checkUser['count'] == 0) {
@@ -191,8 +196,8 @@ try {
         $customerHash = password_hash('password123', PASSWORD_DEFAULT);
 
         $seedUser = $pdo->prepare("INSERT INTO `users` (`name`, `email`, `phone`, `password`, `role`) VALUES (?, ?, ?, ?, ?)");
-        $seedUser->execute(['Kyle Asentista (Admin)', 'admin@asentista.com', '0994 005 8425', $defaultHash, 'admin']);
-        $seedUser->execute(['Maria Santos', 'customer@asentista.com', '0912 345 6789', $customerHash, 'customer']);
+        $seedUser->execute(['Kyle Asentista (Admin)', 'admin@asentista.com', '09940058425', $defaultHash, 'admin']);
+        $seedUser->execute(['Maria Santos', 'customer@asentista.com', '09123456789', $customerHash, 'customer']);
 
         // Insert initial bakery products
         $seedProd = $pdo->prepare("INSERT INTO `products` (`name`, `category`, `price`, `stock`, `description`, `image`, `is_featured`) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -222,7 +227,7 @@ try {
 
         // Insert sample order
         $pdo->exec("INSERT INTO `orders` (`user_id`, `customer_name`, `customer_phone`, `item_name`, `item_price`, `quantity`, `order_type`, `reservation_date`, `special_notes`, `status`) 
-                    VALUES (2, 'Maria Santos', '0912 345 6789', 'Crunchy Crust', 35.00, 1, 'In-Store Pickup', CURDATE(), 'Please slice for sandwiches', 'Confirmed')");
+                    VALUES (2, 'Maria Santos', '09123456789', 'Crunchy Crust', 35.00, 1, 'In-Store Pickup', CURDATE(), 'Please slice for sandwiches', 'Confirmed')");
     } else {
         // Sync default accounts if password hash changed
         try {

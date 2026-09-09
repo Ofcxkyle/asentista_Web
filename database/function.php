@@ -15,9 +15,7 @@ function registerUser(PDO $pdo, $name, $email, $phone, $password, $role = 'custo
     validate_required($name, 'Full Name', $errors);
     validate_length($name, 'Full Name', 2, 100, $errors);
     validate_email($email, $errors);
-    if (!empty($phone)) {
-        validate_phone($phone, $errors);
-    }
+    validate_phone($phone, $errors);
     validate_required($password, 'Password', $errors);
     validate_length($password, 'Password', 8, 255, $errors);
     // Make sure password has at least one number or special character

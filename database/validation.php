@@ -34,14 +34,15 @@ function validate_email($email, &$errors) {
     return true;
 }
 
-// Validate phone number format
+// Validate phone number format (must consist of exactly 11 numbers, no letters)
 function validate_phone($phone, &$errors) {
-    if (empty($phone)) {
+    $phone = trim($phone ?? '');
+    if ($phone === '') {
         $errors[] = "Phone number is required.";
         return false;
     }
-    if (!preg_match('/^[0-9\-\+\s\(\)]{7,25}$/', $phone)) {
-        $errors[] = "Please provide a valid phone number.";
+    if (!preg_match('/^[0-9]{11}$/', $phone)) {
+        $errors[] = "Phone number must consist only of 11 digits (numbers only, e.g. 09123456789).";
         return false;
     }
     return true;

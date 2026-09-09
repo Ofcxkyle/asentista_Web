@@ -494,7 +494,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
 
                                 <div class="form-group">
                                     <label class="form-label" for="custPhone">Phone Number *</label>
-                                    <input type="tel" id="custPhone" name="customer_phone" class="form-input" placeholder="e.g. 0994 005 8425" required value="<?php echo htmlspecialchars($currentUser['phone'] ?? ''); ?>">
+                                    <input type="tel" id="custPhone" name="customer_phone" class="form-input" placeholder="09940058425" required maxlength="11" minlength="11" pattern="[0-9]{11}" inputmode="numeric" title="Phone number must consist only of 11 digits (numbers only, e.g. 09940058425)" value="<?php echo htmlspecialchars(preg_replace('/\D/', '', $currentUser['phone'] ?? '')); ?>">
                                 </div>
 
                                 <div class="form-row">
@@ -692,6 +692,39 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
             if (data.success) {
                 window.location.reload();
             }
+        }
+
+        // Phone number restriction: only 11 digits, do not accept letters
+        const custPhoneInput = document.getElementById('custPhone');
+        if (custPhoneInput) {
+            custPhoneInput.addEventListener('keydown', function(e) {
+                if ([8, 9, 13, 27, 46].indexOf(e.keyCode) !== -1 ||
+                    ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].indexOf(e.keyCode) !== -1) ||
+                    (e.keyCode >= 35 && e.keyCode <= 40)) {
+                    return;
+                }
+                if (e.key < '0' || e.key > '9') {
+                    e.preventDefault();
+                }
+            });
+
+            custPhoneInput.addEventListener('input', function() {
+                const cleaned = this.value.replace(/\D/g, '').slice(0, 11);
+                if (this.value !== cleaned) {
+                    this.value = cleaned;
+                }
+            });
+
+            custPhoneInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pasteText = (e.clipboardData || window.clipboardData).getData('text') || '';
+                const digits = pasteText.replace(/\D/g, '').slice(0, 11);
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const val = this.value;
+                this.value = (val.slice(0, start) + digits + val.slice(end)).replace(/\D/g, '').slice(0, 11);
+                this.dispatchEvent(new Event('input'));
+            });
         }
     </script>
 </body>

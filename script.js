@@ -683,11 +683,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Social icon clicks
-    document.querySelectorAll('.social-box-icon').forEach(icon => {
-        icon.addEventListener('click', () => {
-            const platform = icon.getAttribute('data-platform') || 'Social Media';
-            showToast(`Opening Asentista Bakery on ${platform}...`, 'info');
+    // Phone number input restriction: only 11 digits, disallow letters
+    document.querySelectorAll('input[type="tel"]').forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if ([8, 9, 13, 27, 46].indexOf(e.keyCode) !== -1 ||
+                ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].indexOf(e.keyCode) !== -1) ||
+                (e.keyCode >= 35 && e.keyCode <= 40)) {
+                return;
+            }
+            if (e.key < '0' || e.key > '9') {
+                e.preventDefault();
+            }
+        });
+
+        input.addEventListener('input', function() {
+            const cleaned = this.value.replace(/\D/g, '').slice(0, 11);
+            if (this.value !== cleaned) {
+                this.value = cleaned;
+            }
+        });
+
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pasteText = (e.clipboardData || window.clipboardData).getData('text') || '';
+            const digits = pasteText.replace(/\D/g, '').slice(0, 11);
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            const val = this.value;
+            this.value = (val.slice(0, start) + digits + val.slice(end)).replace(/\D/g, '').slice(0, 11);
+            this.dispatchEvent(new Event('input'));
         });
     });
 });

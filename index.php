@@ -615,7 +615,7 @@ $instagramPhotos = [
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="bookingPhone">Phone Number *</label>
-                            <input type="tel" id="bookingPhone" name="customer_phone" class="form-input" placeholder="e.g. 0994 005 8425" required value="<?php echo htmlspecialchars($currentUser['phone'] ?? ''); ?>">
+                            <input type="tel" id="bookingPhone" name="customer_phone" class="form-input" placeholder="09940058425" required maxlength="11" minlength="11" pattern="[0-9]{11}" inputmode="numeric" title="Phone number must consist only of 11 digits (numbers only, e.g. 09940058425)" value="<?php echo htmlspecialchars(preg_replace('/\D/', '', $currentUser['phone'] ?? '')); ?>">
                         </div>
                     </div>
 

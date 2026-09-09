@@ -95,8 +95,8 @@ ALTER TABLE `products` ADD INDEX `idx_products_stock` (`stock`);
 
 -- Default users (admin: admin@asentista.com / admin123, customer: customer@asentista.com / password123)
 INSERT INTO `users` (`id`, `name`, `email`, `phone`, `password`, `role`) VALUES
-(1, 'Kyle Asentista (Admin)', 'admin@asentista.com', '0994 005 8425', '$2y$10$bea5BvcP2OSI5VyEedLNFuNov0d.TJrce.lSDIXqtaKOAMkrmthqS', 'admin'),
-(2, 'Maria Santos', 'customer@asentista.com', '0912 345 6789', '$2y$10$hs5cl0VIVShDi6r3CCTjRueyxbHD7.f9mnPmNwDl/yU6P9nhXtTdC', 'customer');
+(1, 'Kyle Asentista (Admin)', 'admin@asentista.com', '09940058425', '$2y$10$bea5BvcP2OSI5VyEedLNFuNov0d.TJrce.lSDIXqtaKOAMkrmthqS', 'admin'),
+(2, 'Maria Santos', 'customer@asentista.com', '09123456789', '$2y$10$hs5cl0VIVShDi6r3CCTjRueyxbHD7.f9mnPmNwDl/yU6P9nhXtTdC', 'customer');
 
 -- Default products
 INSERT INTO `products` (`id`, `name`, `category`, `price`, `stock`, `description`, `image`, `is_featured`) VALUES
@@ -121,6 +121,6 @@ INSERT INTO `products` (`id`, `name`, `category`, `price`, `stock`, `description
 
 -- Sample orders
 INSERT INTO `orders` (`id`, `user_id`, `customer_name`, `customer_phone`, `item_name`, `item_price`, `quantity`, `order_type`, `reservation_date`, `special_notes`, `status`) VALUES
-(1, 2, 'Maria Santos', '0912 345 6789', 'Crunchy Crust (x2), Cold Brew (x1)', 125.00, 3, 'In-Store Pickup', CURDATE(), 'Please slice the crunchy crust bread for sandwiches.', 'Confirmed'),
-(2, NULL, 'Juan Dela Cruz', '0998 765 4321', 'Sourdough (x1)', 25.00, 1, 'Direct Delivery', CURDATE(), 'Deliver around 10:00 AM at Sibulan plaza.', 'Pending'),
-(3, 1, 'Kyle Asentista', '0994 005 8425', 'Yeast Custard (x1), Cortado (x2)', 178.00, 3, 'Dine-in Table Booking', CURDATE(), 'Reserve table by the window for 2 guests.', 'Completed');
+(1, 2, 'Maria Santos', '09123456789', 'Crunchy Crust (x2), Cold Brew (x1)', 125.00, 3, 'In-Store Pickup', CURDATE(), 'Please slice the crunchy crust bread for sandwiches.', 'Confirmed'),
+(2, NULL, 'Juan Dela Cruz', '09987654321', 'Sourdough (x1)', 25.00, 1, 'Direct Delivery', CURDATE(), 'Deliver around 10:00 AM at Sibulan plaza.', 'Pending'),
+(3, 1, 'Kyle Asentista', '09940058425', 'Yeast Custard (x1), Cortado (x2)', 178.00, 3, 'Dine-in Table Booking', CURDATE(), 'Reserve table by the window for 2 guests.', 'Completed');

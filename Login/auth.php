@@ -1212,7 +1212,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
 
                             <div class="auth-field-group">
                                 <label class="auth-label" for="regPhone">
-                                    <span>Phone</span>
+                                    <span>Phone <span class="required-star">*</span></span>
                                 </label>
                                 <div class="auth-input-container">
                                     <span class="auth-input-icon">
@@ -1220,7 +1220,7 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                                             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                                         </svg>
                                     </span>
-                                    <input type="tel" id="regPhone" name="phone" class="auth-luxury-input" placeholder="0912 345 6789" value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>" autocomplete="tel">
+                                    <input type="tel" id="regPhone" name="phone" class="auth-luxury-input" placeholder="09123456789" required maxlength="11" minlength="11" pattern="[0-9]{11}" inputmode="numeric" title="Phone number must consist only of 11 digits (numbers only, e.g. 09123456789)" value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>" autocomplete="tel">
                                 </div>
                             </div>
                         </div>
@@ -1395,6 +1395,43 @@ $appBasePath = !empty($parts) ? '/' . implode('/', $parts) . '/' : '/';
                     <span>Passwords do not match yet</span>
                 `;
             }
+        }
+
+        // Phone number restriction: only 11 digits, do not accept letters
+        const regPhoneInput = document.getElementById('regPhone');
+        if (regPhoneInput) {
+            regPhoneInput.addEventListener('keydown', function(e) {
+                // Allow control keys (backspace, tab, enter, escape, delete)
+                if ([8, 9, 13, 27, 46].indexOf(e.keyCode) !== -1 ||
+                    // Allow Ctrl/Cmd + A, C, V, X
+                    ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].indexOf(e.keyCode) !== -1) ||
+                    // Allow arrow keys, home, end
+                    (e.keyCode >= 35 && e.keyCode <= 40)) {
+                    return;
+                }
+                // Reject letters and special characters
+                if (e.key < '0' || e.key > '9') {
+                    e.preventDefault();
+                }
+            });
+
+            regPhoneInput.addEventListener('input', function() {
+                const cleaned = this.value.replace(/\D/g, '').slice(0, 11);
+                if (this.value !== cleaned) {
+                    this.value = cleaned;
+                }
+            });
+
+            regPhoneInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pasteText = (e.clipboardData || window.clipboardData).getData('text') || '';
+                const digits = pasteText.replace(/\D/g, '').slice(0, 11);
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const val = this.value;
+                this.value = (val.slice(0, start) + digits + val.slice(end)).replace(/\D/g, '').slice(0, 11);
+                this.dispatchEvent(new Event('input'));
+            });
         }
     </script>
 </body>
