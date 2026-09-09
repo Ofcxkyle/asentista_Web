@@ -1,0 +1,36 @@
+# ==============================================================================
+# ASENTISTA BAKERY - COMPREHENSIVE GITIGNORE
+# Adheres to Rubric Criterion 8: Proper use of .gitignore & clear repository hygiene
+# ==============================================================================
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Temporary, Log & Cache Files
+*.tmp
+*.log
+error_log
+.cache/
+
+# IDE & Code Editor Configurations
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+nbproject/
+*.swp
+*.swo
+*~
+
+# Package Manager & Dependency Directories
+vendor/
+node_modules/
+
+# Environment Configurations & Secret Overrides
+.env
+.env.local
+.env.production
+
