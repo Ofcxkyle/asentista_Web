@@ -625,7 +625,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.success) {
                     closeModal(bookingModal);
                     bookingForm.reset();
-                    showToast(`<strong>Order #${result.order_id} Received!</strong> ${result.message} <br><a href="User/dashboard.php" style="color:var(--color-yellow); text-decoration:underline;">View in Orders Portal →</a>`, 'success');
+                    showToast(`<strong>Order #${result.order_id} Received!</strong> Redirecting to your order receipt...`, 'success');
+                    setTimeout(() => {
+                        window.location.href = `database/success.php?order_id=${result.order_id}`;
+                    }, 1000);
                 } else {
                     alert(result.message || 'There was an error saving your order.');
                 }

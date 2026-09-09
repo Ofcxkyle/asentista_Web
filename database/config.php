@@ -137,13 +137,21 @@ try {
             `email` VARCHAR(150) NOT NULL,
             `token_hash` VARCHAR(64) NOT NULL,
             `expires_at` INT NOT NULL,
+            `status` VARCHAR(50) NOT NULL DEFAULT 'pending',
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             INDEX `idx_reset_token` (`token_hash`),
             INDEX `idx_reset_email` (`email`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ");
 
     // Add extra columns if not yet present
+    try {
+        $pdo->exec("ALTER TABLE `password_resets` ADD COLUMN `status` VARCHAR(50) NOT NULL DEFAULT 'pending' AFTER `expires_at`");
+    } catch (Exception $e) {}
+    try {
+        $pdo->exec("ALTER TABLE `password_resets` ADD COLUMN `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`");
+    } catch (Exception $e) {}
     try {
         $pdo->exec("ALTER TABLE `orders` ADD COLUMN `quantity` INT NOT NULL DEFAULT 1 AFTER `item_price`");
     } catch (Exception $e) {}

@@ -10,7 +10,7 @@ A full-stack artisan bakery and coffee web application built with **Pure PHP, Va
 - **Artisan Showcase**: Browse organic sourdoughs, rustic baguettes, croissants, and specialty cold brews.
 - **Interactive Cart**: Instant AJAX add-to-cart, debounce-protected quantity steppers (`+` / `-`), item removal, and subtotal calculation.
 - **Table Booking & Special Orders**: Custom date picker, order preference (In-Store Pickup, Dine-in Table Booking, Direct Delivery), and baking instructions.
-- **Printable Order Receipt (`database/success.php`)**: Clean confirmation view with automated print-styling.
+- **Order Receipt Confirmation (`database/success.php`)**: Clean confirmation view showing order summary, reference number, and payment instructions.
 
 ### 2. 🔐 Authentication Portal (`Login/auth.php`)
 - **Role Routing**: Administrators land on the Executive Operations Center; customers land on the storefront or personal dashboard.
@@ -58,7 +58,7 @@ Asentista_Web/
 │   ├── config.php          # Database PDO connection, security flags & error handlers
 │   ├── function.php        # Core CRUD helper library, inventory reconciliation & auth
 │   ├── validation.php      # Dual-layer validation, XSS sanitization, CSRF & rate-limiting
-│   ├── success.php         # Printable order receipt confirmation
+│   ├── success.php         # Order receipt confirmation page
 │   └── database.sql        # Complete MySQL database migration and seed script
 │
 └── assets/                 # High-resolution bakery photography & brand assets

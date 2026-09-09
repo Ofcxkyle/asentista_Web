@@ -1333,18 +1333,18 @@ function createPasswordReset(PDO $pdo, $email) {
         ];
     }
 
-    // Clean up any old tokens for this email
-    $del = $pdo->prepare("DELETE FROM `password_resets` WHERE LOWER(TRIM(email)) = :email OR expires_at < :now");
-    $del->bindValue(':email', $email, PDO::PARAM_STR);
-    $del->bindValue(':now', time(), PDO::PARAM_INT);
-    $del->execute();
+    // Invalidate any previously pending tokens for this email without deleting history
+    $inv = $pdo->prepare("UPDATE `password_resets` SET status = 'superseded', expires_at = :now WHERE LOWER(TRIM(email)) = :email AND status = 'pending'");
+    $inv->bindValue(':email', $email, PDO::PARAM_STR);
+    $inv->bindValue(':now', time() - 1, PDO::PARAM_INT);
+    $inv->execute();
 
     // Generate 64-character hex token from 32 cryptographically secure random bytes
     $rawToken = bin2hex(random_bytes(32));
     $tokenHash = hash('sha256', $rawToken);
     $expiresAt = time() + 3600; // 1 hour expiration
 
-    $ins = $pdo->prepare("INSERT INTO `password_resets` (email, token_hash, expires_at) VALUES (:email, :token_hash, :expires_at)");
+    $ins = $pdo->prepare("INSERT INTO `password_resets` (email, token_hash, expires_at, status) VALUES (:email, :token_hash, :expires_at, 'pending')");
     $ins->bindValue(':email', $email, PDO::PARAM_STR);
     $ins->bindValue(':token_hash', $tokenHash, PDO::PARAM_STR);
     $ins->bindValue(':expires_at', $expiresAt, PDO::PARAM_INT);
@@ -1370,7 +1370,7 @@ function verifyPasswordResetToken(PDO $pdo, $rawToken) {
     $tokenHash = hash('sha256', trim($rawToken));
     $now = time();
 
-    $stmt = $pdo->prepare("SELECT * FROM `password_resets` WHERE token_hash = :hash AND expires_at > :now LIMIT 1");
+    $stmt = $pdo->prepare("SELECT * FROM `password_resets` WHERE token_hash = :hash AND expires_at > :now AND (status = 'pending' OR status IS NULL) LIMIT 1");
     $stmt->bindValue(':hash', $tokenHash, PDO::PARAM_STR);
     $stmt->bindValue(':now', $now, PDO::PARAM_INT);
     $stmt->execute();
@@ -1435,10 +1435,21 @@ function resetUserPassword(PDO $pdo, $rawToken, $newPassword, $confirmPassword) 
         $upd->bindValue(':id', $user['id'], PDO::PARAM_INT);
         $upd->execute();
 
-        // Invalidate token
-        $del = $pdo->prepare("DELETE FROM `password_resets` WHERE LOWER(TRIM(email)) = :email");
-        $del->bindValue(':email', strtolower(trim($user['email'])), PDO::PARAM_STR);
-        $del->execute();
+        // Store and mark the reset token as completed in password_resets
+        $tokenHash = hash('sha256', trim($rawToken));
+        $now = time();
+        $updReset = $pdo->prepare("UPDATE `password_resets` SET status = 'completed', expires_at = :now WHERE token_hash = :hash");
+        $updReset->bindValue(':now', $now, PDO::PARAM_INT);
+        $updReset->bindValue(':hash', $tokenHash, PDO::PARAM_STR);
+        $updReset->execute();
+
+        if ($updReset->rowCount() === 0) {
+            $insReset = $pdo->prepare("INSERT INTO `password_resets` (email, token_hash, expires_at, status) VALUES (:email, :token_hash, :expires_at, 'completed')");
+            $insReset->bindValue(':email', strtolower(trim($user['email'])), PDO::PARAM_STR);
+            $insReset->bindValue(':token_hash', $tokenHash, PDO::PARAM_STR);
+            $insReset->bindValue(':expires_at', $now, PDO::PARAM_INT);
+            $insReset->execute();
+        }
 
         return [
             'success' => true,
@@ -1477,7 +1488,7 @@ function changeUserPassword(PDO $pdo, $userId, $currentPassword, $newPassword, $
     }
 
     // Fetch user to verify current password
-    $stmt = $pdo->prepare("SELECT id, name, password FROM `users` WHERE id = :id LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, name, email, password FROM `users` WHERE id = :id LIMIT 1");
     $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
     $stmt->execute();
     $user = $stmt->fetch();
@@ -1501,6 +1512,18 @@ function changeUserPassword(PDO $pdo, $userId, $currentPassword, $newPassword, $
         $upd->bindValue(':password', $hashedPassword, PDO::PARAM_STR);
         $upd->bindValue(':id', $userId, PDO::PARAM_INT);
         $upd->execute();
+
+        // Store password change event in password_resets table
+        try {
+            $auditToken = hash('sha256', 'change_' . $userId . '_' . time() . '_' . bin2hex(random_bytes(16)));
+            $rec = $pdo->prepare("INSERT INTO `password_resets` (email, token_hash, expires_at, status) VALUES (:email, :token_hash, :expires_at, 'password_changed')");
+            $rec->bindValue(':email', strtolower(trim($user['email'])), PDO::PARAM_STR);
+            $rec->bindValue(':token_hash', $auditToken, PDO::PARAM_STR);
+            $rec->bindValue(':expires_at', time(), PDO::PARAM_INT);
+            $rec->execute();
+        } catch (Exception $e) {
+            error_log("Failed to log into password_resets: " . $e->getMessage());
+        }
 
         return [
             'success' => true,

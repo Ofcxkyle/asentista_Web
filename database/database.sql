@@ -10,6 +10,8 @@ USE `asentista_bakery_db`;
 -- 2. Drop existing tables
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `cart_items`;
+DROP TABLE IF EXISTS `login_throttles`;
+DROP TABLE IF EXISTS `password_resets`;
 DROP TABLE IF EXISTS `orders`;
 DROP TABLE IF EXISTS `products`;
 DROP TABLE IF EXISTS `users`;
@@ -81,6 +83,19 @@ CREATE TABLE `login_throttles` (
   `first_attempt` INT NOT NULL,
   `lockout_until` INT NOT NULL DEFAULT 0,
   INDEX `idx_throttle_lookup` (`identifier`, `lockout_until`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. Password resets table (secure time-limited recovery tokens & password change logs)
+CREATE TABLE `password_resets` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `email` VARCHAR(150) NOT NULL,
+  `token_hash` VARCHAR(64) NOT NULL,
+  `expires_at` INT NOT NULL,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'pending',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_reset_token` (`token_hash`),
+  INDEX `idx_reset_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Indexes

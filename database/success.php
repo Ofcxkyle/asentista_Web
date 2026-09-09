@@ -89,10 +89,6 @@ if (!$order && isset($_SESSION['flash_order'])) {
             margin-top: 2rem;
             flex-wrap: wrap;
         }
-        @media print {
-            .site-nav, .receipt-actions { display: none !important; }
-            .receipt-container { box-shadow: none; border: 1px solid #000; margin: 0 auto; }
-        }
     </style>
 </head>
 <body class="<?php echo isAdmin($pdo) ? 'admin-logged-in' : ''; ?>">
@@ -212,14 +208,10 @@ if (!$order && isset($_SESSION['flash_order'])) {
                 <?php endif; ?>
 
                 <div class="receipt-actions" style="display:flex; gap:0.75rem; justify-content:stretch;">
-                    <button type="button" class="btn btn-secondary btn-md" style="flex:1;" onclick="window.print()">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        Print Receipt
-                    </button>
-                    <a href="../index.php" class="btn btn-ghost btn-md" style="flex:1; border: 1px solid var(--btn-border);">
+                    <a href="../index.php" class="btn btn-ghost btn-md" style="flex:1; border: 1px solid var(--btn-border); text-align:center; justify-content:center;">
                         ← Back to Menu
                     </a>
-                    <a href="../User/dashboard.php" class="btn btn-primary btn-md" style="flex:1;">
+                    <a href="../User/dashboard.php" class="btn btn-primary btn-md" style="flex:1; text-align:center; justify-content:center;">
                         Orders Portal
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </a>

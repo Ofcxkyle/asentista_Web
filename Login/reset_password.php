@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenValid) {
 
         $result = resetUserPassword($pdo, $token, $newPassword, $confirmPassword);
         if ($result['success']) {
-            header('Location: Login/auth.php?msg=password_reset_success');
+            header('Location: auth.php?msg=password_reset_success');
             exit;
         } else {
             $errorMsg = $result['message'];

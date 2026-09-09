@@ -364,7 +364,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <polyline points="22,6 12,13 2,6"></polyline>
                         </svg>
                     </span>
-                    <input type="email" id="recoveryEmail" name="email" class="auth-input" placeholder="e.g. customer@asentista.com" required autofocus value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
+                    <input type="email" id="recoveryEmail" name="email" class="auth-input" placeholder="e.g. customer@asentista.com" required autofocus value="<?php echo htmlspecialchars($_POST['email'] ?? $_GET['email'] ?? ''); ?>">
                 </div>
             </div>
 
