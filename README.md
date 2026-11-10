@@ -1,75 +1,152 @@
-# Asentista's Bakery Web Application
+# 🍞 Asentista's Bakery — Symfony 6.4 + Docker
 
-A web application for Asentista's Bakery built using PHP, MySQL, HTML, CSS, and JavaScript. The system allows customers to view bakery products, manage a shopping cart, and place orders or table reservations, while providing an admin panel to manage products, orders, and customer records.
+A fully production-ready bakery ordering system migrated from legacy PHP/MySQL to **Symfony 6.4 LTS**, containerized with **Docker Compose**, featuring a normalized relational MySQL 8.0 database, real email via **Mailpit**, and a complete admin panel.
 
-## Features
+---
 
-### Customer
-- **Browse Products**: View breads, pastries, and drinks with prices and descriptions.
-- **Shopping Cart**: Add items to cart, update quantities, remove items, and proceed to checkout.
-- **Order & Reservations**: Place orders for in-store pickup, direct delivery, or table reservations with custom notes and payment options (Cash on Delivery, GCash, Bank Transfer).
-- **Order Confirmation**: View order details and reference number right after purchasing.
-- **Customer Account**: Sign up, log in, view personal order history, and reset password if forgotten.
+## 🚀 Quick Start
 
-### Admin
-- **Dashboard**: View summary stats including total revenue, order count, and pending orders.
-- **Order Management**: Review incoming orders, update status (Pending, Confirmed, Completed, Cancelled), and export order lists to CSV.
-- **Product Management**: Add new products, update prices and stock levels, or toggle visibility on the storefront.
-- **Customer List**: View registered customer profiles and order counts.
+### Prerequisites
+- Docker Desktop (Windows)
+- Docker Compose v2
 
-## Folder Structure
+### Start All Containers
 
-```
-Asentista_Web/
-├── index.php               # Main storefront and menu
-├── style.css               # Main stylesheet
-├── script.js               # Frontend JavaScript
-├── .gitignore              # Git ignore file
-├── README.md               # Project documentation
-│
-├── Admin/
-│   └── admin.php           # Admin dashboard and controls
-│
-├── Cart/
-│   ├── cart.php            # Cart and checkout page
-│   ├── cart_action.php     # Handles cart updates
-│   └── order_process.php   # Handles order submissions
-│
-├── Login/
-│   ├── auth.php            # Login and registration page
-│   ├── forgot_password.php # Password recovery request
-│   ├── reset_password.php  # Reset password page
-│   ├── login.php           # Login redirect helper
-│   └── logout.php          # Logout script
-│
-├── User/
-│   └── dashboard.php       # Customer order history and profile
-│
-├── database/
-│   ├── config.php          # Database connection and settings
-│   ├── function.php        # Core backend functions
-│   ├── validation.php      # Input validation helpers
-│   ├── success.php         # Order receipt page
-│   └── database.sql        # Database schema and seed data
-│
-└── assets/                 # Images and logo
+```bash
+docker compose up -d --build
 ```
 
-## Technologies Used
+### Access Points
 
-- **Frontend**: HTML5, CSS3, JavaScript
-- **Backend**: PHP
-- **Database**: MySQL (XAMPP)
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| 🌐 Web App | http://localhost:8000 | — |
+| 🗄️ phpMyAdmin | http://localhost:8088 | root / rootpassword |
+| 📬 Mailpit (Email UI) | http://localhost:8025 | — |
+| 🔌 MySQL (external) | localhost:3307 | root / rootpassword |
 
-## Setup and Installation
+---
 
-1. Copy the project folder into your XAMPP `htdocs` directory:
-   `c:\xampp\htdocs\Asentista_Web`
-2. Start **Apache** and **MySQL** in the XAMPP Control Panel.
-3. Import `database/database.sql` into phpMyAdmin (`http://localhost/phpmyadmin`), or access the site directly to allow automatic table creation.
-4. Open your browser and go to:
-   `http://localhost/Asentista_Web`
+## 🔑 Default Accounts
 
-### Default Login Accounts
-- **Admin**: `admin@asentista.com` / `admin123`
-- **Customer**: `customer@asentista.com` / `password123`
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@asentista.com | admin123 |
+| Customer | customer@asentista.com | password123 |
+
+---
+
+## 🐳 Docker Containers
+
+| Container | Image | Purpose |
+|-----------|-------|---------|
+| `asentista_app` | PHP 8.2-FPM Alpine | Symfony application |
+| `asentista_web` | Nginx 1.25 Alpine | Reverse proxy |
+| `asentista_db` | MySQL 8.0 | Database |
+| `asentista_phpmyadmin` | phpMyAdmin | Database GUI |
+| `asentista_mailer` | Mailpit | Email testing UI |
+
+---
+
+## 🏗️ Architecture
+
+```
+Browser → Nginx:8000 → PHP-FPM:9000 → MySQL:3306
+                                     → Mailpit:1025 (email)
+```
+
+### Database Relations (All FK-constrained)
+```
+categories ← products ← cart_items ← users
+                       ← order_items ← orders ← users
+password_resets ← users
+```
+
+---
+
+## 🔧 Useful Docker Commands
+
+```bash
+# Clear & warmup Symfony cache
+docker exec asentista_app sh -c "chmod -R 777 /var/www/html/var && php bin/console cache:clear && php bin/console cache:warmup"
+
+# Run Doctrine migrations
+docker exec asentista_app php bin/console doctrine:migrations:migrate --no-interaction
+
+# Check all routes
+docker exec asentista_app php bin/console debug:router
+
+# Install Composer dependencies (e.g., after adding mailer)
+docker exec asentista_app composer install --no-dev --optimize-autoloader
+
+# View Symfony logs
+docker exec asentista_app tail -f /var/www/html/var/log/dev.log
+
+# MySQL shell
+docker exec -it asentista_db mysql -uroot -prootpassword asentista_bakery_db
+```
+
+---
+
+## 📦 Feature Checklist
+
+### Customer Features
+- [x] Browse storefront with featured products
+- [x] Full product menu with category & search filters
+- [x] Add to cart (session-based for guests, DB-persisted for logged-in users)
+- [x] Cart merge on login
+- [x] Checkout: In-Store Pickup / Direct Delivery / Table Reservation
+- [x] Order confirmation page with printable receipt
+- [x] Order confirmation email (via Mailpit)
+- [x] Customer dashboard with order history
+- [x] Order detail view
+- [x] Profile edit (name, phone, password change)
+- [x] User registration + Login + Logout
+- [x] Forgot password with email link (via Mailpit)
+- [x] Password reset via token (1-hour expiry)
+
+### Admin Features
+- [x] Admin dashboard: KPIs (revenue, orders, pending, completed)
+- [x] Recent orders & low-stock alerts
+- [x] Full orders list with status update (Pending → Confirmed → Completed → Cancelled)
+- [x] CSV export of all orders
+- [x] Product catalog with Add, Edit (modal), Delete, Toggle Featured
+- [x] Customer list
+- [x] CSRF protection on all state-changing forms
+- [x] Admin sticky topbar when logged in as admin
+
+---
+
+## 🗄️ Database Schema
+
+```sql
+categories       -- Product categories (Bread, Beverage)
+users            -- Symfony-compatible users (JSON roles)
+products         -- Menu items linked to categories (FK)
+cart_items       -- Session & user carts (FK to users, products)
+orders           -- Customer orders (FK to users, ON DELETE SET NULL)
+order_items      -- Order line items (FK to orders, products)
+password_resets  -- Token-based password reset (FK to users)
+```
+
+---
+
+## 📧 Email Testing
+
+All emails are caught by **Mailpit** — no real emails are sent in development.
+
+1. Visit http://localhost:8025 to view the Mailpit inbox
+2. Try Forgot Password from http://localhost:8000/forgot-password
+3. Place an order and check for the confirmation email
+
+---
+
+## 🔐 Security
+
+- Symfony Security with Entity UserProvider
+- bcrypt password hashing
+- CSRF tokens on all state-changing POST forms
+- Role hierarchy: `ROLE_ADMIN` inherits `ROLE_CUSTOMER`
+- Access control: `/admin/*` → ROLE_ADMIN, `/account/*` → ROLE_CUSTOMER
+- Password reset anti-enumeration (same flash message regardless of email existence)
+- Remember Me cookie (1 week)
