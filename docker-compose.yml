@@ -1,0 +1,92 @@
+services:
+  # 1. PHP 8.2-FPM Symfony Application Container
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: asentista_app
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+    environment:
+      APP_ENV: dev
+      APP_SECRET: 2b1b15ebb22fff8f0asentistabakerysecret
+      DATABASE_URL: "mysql://root:rootpassword@db:3306/asentista_bakery_db?serverVersion=8.0.32&charset=utf8mb4"
+      MAILER_DSN: "smtp://mailer:1025"
+    command: sh -c "mkdir -p /var/www/html/var/cache /var/www/html/var/log && chmod -R 777 /var/www/html/var && php-fpm"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - asentista_net
+
+  # 2. Nginx Web Server (Reverse Proxy)
+  web:
+    image: nginx:1.25-alpine
+    container_name: asentista_web
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - asentista_net
+
+  # 3. MySQL 8.0 Database Container (Relational schema auto-initialized)
+  db:
+    image: mysql:8.0
+    container_name: asentista_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: asentista_bakery_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - asentista_db_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    networks:
+      - asentista_net
+
+  # 4. phpMyAdmin Visual Database Inspector
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: asentista_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+    ports:
+      - "8088:80"
+    depends_on:
+      - db
+    networks:
+      - asentista_net
+
+  # 5. Mailpit Local SMTP Testing Server & Web UI
+  mailer:
+    image: axllent/mailpit:latest
+    container_name: asentista_mailer
+    restart: unless-stopped
+    ports:
+      - "8025:8025" # Web UI
+      - "1025:1025" # SMTP Port
+    networks:
+      - asentista_net
+
+networks:
+  asentista_net:
+    driver: bridge
+
+volumes:
+  asentista_db_data:
+    driver: local
