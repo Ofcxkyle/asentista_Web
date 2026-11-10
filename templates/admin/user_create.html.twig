@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create User - Admin{% endblock %}
+
+{% block body %}
+<section style="background: var(--color-brown-deep); color: #fff; padding: 2rem 1.5rem 1.5rem;">
+    <div style="max-width: var(--max-width, 1200px); margin: 0 auto;">
+        <span style="color: var(--color-yellow); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px;">Admin → User Management</span>
+        <h1 style="font-family: var(--font-serif); font-size: 2rem; margin: 0.25rem 0;">Create New User Account</h1>
+    </div>
+</section>
+
+<section style="max-width: 640px; margin: 2.5rem auto 5rem; padding: 0 1.5rem;">
+    <div style="background: #fff; border-radius: 12px; box-shadow: var(--shadow-sm); padding: 2rem;">
+        <form method="POST" action="{{ path('app_admin_user_create') }}" novalidate>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_user_create') }}">
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Full Name <span style="color: #dc2626;">*</span></label>
+                <input type="text" name="name" required maxlength="100" placeholder="e.g. Juan dela Cruz"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Email Address <span style="color: #dc2626;">*</span></label>
+                <input type="email" name="email" required maxlength="150" placeholder="user@example.com"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Phone Number</label>
+                <input type="text" name="phone" maxlength="30" placeholder="e.g. 09XX-XXX-XXXX"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Role <span style="color: #dc2626;">*</span></label>
+                <select name="role" required style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                    <option value="ROLE_CUSTOMER">Customer</option>
+                    <option value="ROLE_STAFF">Staff</option>
+                    <option value="ROLE_ADMIN">Admin</option>
+                </select>
+                <small style="color: var(--color-text-subtle); font-size: 0.8rem;">Staff can manage products. Admins have full access.</small>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Password <span style="color: #dc2626;">*</span></label>
+                <input type="password" name="password" required minlength="6" placeholder="Minimum 6 characters"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                <small style="color: var(--color-text-subtle); font-size: 0.8rem;">Password will be securely hashed. Never stored as plain text.</small>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit"
+                    style="flex: 1; background: var(--color-brown-deep); color: #fff; padding: 0.75rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer;">
+                    Create Account
+                </button>
+                <a href="{{ path('app_admin_users') }}"
+                    style="flex: 1; background: #f1f1f1; color: var(--color-brown-deep); padding: 0.75rem; border-radius: 8px; font-size: 1rem; font-weight: 700; text-align: center; text-decoration: none;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
+

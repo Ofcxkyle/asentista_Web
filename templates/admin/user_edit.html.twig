@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit User - Admin{% endblock %}
+
+{% block body %}
+<section style="background: var(--color-brown-deep); color: #fff; padding: 2rem 1.5rem 1.5rem;">
+    <div style="max-width: var(--max-width, 1200px); margin: 0 auto;">
+        <span style="color: var(--color-yellow); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px;">Admin → User Management</span>
+        <h1 style="font-family: var(--font-serif); font-size: 2rem; margin: 0.25rem 0;">Edit User: {{ user.name }}</h1>
+    </div>
+</section>
+
+<section style="max-width: 640px; margin: 2.5rem auto 5rem; padding: 0 1.5rem;">
+    <div style="background: #fff; border-radius: 12px; box-shadow: var(--shadow-sm); padding: 2rem;">
+        <form method="POST" action="{{ path('app_admin_user_edit', {id: user.id}) }}" novalidate>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_user_edit_' ~ user.id) }}">
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Full Name <span style="color: #dc2626;">*</span></label>
+                <input type="text" name="name" value="{{ user.name }}" required maxlength="100"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Email Address <span style="color: #dc2626;">*</span></label>
+                <input type="email" name="email" value="{{ user.email }}" required maxlength="150"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Phone Number</label>
+                <input type="text" name="phone" value="{{ user.phone ?? '' }}" maxlength="30"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Role <span style="color: #dc2626;">*</span></label>
+                {% set currentRole = 'ROLE_CUSTOMER' %}
+                {% if 'ROLE_ADMIN' in user.roles %}{% set currentRole = 'ROLE_ADMIN' %}
+                {% elseif 'ROLE_STAFF' in user.roles %}{% set currentRole = 'ROLE_STAFF' %}{% endif %}
+                <select name="role" required style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                    <option value="ROLE_CUSTOMER" {{ currentRole == 'ROLE_CUSTOMER' ? 'selected' : '' }}>Customer</option>
+                    <option value="ROLE_STAFF" {{ currentRole == 'ROLE_STAFF' ? 'selected' : '' }}>Staff</option>
+                    <option value="ROLE_ADMIN" {{ currentRole == 'ROLE_ADMIN' ? 'selected' : '' }}>Admin</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="is_active" {{ user.isActive ? 'checked' : '' }} style="width: 16px; height: 16px;">
+                    <span style="font-weight: 600; color: var(--color-brown-deep);">Account Active</span>
+                </label>
+                <small style="color: var(--color-text-subtle); font-size: 0.8rem; display: block; margin-top: 0.3rem;">Uncheck to disable this account without deleting it.</small>
+            </div>
+
+            <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                <div style="font-weight: 600; margin-bottom: 0.75rem; color: var(--color-brown-deep);">Reset Password (optional)</div>
+                <input type="password" name="new_password" minlength="6" placeholder="Leave blank to keep current password"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                <small style="color: var(--color-text-subtle); font-size: 0.8rem; display: block; margin-top: 0.4rem;">If set, password will be securely re-hashed. Minimum 6 characters.</small>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit"
+                    style="flex: 1; background: var(--color-brown-deep); color: #fff; padding: 0.75rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer;">
+                    Save Changes
+                </button>
+                <a href="{{ path('app_admin_users') }}"
+                    style="flex: 1; background: #f1f1f1; color: var(--color-brown-deep); padding: 0.75rem; border-radius: 8px; font-size: 1rem; font-weight: 700; text-align: center; text-decoration: none;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
+

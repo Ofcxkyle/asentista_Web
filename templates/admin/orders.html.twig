@@ -1,0 +1,90 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Manage Orders - Admin - Asentista's Bakery{% endblock %}
+
+{% block body %}
+<section style="background: var(--color-brown-deep); color: #fff; padding: 2.5rem 1.5rem 2rem;">
+    <div style="max-width: var(--max-width, 1200px); margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span style="color: var(--color-yellow); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1.5px;">Order Fulfillment</span>
+            <h1 style="font-family: var(--font-serif); font-size: 2.2rem; margin: 0.25rem 0;">All Customer Orders &amp; Bookings</h1>
+            <p style="color: #EDE0D4; margin: 0; font-size: 0.95rem;">Review line items, confirm bookings, and update fulfillment status.</p>
+        </div>
+        <div>
+            <a href="{{ path('app_admin_orders_export_csv') }}" class="btn" style="background: var(--color-yellow); color: var(--color-brown-deep); font-weight: 700; padding: 0.65rem 1.5rem; border-radius: 6px; text-decoration: none;">Export All to CSV</a>
+        </div>
+    </div>
+</section>
+
+<section style="max-width: var(--max-width, 1200px); margin: 2rem auto 5rem; padding: 0 1.5rem;">
+    <div style="background: #fff; border-radius: 12px; box-shadow: var(--shadow-sm); overflow: hidden;">
+        <div style="padding: 1.25rem 1.5rem; background: #fdfaf7; border-bottom: 1px solid rgba(43,27,21,0.08); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-family: var(--font-serif); font-size: 1.25rem; color: var(--color-brown-deep); margin: 0;">Total Orders ({{ orders|length }})</h3>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid rgba(43,27,21,0.08); text-align: left; font-size: 0.8rem; color: var(--color-text-subtle); text-transform: uppercase; background: #faf6f2;">
+                        <th style="padding: 12px 1.25rem;">Order #</th>
+                        <th style="padding: 12px 1rem;">Customer</th>
+                        <th style="padding: 12px 1rem;">Type &amp; Date</th>
+                        <th style="padding: 12px 1rem;">Items Purchased</th>
+                        <th style="padding: 12px 1rem;">Total</th>
+                        <th style="padding: 12px 1.25rem;">Status &amp; Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr style="border-bottom: 1px solid rgba(43,27,21,0.06); font-size: 0.9rem;">
+                            <td style="padding: 14px 1.25rem; font-weight: 700; font-family: monospace; color: var(--color-brown-deep); vertical-align: top;">
+                                <a href="{{ path('app_checkout_success', { orderNumber: order.orderNumber }) }}" style="color: var(--color-brown-deep); text-decoration: none;">{{ order.orderNumber }}</a>
+                                <div style="font-size: 0.75rem; color: var(--color-text-subtle); font-family: var(--font-sans); font-weight: normal; margin-top: 2px;">{{ order.createdAt|date('M d, H:i') }}</div>
+                            </td>
+                            <td style="padding: 14px 1rem; vertical-align: top;">
+                                <strong>{{ order.customerName }}</strong>
+                                <div style="font-size: 0.78rem; color: var(--color-text-subtle);">{{ order.customerEmail }}</div>
+                                <div style="font-size: 0.78rem; color: var(--color-text-subtle);">{{ order.customerPhone }}</div>
+                            </td>
+                            <td style="padding: 14px 1rem; vertical-align: top;">
+                                <strong style="color: var(--color-brown-deep);">{{ order.orderType }}</strong>
+                                <div style="font-size: 0.8rem; color: var(--color-amber-accessible); font-weight: 600;">For: {{ order.reservationDate|date('M d, Y') }}</div>
+                                {% if order.specialNotes %}
+                                    <div style="font-size: 0.78rem; color: #78350f; background: #fff8eb; padding: 4px 6px; border-radius: 4px; margin-top: 4px;">{{ order.specialNotes }}</div>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 14px 1rem; vertical-align: top;">
+                                {% for item in order.items %}
+                                    <div style="font-size: 0.85rem; margin-bottom: 2px;">
+                                        &bull; <strong>{{ item.productName }}</strong> &times; {{ item.quantity }} <span style="color: var(--color-text-subtle);">(₱{{ item.subtotal }})</span>
+                                    </div>
+                                {% endfor %}
+                            </td>
+                            <td style="padding: 14px 1rem; font-weight: 800; color: var(--color-brown-deep); font-size: 1.05rem; vertical-align: top;">₱{{ order.totalAmount }}</td>
+                            <td style="padding: 14px 1.25rem; vertical-align: top;">
+                                {% if order.status|lower == 'completed' %}
+                                    {# Once Completed, the status is permanently locked and cannot be changed #}
+                                    <span style="background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #bbf7d0;">
+                                        ✔ Completed (Locked)
+                                    </span>
+                                {% else %}
+                                    <form action="{{ path('app_admin_order_status', { id: order.id }) }}" method="POST" style="display: flex; gap: 6px; align-items: center; margin: 0;">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('order_status_' ~ order.id) }}">
+                                        <select name="status" style="padding: 5px 8px; border-radius: 4px; border: 1px solid rgba(43,27,21,0.2); font-size: 0.85rem; font-weight: 600;">
+                                            <option value="Pending" {% if order.status|lower == 'pending' %}selected{% endif %}>Pending</option>
+                                            <option value="Confirmed" {% if order.status|lower == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                            <option value="Completed" {% if order.status|lower == 'completed' %}selected{% endif %}>Completed</option>
+                                            <option value="Cancelled" {% if order.status|lower == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                        </select>
+                                        <button type="submit" class="btn" style="background: var(--color-brown-deep); color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: none;">Save</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

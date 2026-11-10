@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Customers - Admin - Asentista's Bakery{% endblock %}
+
+{% block body %}
+<section style="background: var(--color-brown-deep); color: #fff; padding: 2.5rem 1.5rem 2rem;">
+    <div style="max-width: var(--max-width, 1200px); margin: 0 auto;">
+        <span style="color: var(--color-yellow); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1.5px;">Customer Records</span>
+        <h1 style="font-family: var(--font-serif); font-size: 2.2rem; margin: 0.25rem 0;">Registered Customers &amp; Staff</h1>
+        <p style="color: #EDE0D4; margin: 0; font-size: 0.95rem;">View customer profiles and their total purchase histories.</p>
+    </div>
+</section>
+
+<section style="max-width: var(--max-width, 1200px); margin: 2rem auto 5rem; padding: 0 1.5rem;">
+    <div style="background: #fff; border-radius: 12px; box-shadow: var(--shadow-sm); overflow: hidden;">
+        <div style="padding: 1.25rem 1.5rem; background: #fdfaf7; border-bottom: 1px solid rgba(43,27,21,0.08);">
+            <h3 style="font-family: var(--font-serif); font-size: 1.25rem; color: var(--color-brown-deep); margin: 0;">User Accounts ({{ customers|length }})</h3>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid rgba(43,27,21,0.08); text-align: left; font-size: 0.8rem; color: var(--color-text-subtle); text-transform: uppercase; background: #faf6f2;">
+                        <th style="padding: 12px 1.5rem;">Customer Name</th>
+                        <th style="padding: 12px 1rem;">Email</th>
+                        <th style="padding: 12px 1rem;">Phone</th>
+                        <th style="padding: 12px 1rem;">Role</th>
+                        <th style="padding: 12px 1rem;">Total Orders</th>
+                        <th style="padding: 12px 1.5rem;">Registered On</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                        <tr style="border-bottom: 1px solid rgba(43,27,21,0.06); font-size: 0.9rem;">
+                            <td style="padding: 14px 1.5rem; font-weight: 700; color: var(--color-brown-deep);">{{ customer.name }}</td>
+                            <td style="padding: 14px 1rem; color: var(--color-text-muted);">{{ customer.email }}</td>
+                            <td style="padding: 14px 1rem; color: var(--color-text-muted);">{{ customer.phone|default('—') }}</td>
+                            <td style="padding: 14px 1rem;">
+                                {% if customer.isAdmin %}
+                                    <span style="background: #92400e; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">Administrator</span>
+                                {% else %}
+                                    <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">Customer</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 14px 1rem; font-weight: 700; color: var(--color-brown-deep);">{{ customer.orders|length }}</td>
+                            <td style="padding: 14px 1.5rem; color: var(--color-text-subtle);">{{ customer.createdAt|date('M d, Y') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}
