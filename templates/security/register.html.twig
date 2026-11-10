@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create an Account - Asentista's Bakery{% endblock %}
+
+{% block body %}
+<section style="max-width: 500px; margin: 4rem auto 6rem; padding: 0 1.5rem;">
+    <div style="background: #fff; border-radius: 16px; padding: 2.5rem; box-shadow: var(--shadow-md); border-top: 5px solid var(--color-yellow);">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <img src="{{ asset('assets/ASENTISTA FINAL.png') }}" alt="Logo" style="height: 52px; margin-bottom: 0.75rem;">
+            <h1 style="font-family: var(--font-serif); font-size: 1.8rem; color: var(--color-brown-deep); margin-bottom: 0.5rem;">Join Our Bakery Club</h1>
+            <p style="color: var(--color-text-muted); font-size: 0.9rem;">Enjoy fast order tracking, easy checkout, and table booking</p>
+        </div>
+
+        <form action="{{ path('app_register') }}" method="POST">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('register') }}">
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px; color: var(--color-brown-deep);">Full Name *</label>
+                <input type="text" name="name" required style="width: 100%; padding: 0.7rem 0.85rem; border: 1px solid rgba(43,27,21,0.2); border-radius: 6px; font-size: 0.95rem;">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px; color: var(--color-brown-deep);">Email Address *</label>
+                <input type="email" name="email" required style="width: 100%; padding: 0.7rem 0.85rem; border: 1px solid rgba(43,27,21,0.2); border-radius: 6px; font-size: 0.95rem;">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px; color: var(--color-brown-deep);">Phone Number</label>
+                <input type="tel" name="phone" placeholder="09XX XXX XXXX" style="width: 100%; padding: 0.7rem 0.85rem; border: 1px solid rgba(43,27,21,0.2); border-radius: 6px; font-size: 0.95rem;">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px; color: var(--color-brown-deep);">Password (min 6 characters) *</label>
+                <input type="password" name="password" required minlength="6" style="width: 100%; padding: 0.7rem 0.85rem; border: 1px solid rgba(43,27,21,0.2); border-radius: 6px; font-size: 0.95rem;">
+            </div>
+
+            <div style="margin-bottom: 1.75rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px; color: var(--color-brown-deep);">Confirm Password *</label>
+                <input type="password" name="confirm_password" required minlength="6" style="width: 100%; padding: 0.7rem 0.85rem; border: 1px solid rgba(43,27,21,0.2); border-radius: 6px; font-size: 0.95rem;">
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%; background: var(--color-yellow); color: var(--color-brown-deep); font-weight: 700; font-size: 1rem; padding: 0.85rem; border-radius: 6px; box-shadow: var(--shadow-sm);">Create Account &rarr;</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid rgba(43,27,21,0.08); font-size: 0.9rem; color: var(--color-text-muted);">
+            Already have an account? <a href="{{ path('app_login') }}" style="color: var(--color-amber-accessible); font-weight: 700;">Log In</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

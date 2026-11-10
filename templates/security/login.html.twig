@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Login - Asentista's Bakery{% endblock %}
+
+{% block body %}
+<section style="max-width: 480px; margin: 4rem auto 6rem; padding: 0 1.5rem;">
+    <div style="background: #fff; border-radius: 16px; padding: 2.5rem; box-shadow: var(--shadow-md); border-top: 5px solid var(--color-yellow);">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <img src="{{ asset('assets/ASENTISTA FINAL.png') }}" alt="Logo" style="height: 52px; margin-bottom: 0.75rem;">
+            <h1 style="font-family: var(--font-serif); font-size: 1.8rem; color: var(--color-brown-deep); margin-bottom: 0.5rem;">Welcome Back</h1>
+            <p style="color: var(--color-text-muted); font-size: 0.9rem;">Sign in to your bakery account or admin panel</p>
+        </div>
+
+        {% if error %}
+            <div style="background: #fee2e2; color: #991b1b; padding: 0.85rem 1rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.88rem; border: 1px solid #fecaca;">
+                {{ error.messageKey|trans(error.messageData, 'security') }}
+            </div>
+        {% endif %}
+
+        <form action="{{ path('app_login') }}" method="POST">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px; color: var(--color-brown-deep);">Email Address</label>
+                <input type="email" name="_username" value="{{ last_username }}" required autofocus style="width: 100%; padding: 0.7rem 0.85rem; border: 1px solid rgba(43,27,21,0.2); border-radius: 6px; font-size: 0.95rem;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <label style="font-weight: 600; font-size: 0.88rem; color: var(--color-brown-deep);">Password</label>
+                    <a href="{{ path('app_forgot_password') }}" style="font-size: 0.8rem; color: var(--color-amber-accessible); font-weight: 600;">Forgot Password?</a>
+                </div>
+                <input type="password" name="_password" required style="width: 100%; padding: 0.7rem 0.85rem; border: 1px solid rgba(43,27,21,0.2); border-radius: 6px; font-size: 0.95rem;">
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%; background: var(--color-yellow); color: var(--color-brown-deep); font-weight: 700; font-size: 1rem; padding: 0.85rem; border-radius: 6px; box-shadow: var(--shadow-sm);">Log In &rarr;</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid rgba(43,27,21,0.08); font-size: 0.9rem; color: var(--color-text-muted);">
+            Don't have an account yet? <a href="{{ path('app_register') }}" style="color: var(--color-amber-accessible); font-weight: 700;">Create Account</a>
+        </div>
+
+        {# Default Account Helper #}
+        <div style="margin-top: 1.5rem; background: #fdfaf7; border: 1px dashed rgba(43,27,21,0.2); border-radius: 8px; padding: 0.85rem; font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.5;">
+            <strong>Demo Accounts:</strong><br>
+            &bull; <strong>Admin:</strong> <code>admin@asentista.com</code> / <code>admin123</code><br>
+            &bull; <strong>Staff:</strong> <code>staff@asentista.com</code> / <code>password123</code><br>
+            &bull; <strong>Customer:</strong> <code>customer@asentista.com</code> / <code>password123</code>
+        </div>
+    </div>
+</section>
+{% endblock %}
