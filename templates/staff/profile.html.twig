@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Profile - Staff{% endblock %}
+
+{% block body %}
+<section style="background: #0369a1; color: #fff; padding: 2rem 1.5rem 1.5rem;">
+    <div style="max-width: var(--max-width, 1200px); margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span style="color: #bae6fd; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px;">Staff Account</span>
+            <h1 style="font-family: var(--font-serif); font-size: 2rem; margin: 0.25rem 0;">My Profile & Security</h1>
+        </div>
+        <a href="{{ path('app_staff_dashboard') }}" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 0.6rem 1.25rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; text-decoration: none;">← Staff Dashboard</a>
+    </div>
+</section>
+
+<section style="max-width: 680px; margin: 2.5rem auto 5rem; padding: 0 1.5rem;">
+    <div style="background: #fff; border-radius: 12px; box-shadow: var(--shadow-sm); padding: 2rem;">
+        <form method="POST" action="{{ path('app_staff_profile') }}" novalidate>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('staff_profile') }}">
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Full Name <span style="color: #dc2626;">*</span></label>
+                <input type="text" name="name" value="{{ user.name }}" required maxlength="100"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Email Address</label>
+                <input type="email" value="{{ user.email }}" disabled
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; background: #f9fafb; color: #6b7280; cursor: not-allowed;">
+                <small style="color: var(--color-text-subtle); font-size: 0.8rem;">To update your staff email, please contact the administrator.</small>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Phone Number</label>
+                <input type="text" name="phone" value="{{ user.phone ?? '' }}" maxlength="30" placeholder="e.g. 09XX-XXX-XXXX"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+            </div>
+
+            <div style="padding: 1.25rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 1rem; color: var(--color-brown-deep); font-size: 1rem;">Change Password</h4>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.88rem; color: var(--color-brown-deep);">Current Password</label>
+                    <input type="password" name="current_password" placeholder="Required to change password"
+                        style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.88rem; color: var(--color-brown-deep);">New Password</label>
+                        <input type="password" name="new_password" minlength="6" placeholder="Min 6 characters"
+                            style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.88rem; color: var(--color-brown-deep);">Confirm New Password</label>
+                        <input type="password" name="confirm_password" minlength="6" placeholder="Repeat new password"
+                            style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit"
+                    style="flex: 1; background: #0369a1; color: #fff; padding: 0.75rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer;">
+                    Update Profile
+                </button>
+                <a href="{{ path('app_staff_dashboard') }}"
+                    style="flex: 1; background: #f1f1f1; color: var(--color-brown-deep); padding: 0.75rem; border-radius: 8px; font-size: 1rem; font-weight: 700; text-align: center; text-decoration: none;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
+

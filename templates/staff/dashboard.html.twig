@@ -1,0 +1,99 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Staff Dashboard - Asentista's Bakery{% endblock %}
+
+{% block body %}
+<section style="background: #0369a1; color: #fff; padding: 2.5rem 1.5rem 2rem;">
+    <div style="max-width: var(--max-width, 1200px); margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span style="color: #bae6fd; font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1.5px;">Staff Panel</span>
+            <h1 style="font-family: var(--font-serif); font-size: 2.2rem; margin: 0.25rem 0;">Welcome, {{ user.name }}</h1>
+            <p style="color: #e0f2fe; margin: 0; font-size: 0.95rem;">Manage bakery products and your account.</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <a href="{{ path('app_staff_profile') }}" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 0.6rem 1.25rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; text-decoration: none;">My Profile</a>
+            <a href="{{ path('app_staff_products') }}" style="background: #fff; color: #0369a1; font-weight: 700; padding: 0.6rem 1.25rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none;">+ Manage Products</a>
+        </div>
+    </div>
+</section>
+
+<section style="max-width: var(--max-width, 1200px); margin: 2rem auto 5rem; padding: 0 1.5rem;">
+    {# KPI Cards #}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+        <div style="background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm); border-left: 5px solid #0369a1;">
+            <div style="color: var(--color-text-subtle); font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Total Products</div>
+            <div style="font-size: 2rem; font-weight: 800; color: var(--color-brown-deep); margin-top: 4px;">{{ total_products }}</div>
+            <a href="{{ path('app_staff_products') }}" style="font-size: 0.8rem; color: #0369a1; margin-top: 4px; display: block;">Manage →</a>
+        </div>
+        <div style="background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm); border-left: 5px solid #166534;">
+            <div style="color: var(--color-text-subtle); font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Total Orders</div>
+            <div style="font-size: 2rem; font-weight: 800; color: var(--color-brown-deep); margin-top: 4px;">{{ total_orders }}</div>
+            <div style="font-size: 0.8rem; color: #166534; margin-top: 4px;">System-wide</div>
+        </div>
+        <div style="background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm); border-left: 5px solid #7c3aed;">
+            <div style="color: var(--color-text-subtle); font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Your Role</div>
+            <div style="font-size: 1.3rem; font-weight: 800; color: var(--color-brown-deep); margin-top: 4px;">Staff</div>
+            <div style="font-size: 0.8rem; color: #7c3aed; margin-top: 4px;">Product management</div>
+        </div>
+    </div>
+
+    {# Access Restriction Notice #}
+    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 10px; padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center;">
+        <span style="font-size: 1.5rem;">🔒</span>
+        <div>
+            <strong style="color: #92400e;">Access Restriction:</strong>
+            <span style="color: #78350f; font-size: 0.9rem;"> Staff accounts cannot access the Admin Dashboard, User Management, or place customer orders.</span>
+        </div>
+    </div>
+
+    {# Quick Actions #}
+    <div style="background: #fff; border-radius: 12px; box-shadow: var(--shadow-sm); padding: 1.5rem; margin-bottom: 2rem;">
+        <h3 style="font-family: var(--font-serif); color: var(--color-brown-deep); margin: 0 0 1rem;">Quick Actions</h3>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="{{ path('app_staff_products') }}" style="background: #0369a1; color: #fff; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 0.9rem;">📦 Manage Products</a>
+            <a href="{{ path('app_staff_profile') }}" style="background: #7c3aed; color: #fff; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 0.9rem;">👤 My Profile</a>
+            <a href="{{ path('app_store_menu') }}" style="background: #166534; color: #fff; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 0.9rem;">🍞 View Menu</a>
+        </div>
+    </div>
+
+    {# Recent Products #}
+    <div style="background: #fff; border-radius: 12px; box-shadow: var(--shadow-sm); overflow: hidden;">
+        <div style="padding: 1.25rem 1.5rem; background: #f0f9ff; border-bottom: 1px solid rgba(3,105,161,0.15); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-family: var(--font-serif); font-size: 1.25rem; color: var(--color-brown-deep); margin: 0;">Recent Products</h3>
+            <a href="{{ path('app_staff_products') }}" style="color: #0369a1; font-weight: 600; font-size: 0.85rem;">View All →</a>
+        </div>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f0f9ff; border-bottom: 2px solid rgba(3,105,161,0.1); font-size: 0.8rem; color: var(--color-text-subtle); text-transform: uppercase; text-align: left;">
+                        <th style="padding: 10px 1rem;">Product</th>
+                        <th style="padding: 10px 1rem;">Category</th>
+                        <th style="padding: 10px 1rem;">Price</th>
+                        <th style="padding: 10px 1rem;">Stock</th>
+                        <th style="padding: 10px 1rem;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in my_products|slice(0, 8) %}
+                        <tr style="border-bottom: 1px solid rgba(43,27,21,0.05); font-size: 0.88rem;">
+                            <td style="padding: 12px 1rem; font-weight: 600;">{{ product.name }}</td>
+                            <td style="padding: 12px 1rem; color: var(--color-text-subtle);">{{ product.category.name }}</td>
+                            <td style="padding: 12px 1rem; font-weight: 700;">₱{{ product.price }}</td>
+                            <td style="padding: 12px 1rem;">
+                                <span style="background: {{ product.stock < 10 ? '#fee2e2' : '#dcfce7' }}; color: {{ product.stock < 10 ? '#991b1b' : '#166534' }}; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">{{ product.stock }}</span>
+                            </td>
+                            <td style="padding: 12px 1rem;">
+                                <a href="{{ path('app_staff_product_edit', {id: product.id}) }}"
+                                   style="background: #0369a1; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; text-decoration: none; font-weight: 600;">Edit</a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="5" style="padding: 1.5rem; text-align: center; color: var(--color-text-subtle);">No products yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

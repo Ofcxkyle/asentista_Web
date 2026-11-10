@@ -1,0 +1,84 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Product - Staff{% endblock %}
+
+{% block body %}
+<section style="background: #0369a1; color: #fff; padding: 2rem 1.5rem 1.5rem;">
+    <div style="max-width: var(--max-width, 1200px); margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span style="color: #bae6fd; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px;">Staff → Edit Product</span>
+            <h1 style="font-family: var(--font-serif); font-size: 2rem; margin: 0.25rem 0;">Edit: {{ product.name }}</h1>
+        </div>
+        <a href="{{ path('app_staff_products') }}" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 0.6rem 1.25rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; text-decoration: none;">← Back to Products</a>
+    </div>
+</section>
+
+<section style="max-width: 680px; margin: 2.5rem auto 5rem; padding: 0 1.5rem;">
+    <div style="background: #fff; border-radius: 12px; box-shadow: var(--shadow-sm); padding: 2rem;">
+        <form method="POST" action="{{ path('app_staff_product_edit', {id: product.id}) }}" enctype="multipart/form-data" novalidate>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('staff_product_edit_' ~ product.id) }}">
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Product Name <span style="color: #dc2626;">*</span></label>
+                <input type="text" name="name" value="{{ product.name }}" required maxlength="150"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Category <span style="color: #dc2626;">*</span></label>
+                <select name="category_id" required style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {{ product.category and product.category.id == cat.id ? 'selected' : '' }}>
+                            {{ cat.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Price (₱) <span style="color: #dc2626;">*</span></label>
+                    <input type="number" name="price" step="0.01" min="0.01" value="{{ product.price }}" required
+                        style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Stock Quantity</label>
+                    <input type="number" name="stock" min="0" value="{{ product.stock }}"
+                        style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.25rem; padding: 0.85rem; background: #faf6f2; border: 1px dashed rgba(43,27,21,0.25); border-radius: 8px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.9rem; color: var(--color-brown-deep);">Product Picture</label>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <img src="{{ asset(product.image) }}" alt="Preview" style="width: 44px; height: 44px; object-fit: contain; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 2px;">
+                    <span style="font-size: 0.8rem; color: var(--color-text-subtle);">Current image</span>
+                </div>
+                <input type="file" name="image_file" accept="image/*" style="width: 100%; font-size: 0.82rem;">
+            </div>
+                    <input type="number" name="stock" min="0" value="{{ product.stock }}"
+                        style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-brown-deep);">Description</label>
+                <textarea name="description" rows="3"
+                    style="width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; resize: vertical;">{{ product.description }}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit"
+                    style="flex: 1; background: #0369a1; color: #fff; padding: 0.75rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer;">
+                    Save Changes
+                </button>
+                <a href="{{ path('app_staff_products') }}"
+                    style="flex: 1; background: #f1f1f1; color: var(--color-brown-deep); padding: 0.75rem; border-radius: 8px; font-size: 1rem; font-weight: 700; text-align: center; text-decoration: none;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
