@@ -170,3 +170,94 @@ INSERT INTO `order_items` (`order_id`, `product_id`, `product_name`, `unit_price
 (2, 11, 'Sourdough', 25.00, 1, 25.00),
 (3, 4, 'Yeast Custard', 40.00, 1, 40.00),
 (3, 17, 'Cortado', 69.00, 2, 138.00);
+
+-- ============================================================
+-- phpMyAdmin Configuration Storage & Visual Designer Layout
+-- ============================================================
+CREATE DATABASE IF NOT EXISTS `phpmyadmin` DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+USE `phpmyadmin`;
+
+CREATE TABLE IF NOT EXISTS `pma__bookmark` (
+  `id` int(10) unsigned NOT NULL auto_increment,
+  `dbase` varchar(255) NOT NULL default '',
+  `user` varchar(255) NOT NULL default '',
+  `label` varchar(255) COLLATE utf8_general_ci NOT NULL default '',
+  `query` text NOT NULL,
+  PRIMARY KEY  (`id`)
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+
+CREATE TABLE IF NOT EXISTS `pma__relation` (
+  `master_db` varchar(64) NOT NULL default '',
+  `master_table` varchar(64) NOT NULL default '',
+  `master_field` varchar(64) NOT NULL default '',
+  `foreign_db` varchar(64) NOT NULL default '',
+  `foreign_table` varchar(64) NOT NULL default '',
+  `foreign_field` varchar(64) NOT NULL default '',
+  PRIMARY KEY  (`master_db`,`master_table`,`master_field`),
+  KEY `foreign_field` (`foreign_db`,`foreign_table`)
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+
+CREATE TABLE IF NOT EXISTS `pma__table_coords` (
+  `db_name` varchar(64) NOT NULL default '',
+  `table_name` varchar(64) NOT NULL default '',
+  `pdf_page_number` int(11) NOT NULL default '0',
+  `x` float unsigned NOT NULL default '0',
+  `y` float unsigned NOT NULL default '0',
+  PRIMARY KEY  (`db_name`,`table_name`,`pdf_page_number`)
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+
+CREATE TABLE IF NOT EXISTS `pma__pdf_pages` (
+  `db_name` varchar(64) NOT NULL default '',
+  `page_nr` int(10) unsigned NOT NULL auto_increment,
+  `page_descr` varchar(50) COLLATE utf8_general_ci NOT NULL default '',
+  PRIMARY KEY  (`page_nr`),
+  KEY `db_name` (`db_name`)
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+
+CREATE TABLE IF NOT EXISTS `pma__designer_settings` (
+  `username` varchar(64) NOT NULL,
+  `settings_data` text NOT NULL,
+  PRIMARY KEY (`username`)
+) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+
+-- Register clean visual diagram page
+DELETE FROM `pma__pdf_pages` WHERE `db_name` = 'asentista_bakery_db';
+INSERT INTO `pma__pdf_pages` (`db_name`, `page_nr`, `page_descr`) 
+VALUES ('asentista_bakery_db', 1, 'Asentista Bakery Relational Diagram');
+
+-- Save structured, non-overlapping coordinates (Columns: Auth/Users, Products/Items, Cart/Orders)
+DELETE FROM `pma__table_coords` WHERE `db_name` = 'asentista_bakery_db';
+INSERT INTO `pma__table_coords` (`db_name`, `table_name`, `pdf_page_number`, `x`, `y`) VALUES
+('asentista_bakery_db', 'password_resets',           0,  80,  50),
+('asentista_bakery_db', 'users',                     0,  80, 270),
+('asentista_bakery_db', 'doctrine_migration_versions',0,  80, 600),
+('asentista_bakery_db', 'categories',                0, 440,  50),
+('asentista_bakery_db', 'products',                  0, 440, 240),
+('asentista_bakery_db', 'order_items',               0, 440, 560),
+('asentista_bakery_db', 'cart_items',                0, 800,  50),
+('asentista_bakery_db', 'orders',                    0, 800, 310),
+('asentista_bakery_db', 'password_resets',           1,  80,  50),
+('asentista_bakery_db', 'users',                     1,  80, 270),
+('asentista_bakery_db', 'doctrine_migration_versions',1,  80, 600),
+('asentista_bakery_db', 'categories',                1, 440,  50),
+('asentista_bakery_db', 'products',                  1, 440, 240),
+('asentista_bakery_db', 'order_items',               1, 440, 560),
+('asentista_bakery_db', 'cart_items',                1, 800,  50),
+('asentista_bakery_db', 'orders',                    1, 800, 310);
+
+-- Save all foreign key relationships for phpMyAdmin Designer
+DELETE FROM `pma__relation` WHERE `master_db` = 'asentista_bakery_db';
+INSERT INTO `pma__relation` (`master_db`, `master_table`, `master_field`, `foreign_db`, `foreign_table`, `foreign_field`) VALUES
+('asentista_bakery_db', 'cart_items',      'product_id',    'asentista_bakery_db', 'products',   'id'),
+('asentista_bakery_db', 'cart_items',      'user_id',       'asentista_bakery_db', 'users',      'id'),
+('asentista_bakery_db', 'order_items',     'product_id',    'asentista_bakery_db', 'products',   'id'),
+('asentista_bakery_db', 'order_items',     'order_id',      'asentista_bakery_db', 'orders',     'id'),
+('asentista_bakery_db', 'orders',          'user_id',       'asentista_bakery_db', 'users',      'id'),
+('asentista_bakery_db', 'password_resets', 'user_id',       'asentista_bakery_db', 'users',      'id'),
+('asentista_bakery_db', 'products',        'category_id',   'asentista_bakery_db', 'categories', 'id'),
+('asentista_bakery_db', 'products',        'created_by_id', 'asentista_bakery_db', 'users',      'id');
+
+DELETE FROM `pma__designer_settings` WHERE `username` = 'root';
+INSERT INTO `pma__designer_settings` (`username`, `settings_data`) 
+VALUES ('root', '{\"angular_direct\":\"angular\",\"snap_to_grid\":\"OFF\",\"small_big\":\"V\",\"pin_text\":\"true\"}');
+

@@ -65,6 +65,7 @@ services:
       PMA_HOST: db
       PMA_USER: root
       PMA_PASSWORD: rootpassword
+      PMA_PMADB: phpmyadmin
     ports:
       - "8088:80"
     depends_on:
