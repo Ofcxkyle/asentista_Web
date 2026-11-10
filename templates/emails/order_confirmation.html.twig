@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed - Asentista's Bakery</title>
+    <style>
+        body { margin: 0; padding: 0; background: #f5ede6; font-family: 'Helvetica Neue', Arial, sans-serif; }
+        .wrapper { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .header { background: #2B1B15; color: #fff; padding: 2.5rem 2rem; text-align: center; border-bottom: 4px solid #FFAE34; }
+        .header h1 { margin: 0 0 0.25rem; font-size: 1.8rem; font-family: Georgia, serif; color: #FFAE34; }
+        .header .order-num { display: inline-block; background: rgba(255,174,52,0.15); color: #FFAE34; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; margin-top: 0.5rem; font-family: monospace; }
+        .meta-grid { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid #ede0d4; }
+        .meta-item { flex: 1 1 50%; padding: 1rem 1.5rem; border-right: 1px solid #ede0d4; }
+        .meta-item:nth-child(even) { border-right: none; }
+        .meta-label { font-size: 0.75rem; color: #9a8a82; text-transform: uppercase; font-weight: 600; }
+        .meta-value { font-size: 0.95rem; color: #2B1B15; font-weight: 700; margin-top: 2px; }
+        .body { padding: 2rem; }
+        .items-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .items-table th { text-align: left; font-size: 0.78rem; color: #9a8a82; text-transform: uppercase; padding: 8px 0; border-bottom: 2px solid #ede0d4; }
+        .items-table td { padding: 12px 0; border-bottom: 1px solid #f5ede6; font-size: 0.92rem; color: #4a3728; }
+        .items-table .total-row td { font-weight: 800; font-size: 1.05rem; color: #2B1B15; border-top: 2px solid #ede0d4; border-bottom: none; }
+        .cta-btn { display: inline-block; background: #FFAE34; color: #2B1B15; padding: 0.8rem 2rem; border-radius: 6px; font-weight: 700; font-size: 0.95rem; text-decoration: none; }
+        .notes-box { background: #fff8eb; border-left: 4px solid #FFAE34; padding: 0.75rem 1rem; border-radius: 4px; font-size: 0.88rem; color: #78350f; margin: 1rem 0; }
+        .footer { background: #fdfaf7; padding: 1.5rem 2rem; text-align: center; font-size: 0.8rem; color: #8a7a72; border-top: 1px solid rgba(43,27,21,0.08); }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="header">
+            <h1>Order Confirmed! 🎉</h1>
+            <div class="order-num">{{ order.orderNumber }}</div>
+        </div>
+
+        <div class="meta-grid">
+            <div class="meta-item">
+                <div class="meta-label">Fulfillment Type</div>
+                <div class="meta-value">{{ order.orderType }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Scheduled Date</div>
+                <div class="meta-value">{{ order.reservationDate|date('F j, Y') }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Status</div>
+                <div class="meta-value" style="color: #d97706;">{{ order.status }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Contact</div>
+                <div class="meta-value">{{ order.customerPhone }}</div>
+            </div>
+        </div>
+
+        <div class="body">
+            <p style="color: #4a3728; font-size: 0.95rem; line-height: 1.7;">
+                Thank you, <strong>{{ order.customerName }}</strong>! Your order from Asentista's Bakery has been received and is being prepared. Here is your order summary:
+            </p>
+
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th style="text-align: center;">Qty</th>
+                        <th style="text-align: right;">Price</th>
+                        <th style="text-align: right;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                        <tr>
+                            <td><strong>{{ item.productName }}</strong></td>
+                            <td style="text-align: center;">{{ item.quantity }}</td>
+                            <td style="text-align: right;">₱{{ item.unitPrice }}</td>
+                            <td style="text-align: right; font-weight: 700;">₱{{ item.subtotal }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td colspan="3" style="text-align: right; padding-top: 16px;">Total Amount</td>
+                        <td style="text-align: right; padding-top: 16px; font-size: 1.1rem;">₱{{ order.totalAmount }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            {% if order.specialNotes %}
+                <div class="notes-box">
+                    <strong>Special Instructions:</strong> {{ order.specialNotes }}
+                </div>
+            {% endif %}
+
+            <p style="color: #4a3728; font-size: 0.9rem; line-height: 1.6; margin-top: 1.5rem;">
+                Our team will prepare your order fresh on your scheduled date. Payment is accepted via cash at counter, GCash, or bank transfer upon fulfillment.
+            </p>
+
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <p style="font-size: 0.88rem; color: #7a5c4f; margin-bottom: 0.75rem;">Questions? We're just a call away:</p>
+                <strong style="font-size: 1rem; color: #2B1B15;">0994-005-8425</strong>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Asentista's Bakery</strong></p>
+            <p>Sibulan Commercial Center, Negros Oriental &bull; hello@asentista.com</p>
+            <p>&copy; {{ "now"|date("Y") }} Asentista's Bakery. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

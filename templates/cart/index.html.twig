@@ -1,0 +1,92 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Your Shopping Cart - Asentista's Bakery{% endblock %}
+
+{% block body %}
+<section style="background: var(--color-brown-deep); color: #fff; padding: 3rem 1.5rem 2rem; text-align: center;">
+    <div style="max-width: 800px; margin: 0 auto;">
+        <h1 style="font-family: var(--font-serif); font-size: 2.5rem; margin-bottom: 0.5rem;">Your Shopping Cart</h1>
+        <p style="color: #EDE0D4;">Review your artisan bakery picks before completing your reservation or delivery.</p>
+    </div>
+</section>
+
+<section style="max-width: var(--max-width, 1200px); margin: 3rem auto 5rem; padding: 0 1.5rem;">
+    {% if items is empty %}
+        <div style="background: #fff; padding: 5rem 2rem; border-radius: 12px; text-align: center; box-shadow: var(--shadow-sm); max-width: 600px; margin: 0 auto;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🍞</div>
+            <h2 style="font-family: var(--font-serif); font-size: 1.8rem; color: var(--color-brown-deep); margin-bottom: 0.75rem;">Your cart is empty</h2>
+            <p style="color: var(--color-text-muted); line-height: 1.6; margin-bottom: 2rem;">Looks like you haven't added any fresh breads, pastries, or coffee yet.</p>
+            <a href="{{ path('app_store_menu') }}" class="btn" style="background: var(--color-yellow); color: var(--color-brown-deep); font-weight: 700; padding: 0.75rem 2rem; border-radius: 6px;">Browse Our Fresh Bakes &rarr;</a>
+        </div>
+    {% else %}
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2.5rem; align-items: start;">
+            {# Cart Items List #}
+            <div style="background: #fff; border-radius: 12px; box-shadow: var(--shadow-sm); overflow: hidden;">
+                <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(43,27,21,0.08); background: #fdfaf7;">
+                    <h3 style="font-family: var(--font-serif); font-size: 1.2rem; color: var(--color-brown-deep); margin: 0;">Order Items ({{ items|length }})</h3>
+                </div>
+
+                <div style="padding: 0 1.5rem;">
+                    {% for item in items %}
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 0; border-bottom: 1px solid rgba(43,27,21,0.06); gap: 1.5rem; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 1.25rem; flex: 2; min-width: 220px;">
+                                <div style="width: 70px; height: 70px; background: #fdfaf7; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 6px; border: 1px solid rgba(43,27,21,0.06);">
+                                    <img src="{{ asset(item.product.image) }}" alt="{{ item.product.name }}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                </div>
+                                <div>
+                                    <h4 style="font-family: var(--font-serif); font-size: 1.1rem; color: var(--color-brown-deep); margin: 0 0 4px;">{{ item.product.name }}</h4>
+                                    <span style="font-size: 0.85rem; color: var(--color-text-muted);">₱{{ item.product.price }} each</span>
+                                </div>
+                            </div>
+
+                            {# Quantity Controller #}
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <form action="{{ path('app_cart_update', { id: item.id }) }}" method="POST" style="display: flex; align-items: center; gap: 6px; margin: 0;">
+                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" style="width: 60px; padding: 6px 8px; border: 1px solid rgba(43,27,21,0.2); border-radius: 4px; text-align: center; font-weight: 600;" onchange="this.form.submit()">
+                                    <button type="submit" class="btn" style="background: #f5ede6; color: var(--color-brown-deep); padding: 6px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">Update</button>
+                                </form>
+                            </div>
+
+                            {# Subtotal & Remove #}
+                            <div style="text-align: right; min-width: 110px;">
+                                <div style="font-weight: 700; font-size: 1.15rem; color: var(--color-brown-deep);">₱{{ item.subtotal|number_format(2) }}</div>
+                                <a href="{{ path('app_cart_remove', { id: item.id }) }}" onclick="return confirm('Remove {{ item.product.name }} from cart?')" style="font-size: 0.8rem; color: #dc2626; font-weight: 500; text-decoration: underline; display: inline-block; margin-top: 4px;">Remove</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div style="padding: 1.25rem 1.5rem; background: #fdfaf7; display: flex; justify-content: space-between; align-items: center;">
+                    <a href="{{ path('app_store_menu') }}" style="color: var(--color-brown-deep); font-weight: 600; font-size: 0.9rem;">&larr; Continue Browsing Menu</a>
+                </div>
+            </div>
+
+            {# Order Summary Card #}
+            <div style="background: #fff; border-radius: 12px; padding: 1.75rem; box-shadow: var(--shadow-sm); border-top: 4px solid var(--color-yellow);">
+                <h3 style="font-family: var(--font-serif); font-size: 1.3rem; color: var(--color-brown-deep); margin-bottom: 1.25rem;">Order Summary</h3>
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem; color: var(--color-text-muted);">
+                    <span>Items Subtotal:</span>
+                    <span style="font-weight: 600; color: var(--color-brown-deep);">₱{{ total|number_format(2) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem; color: var(--color-text-muted);">
+                    <span>Estimated Tax:</span>
+                    <span style="font-weight: 600; color: #166534;">Included</span>
+                </div>
+
+                <div style="border-top: 1px solid rgba(43,27,21,0.1); margin: 1.25rem 0; padding-top: 1rem; display: flex; justify-content: space-between; align-items: baseline;">
+                    <span style="font-size: 1.1rem; font-weight: 700; color: var(--color-brown-deep);">Total Amount:</span>
+                    <span style="font-size: 1.6rem; font-weight: 800; color: var(--color-brown-deep);">₱{{ total|number_format(2) }}</span>
+                </div>
+
+                <a href="{{ path('app_checkout_index') }}" class="btn" style="width: 100%; background: var(--color-yellow); color: var(--color-brown-deep); font-weight: 700; font-size: 1rem; padding: 0.85rem; border-radius: 6px; text-align: center; margin-top: 0.5rem; box-shadow: var(--shadow-sm);">Proceed to Checkout &rarr;</a>
+
+                <div style="margin-top: 1.5rem; background: #fdfaf7; padding: 1rem; border-radius: 8px; font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.5;">
+                    <div style="font-weight: 600; color: var(--color-brown-deep); margin-bottom: 4px;">Bakery Guarantee:</div>
+                    Orders placed for pickup or delivery are prepared hot fresh on your requested date. Cash on Delivery, GCash, or Bank Transfer accepted.
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
